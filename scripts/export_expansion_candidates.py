@@ -139,7 +139,7 @@ def main() -> int:
                     "review_status": review_status,
                     "novel_contribution": "",
                     "source_diversity_note": (
-                        "excluded in the v0 baseline as a non-skill template placeholder"
+                        "excluded in the initial baseline as a non-skill template placeholder"
                         if file_sha in EXCLUDED_HASHES
                         else ""
                     ),

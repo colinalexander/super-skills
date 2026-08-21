@@ -6,7 +6,7 @@ Produce one coherent, high-utility skill per category from a body of public skil
 
 ## Baseline corpus
 
-Version 0 uses the top 100 GitSkills content groups ranked by repository count. One placeholder row was excluded, leaving 99 content hashes across eight categories. Identical hashes are exact byte matches; repeated names may still represent different versions.
+The initial baseline uses the top 100 GitSkills content groups ranked by repository count. One placeholder row was excluded, leaving 99 content hashes across eight categories. Identical hashes are exact byte matches; repeated names may still represent different versions.
 
 The source ledger records both verified upstream locations and representative observed copies. “Observed copy” must not be read as an authorship claim.
 

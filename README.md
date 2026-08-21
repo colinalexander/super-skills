@@ -12,9 +12,9 @@
 
 **Super Skills is an open-source project for synthesizing broad agent capabilities from patterns found across widely reused public skills.** The [GitSkills dataset](https://huggingface.co/datasets/mvaccargiu/gitskills) provides the initial empirical foundation.
 
-**These are not bundles of copied prompts or concatenated skills.** The current v0 contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
+**These are not bundles of copied prompts or concatenated skills.** The suite currently contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications and the top-1,000 metadata/lineage triage are complete; seven expansion sources have been retained, with application engineering and software delivery at the current saturation checkpoint. Other category reviews, comparative benchmarks, and full upstream-lineage verification continue.
+> **Status:** Private research build. The top-100 synthesis and evaluation specifications and the top-1,000 metadata/lineage triage are complete; seven expansion sources have been retained, with application engineering and software delivery at the current saturation checkpoint. Other category reviews, comparative benchmarks, and full upstream-lineage verification continue.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -133,7 +133,7 @@ A provenance entry records research influence. It does not imply incorporation, 
 
 ## Expanding the evidence base
 
-The top-100 corpus establishes the v0 architecture; it does not establish corpus-wide completeness. Broader GitSkills samples can be screened for:
+The top-100 corpus establishes the initial architecture; it does not establish corpus-wide completeness. Broader GitSkills samples can be screened for:
 
 - additional specialist coverage;
 - genuinely distinct approaches;
@@ -141,7 +141,7 @@ The top-100 corpus establishes the v0 architecture; it does not establish corpus
 - new conflicts or constraints;
 - new evaluation cases.
 
-The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the v0 baseline. The additions have provisional category routing and near-duplicate flags, while ambiguous and outside-taxonomy records remain explicit review queues. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
+The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the initial baseline. The additions have provisional category routing and near-duplicate flags, while ambiguous and outside-taxonomy records remain explicit review queues. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
 
 Expansion uses **evidence saturation** rather than an arbitrary source count: additional sources stop materially affecting a category once they cease producing new principles, modes, constraints, conflicts, or evaluation cases.
 

@@ -14,7 +14,7 @@ The committed evidence set consists of:
 
 | Record class | Count | Status |
 | --- | ---: | --- |
-| Synthesized v0 baseline | 99 | Recorded in `source-ledger.csv` |
+| Synthesized initial baseline | 99 | Recorded in `source-ledger.csv` |
 | New eligible candidates | 900 | Metadata triage complete; source review in progress |
 | Non-skill template placeholder | 1 | Excluded at rank 24 |
 | **Total ranked hashes** | **1,000** | Complete rank coverage |
@@ -44,7 +44,8 @@ The 900 eligible additions have completed a reproducible first-pass triage:
 
 The taxonomy-review set contains 37 marketing/business, six service-automation,
 and five data-science/ML candidates. These are observations about the top-1,000
-sample, not decisions to add new public skills.
+sample, not decisions to add new public skills. The public suite therefore
+still contains eight categories.
 
 Content-similarity triage also flagged 205 records across 91 possible
 near-duplicate lineages. This is deliberately a review aid rather than a claim
