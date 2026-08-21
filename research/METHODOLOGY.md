@@ -55,7 +55,7 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 - Use the optional similarity checker against a separately held raw corpus before publication.
 - Treat unknown or missing source-license metadata as a reason for stronger separation, not as permission.
 
-The Apache-2.0 license covers the original work in this repository only.
+Independently authored implementation materials are covered by the repository's Apache-2.0 license. Research materials in this directory are licensed under CC BY 4.0 and retain the GitSkills attribution and modification notice in `ATTRIBUTION.md`. Neither license applies to third-party source text, which is not distributed here.
 
 ## Versioning
 
