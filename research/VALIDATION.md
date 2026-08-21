@@ -5,6 +5,8 @@ Date: 2026-08-20
 ## Corpus checks
 
 - Ledger rows: 130 distinct content hashes across 11 super-skills: 99 baseline hashes and 31 promoted expansion hashes.
+- Review-decision rows: 194 distinct substantively reviewed hashes: 130 retained and 64 not retained, with a nonempty hash-level reason and synthesis target for every row.
+- Token counts: generated for every skill with `cl100k_base` under pinned `tiktoken==0.11.0`; README core/full figures match the generated record.
 - Source text reconstruction: 99/99 baseline hashes and all 900 eligible expansion hashes retrieved from GitSkills into temporary locations outside this repository.
 - Public source-text inclusion: none; only metadata, hashes, links, aggregate decisions, and newly written instructions are retained.
 - Similarity check: the original 52 public files passed against all 99 baseline sources; the expanded set of 73 public skill, reference, and routing-metadata files passed against all 900 expansion sources. No pair reached the 20% smaller-document containment threshold using normalized eight-word shingles.
@@ -14,13 +16,20 @@ This automated comparison detects suspicious phrase-level overlap; it does not m
 ## Structural checks
 
 - `scripts/validate_repository.py`: passed.
+- `scripts/update_token_counts.py --check`: passed under Python 3.12 with the pinned validation requirements.
 - Official skill-creator `quick_validate.py`: passed for all 11 skill directories.
 - Python compilation: passed for all repository scripts.
 - Git whitespace check: passed.
 
 ## Behavioral checks
 
-The repository includes a shared rubric and category-specific positive, boundary, and non-trigger cases. These cases are authored evaluation specifications; they have not yet been run as a comparative model benchmark. A future release must distinguish rubric completeness from measured model performance.
+The repository includes 60 category cases, 12 global true negatives, a shared
+rubric, and a preregistered four-arm benchmark protocol. The source-suite arm
+installs all 130 retained sources and the super-suite arm installs all 11
+super-skills; arm membership is not selected after seeing a task. Natural and
+matched-token-budget comparisons are both required. These are authored
+evaluation specifications; they have not yet been run as a comparative model
+benchmark.
 
 ## Expansion status
 

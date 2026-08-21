@@ -1,0 +1,28 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-validation.txt
+      - name: Install validation dependencies
+        run: python -m pip install -r requirements-validation.txt
+      - name: Validate repository structure
+        run: python scripts/validate_repository.py
+      - name: Verify token counts
+        run: python scripts/update_token_counts.py --check
+      - name: Compile repository scripts
+        run: python -m compileall -q scripts

@@ -75,6 +75,10 @@ The promoted evidence consists of three application-engineering, one
 software-delivery, three agent-tooling, 14 marketing-and-growth, five
 connected-service-automation, and five data-science-and-ML hashes. The source
 ledger records provenance before retained propositions appear in public skills.
+The separate `review-decisions.csv` records all 95 expansion reviews alongside
+the 99 baseline decisions. Every non-retained row identifies a decision code,
+hash-specific rationale, the synthesis rule already covering it, and a direct
+near-duplicate target where one was observed.
 
 Application engineering and software delivery each reached the current
 no-new-information review checkpoint: after the last retained source in each ranked stream, 20

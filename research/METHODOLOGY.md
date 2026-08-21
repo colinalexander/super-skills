@@ -8,7 +8,11 @@ Produce one coherent, high-utility skill per category from a body of public skil
 
 The initial baseline uses the top 100 GitSkills content groups ranked by repository count. One placeholder row was excluded, leaving 99 content hashes across eight initial categories. Identical hashes are exact byte matches; repeated names may still represent different versions.
 
-The source ledger records both verified upstream locations and representative observed copies. “Observed copy” must not be read as an authorship claim.
+The source ledger records retained evidence at verified upstream locations or
+representative observed copies. The separate `review-decisions.csv` records
+every substantive outcome, including decisions not to retain a source, the
+specific synthesis rule that already covers it, and direct near-duplicate links
+where available. “Observed copy” must not be read as an authorship claim.
 
 ## Evidence expansion
 
@@ -58,6 +62,13 @@ Record exclusions and the reason for them. Population-level claims and future
 ordered review are governed by the preregistered definitions, random probe, and
 family-rerank requirements in `SAMPLING_PLAN.md`.
 
+The 194-row decision register distinguishes retained evidence, context- or
+product-specific material, near-duplicate lineages, out-of-scope records, and
+propositions already covered by a named synthesis rule. Its hash-level
+`reason_detail`, `covered_by`, and `duplicate_of_file_sha` fields make later
+no-new-information decisions auditable. These are substantive research
+judgments, not labels regenerated mechanically from filenames.
+
 `scripts/export_expansion_candidates.py` creates the metadata-only review queue. Raw text used during review must remain in a separate, uncommitted research location.
 
 `scripts/triage_expansion.py` uses representative names and descriptions to
@@ -88,6 +99,13 @@ For each category:
 7. Write new instructions without consulting source wording line by line.
 8. Test routing, behavior, and non-goals with category and cross-category evals.
 
+Comparative evaluation follows `evals/BENCHMARK.md`. Arm composition is fixed
+mechanically before execution: no skills, one rank-selected source, all 130
+retained sources, and all 11 super-skills. Global true negatives supply the
+negative denominator for activation precision. Natural-host results and a
+matched-token-budget sensitivity analysis are both required so lower context
+cost cannot substitute for task quality.
+
 ## Inclusion test
 
 A rule belongs in a super-skill only if it changes a material decision, action, verification step, or failure response. Advice that is merely stylistic, redundant, unverifiable, or too product-version-specific is omitted or moved to a contextual reference.
@@ -104,4 +122,4 @@ Independently authored implementation materials are covered by the repository's 
 
 ## Releases
 
-A release should state its corpus cutoff, ledger row count, synthesis-matrix revision, and eval results. Material changes to routing boundaries or safety rules must be called out explicitly; source-only additions that do not alter behavior still require an auditable ledger update.
+A release should state its corpus cutoff, review-decision and retained-ledger row counts, synthesis-matrix revision, pinned tokenizer/count record, and eval results. Material changes to routing boundaries or safety rules must be called out explicitly; source-only additions that do not alter behavior still require an auditable review-decision update.

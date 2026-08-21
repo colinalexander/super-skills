@@ -118,6 +118,178 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
 
 
+def validate_review_decisions(errors: list[str]) -> None:
+    decisions_path = ROOT / "research" / "review-decisions.csv"
+    ledger_path = ROOT / "research" / "source-ledger.csv"
+    queue_path = ROOT / "research" / "expansion-queue.csv"
+    expected_fields = [
+        "rank",
+        "file_sha",
+        "representative_name",
+        "super_skill",
+        "decision",
+        "decision_code",
+        "reason_detail",
+        "covered_by",
+        "duplicate_of_file_sha",
+    ]
+    if not decisions_path.is_file():
+        fail(errors, "missing research/review-decisions.csv")
+        return
+    with decisions_path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        fields = reader.fieldnames or []
+        decisions = list(reader)
+    with ledger_path.open(newline="", encoding="utf-8") as handle:
+        ledger = list(csv.DictReader(handle))
+    with queue_path.open(newline="", encoding="utf-8") as handle:
+        queue = list(csv.DictReader(handle))
+
+    if fields != expected_fields:
+        fail(errors, f"review decision fields differ: {fields}")
+    if len(decisions) != 194:
+        fail(errors, f"review decisions contain {len(decisions)} rows, expected 194")
+    hashes = [row["file_sha"] for row in decisions]
+    if len(hashes) != len(set(hashes)):
+        fail(errors, "review decisions contain duplicate hashes")
+
+    retained = {row["file_sha"] for row in decisions if row["decision"] == "retained"}
+    rejected = {
+        row["file_sha"] for row in decisions if row["decision"] == "not-retained"
+    }
+    ledger_hashes = {row["file_sha"] for row in ledger}
+    queue_rejected = {
+        row["file_sha"]
+        for row in queue
+        if row["review_status"] == "reviewed-no-new-contribution"
+    }
+    if retained != ledger_hashes:
+        fail(errors, "retained review decisions must match the evidence ledger")
+    if rejected != queue_rejected:
+        fail(errors, "not-retained review decisions must match the reviewed queue")
+
+    all_frame_hashes = ledger_hashes | {row["file_sha"] for row in queue}
+    allowed_codes = {
+        "retained-synthesis-evidence",
+        "not-retained-covered",
+        "not-retained-context-specific",
+        "not-retained-near-duplicate",
+        "not-retained-product-specific",
+        "not-retained-out-of-scope",
+    }
+    for number, row in enumerate(decisions, start=2):
+        if row["decision_code"] not in allowed_codes:
+            fail(errors, f"review decision row {number}: unknown decision code")
+        if not row["reason_detail"].strip():
+            fail(errors, f"review decision row {number}: missing reason_detail")
+        if "::" not in row["covered_by"]:
+            fail(errors, f"review decision row {number}: invalid covered_by")
+            continue
+        path_text, area = row["covered_by"].split("::", 1)
+        target = ROOT / path_text
+        if not target.is_file() or f"| {area} |" not in target.read_text(encoding="utf-8"):
+            fail(errors, f"review decision row {number}: unresolved covered_by")
+        duplicate = row["duplicate_of_file_sha"]
+        if duplicate and (duplicate not in all_frame_hashes or duplicate == row["file_sha"]):
+            fail(errors, f"review decision row {number}: invalid duplicate target")
+        if row["decision_code"] == "not-retained-near-duplicate" and not duplicate:
+            fail(errors, f"review decision row {number}: missing duplicate target")
+
+
+def validate_token_counts(errors: list[str]) -> None:
+    path = ROOT / "research" / "token-counts.csv"
+    expected_fields = [
+        "skill",
+        "tokenizer",
+        "tokenizer_package_version",
+        "core_tokens",
+        "full_tokens",
+        "reference_files",
+    ]
+    if not path.is_file():
+        fail(errors, "missing research/token-counts.csv")
+        return
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        fields = reader.fieldnames or []
+        rows = list(reader)
+    if fields != expected_fields:
+        fail(errors, f"token count fields differ: {fields}")
+    if {row["skill"] for row in rows} != set(SKILLS):
+        fail(errors, "token counts must cover every skill exactly once")
+    if len(rows) != len(SKILLS):
+        fail(errors, f"token counts contain {len(rows)} rows, expected {len(SKILLS)}")
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for number, row in enumerate(rows, start=2):
+        core = int(row["core_tokens"])
+        full = int(row["full_tokens"])
+        references = int(row["reference_files"])
+        if row["tokenizer"] != "cl100k_base" or row["tokenizer_package_version"] != "0.11.0":
+            fail(errors, f"token count row {number}: tokenizer pin differs")
+        if core < 1 or full < core or references < 1:
+            fail(errors, f"token count row {number}: invalid counts")
+        marker = f"| [`{row['skill']}`](skills/{row['skill']}/) |"
+        if marker not in readme or f"| {core:,} | {full:,} |" not in readme:
+            fail(errors, f"README token counts are stale for {row['skill']}")
+
+
+def validate_evaluations(errors: list[str]) -> None:
+    category_dir = ROOT / "evals" / "category-specific"
+    category_cases = sum(
+        path.read_text(encoding="utf-8").count('  - id: "')
+        for path in category_dir.glob("*.yaml")
+    )
+    if category_cases != 60:
+        fail(errors, f"category evaluations contain {category_cases} cases, expected 60")
+
+    negatives_path = ROOT / "evals" / "shared" / "true-negatives.yaml"
+    if not negatives_path.is_file():
+        fail(errors, "missing global true-negative evaluations")
+    else:
+        negatives = negatives_path.read_text(encoding="utf-8")
+        if negatives.count('  - id: "') != 12:
+            fail(errors, "global true-negative set must contain 12 cases")
+        if negatives.count("    should_activate: false") != 12:
+            fail(errors, "every global true negative must disable activation")
+        if negatives.count('    forbidden_activations: "all"') != 12:
+            fail(errors, "every global true negative must forbid all skills")
+
+    benchmark_path = ROOT / "evals" / "BENCHMARK.md"
+    if not benchmark_path.is_file():
+        fail(errors, "missing evals/BENCHMARK.md")
+    else:
+        benchmark = benchmark_path.read_text(encoding="utf-8")
+        for marker in (
+            "**Unskilled:**",
+            "**Best individual source:**",
+            "**Source suite:**",
+            "**Super suite:**",
+            "all 130 retained exact-hash sources",
+            "global true-negative",
+            "matched-budget sensitivity analysis",
+        ):
+            if marker not in benchmark:
+                fail(errors, f"benchmark protocol is missing {marker!r}")
+
+    conflict_path = (
+        ROOT / "research" / "conflict-decisions" / "interface-aesthetic-profiles.md"
+    )
+    if not conflict_path.is_file():
+        fail(errors, "missing worked interface conflict decision")
+    else:
+        conflict = conflict_path.read_text(encoding="utf-8")
+        for marker in (
+            "44ead27ef04ffe79ade0c6df7fd696dbcf7b246b",
+            "f5375b908340e1376ed391232a31c5d82d5babfb",
+            "Existing product authority",
+            "Audience and task",
+            "Why majority vote fails",
+        ):
+            if marker not in conflict:
+                fail(errors, f"worked interface conflict is missing {marker!r}")
+
+
 def validate_expansion_queue(errors: list[str]) -> None:
     ledger = ROOT / "research" / "source-ledger.csv"
     queue = ROOT / "research" / "expansion-queue.csv"
@@ -258,7 +430,7 @@ def validate_licensing(errors: list[str]) -> None:
         ),
         (
             "derives category counts, synthesis matrices, conflict decisions, "
-            "and evaluation specifications"
+            "evaluation specifications, and instruction token counts"
         ),
         (
             "reformats selected metadata into repository-specific CSV and "
@@ -294,6 +466,9 @@ def main() -> int:
     validate_suite(errors)
     validate_ledger(errors)
     validate_expansion_queue(errors)
+    validate_review_decisions(errors)
+    validate_token_counts(errors)
+    validate_evaluations(errors)
     validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
@@ -302,7 +477,7 @@ def main() -> int:
         return 1
     print(
         "Repository validation passed: 11 skills, 130 evidence rows, "
-        "901 expansion records, complete matrices and evals."
+        "194 review decisions, 901 expansion records, and 72 eval cases."
     )
     return 0
 

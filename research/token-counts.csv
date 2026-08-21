@@ -1,0 +1,12 @@
+skill,tokenizer,tokenizer_package_version,core_tokens,full_tokens,reference_files
+agent-tooling-and-orchestration,cl100k_base,0.11.0,454,1602,5
+application-engineering,cl100k_base,0.11.0,463,1613,4
+connected-service-automation,cl100k_base,0.11.0,463,1164,4
+data-science-and-ml,cl100k_base,0.11.0,479,1366,4
+document-productivity,cl100k_base,0.11.0,451,1684,5
+game-development,cl100k_base,0.11.0,456,1699,5
+interface-design,cl100k_base,0.11.0,614,2197,6
+marketing-and-growth,cl100k_base,0.11.0,552,1962,5
+reasoning-modes,cl100k_base,0.11.0,399,1274,4
+software-delivery,cl100k_base,0.11.0,516,1970,6
+systems-and-security,cl100k_base,0.11.0,432,1182,3
