@@ -102,12 +102,15 @@ Anthropic blobs. Eight are versions of the DOCX, PDF, PPTX, or XLSX skills whose
 upstream file-level terms are source-available rather than open-source; see, for
 example, the current [PPTX license](https://github.com/anthropics/skills/blob/main/skills/pptx/LICENSE.txt).
 
-Some observed copies sit in repositories labeled MIT. Repository-level license
-metadata does not relicense a copied file and must not override verified
-file-level origin terms. Because this category is overwhelmingly vendor-derived,
-Super Skills preserves its research records but withholds the installable skill
-and evaluation cases. This is a provenance and product decision, not a legal
-determination.
+The authoritative [source ledger](source-ledger.csv) records the verified
+upstream repository, path, commit, and best available file-level terms for all
+10 exact matches. Two observed copies had previously inherited `MIT` metadata
+from their containing repositories; those records now carry the restrictive
+upstream terms instead. Repository-level metadata does not relicense a copied
+file and must not override verified file-level origin terms. Because this
+category is overwhelmingly vendor-derived, Super Skills preserves its research
+records but withholds the installable skill and evaluation cases. This is a
+provenance and product decision, not a legal determination.
 
 ## Reranking rule
 

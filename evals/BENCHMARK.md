@@ -13,7 +13,7 @@ derived.
 ## Pre-execution publication gate
 
 Before any benchmark execution, the current active public skill files must pass
-`scripts/check_similarity.py` against all 900 eligible expansion sources at the
+`scripts/check_similarity.py` against all 999 eligible baseline-plus-expansion sources at the
 preregistered normalized eight-word-shingle and 20% smaller-document
 containment threshold. Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected

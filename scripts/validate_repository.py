@@ -26,6 +26,45 @@ SKILLS = (
 WITHHELD_CATEGORIES = ("document-productivity",)
 EVIDENCE_CATEGORIES = SKILLS + WITHHELD_CATEGORIES
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
+RETAINED_SOURCE_DESCRIPTION_TOKENS = 5_613
+LEDGER_FIELDS = (
+    "rank",
+    "super_skill",
+    "category",
+    "skill_name",
+    "file_sha",
+    "repositories",
+    "occurrences",
+    "reference_repository",
+    "reference_path",
+    "reference_commit",
+    "reference_url",
+    "license_metadata",
+    "provenance_status",
+    "reuse_policy",
+)
+ANTHROPIC_DOCUMENT_EXACT_HASHES = {
+    "f6a22ddf88fdc7e7b7603f4c9064cc51bd930ad9",
+    "df5000e17ef60ecf400e65bfcd3c58ff88b604c3",
+    "c5c881be9ebaa2bfcdd02f97de2ebd711ab78803",
+    "d3e046a5ae107a6cb23cfb16c219837094ab35d3",
+    "2951e559989765293b6fbf83942378a3c2d0cba6",
+    "22db189c8b17d48f94f11fa0c45343441239ff40",
+    "a5a69839ef4a161131d80b6daef10037a9686f4a",
+    "b93b875fe11cf805bdfbbe5f0e7878a7562896ac",
+    "56ea935b74f371bfeb4c7d3c19d5139df866e73b",
+    "664663895bcd11b88a632301d830b313cbabb845",
+}
+RESTRICTED_DOCUMENT_HASHES = {
+    "f6a22ddf88fdc7e7b7603f4c9064cc51bd930ad9",
+    "df5000e17ef60ecf400e65bfcd3c58ff88b604c3",
+    "c5c881be9ebaa2bfcdd02f97de2ebd711ab78803",
+    "d3e046a5ae107a6cb23cfb16c219837094ab35d3",
+    "2951e559989765293b6fbf83942378a3c2d0cba6",
+    "22db189c8b17d48f94f11fa0c45343441239ff40",
+    "b93b875fe11cf805bdfbbe5f0e7878a7562896ac",
+    "664663895bcd11b88a632301d830b313cbabb845",
+}
 
 
 def fail(errors: list[str], message: str) -> None:
@@ -104,7 +143,11 @@ def validate_skill(skill: str, errors: list[str]) -> None:
 def validate_ledger(errors: list[str]) -> None:
     ledger = ROOT / "research" / "source-ledger.csv"
     with ledger.open(newline="", encoding="utf-8") as handle:
-        rows = list(csv.DictReader(handle))
+        reader = csv.DictReader(handle)
+        fields = tuple(reader.fieldnames or ())
+        rows = list(reader)
+    if fields != LEDGER_FIELDS:
+        fail(errors, f"source ledger fields differ: {fields}")
     if len(rows) != 130:
         fail(errors, f"source ledger contains {len(rows)} rows, expected 130")
     observed = {row["super_skill"] for row in rows}
@@ -125,6 +168,22 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: missing HTTPS reference URL")
         if row["reuse_policy"] != "ideas-only synthesis; no source prose, code, or assets copied":
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
+        if row["file_sha"] in ANTHROPIC_DOCUMENT_EXACT_HASHES:
+            commit = row["reference_commit"]
+            expected_prefix = f"https://github.com/anthropics/skills/blob/{commit}/"
+            if (
+                row["reference_repository"] != "anthropics/skills"
+                or not commit
+                or not row["reference_url"].startswith(expected_prefix)
+                or not row["provenance_status"].startswith("upstream exact Git blob")
+            ):
+                fail(errors, f"source ledger row {number}: stale document lineage")
+        if (
+            row["file_sha"] in RESTRICTED_DOCUMENT_HASHES
+            and row["license_metadata"]
+            != "Anthropic file-level terms (source-available)"
+        ):
+            fail(errors, f"source ledger row {number}: stale document license terms")
 
 
 def validate_review_decisions(errors: list[str]) -> None:
@@ -250,7 +309,11 @@ def validate_token_counts(errors: list[str]) -> None:
             fail(errors, f"README token counts are stale for {row['skill']}")
     if f"total **{description_total:,} tokens**" not in readme:
         fail(errors, "README aggregate description-token count is stale")
-    if "**5,613 tokens**" not in readme or "9.7×" not in readme:
+    expected_ratio = RETAINED_SOURCE_DESCRIPTION_TOKENS / description_total
+    if (
+        f"**{RETAINED_SOURCE_DESCRIPTION_TOKENS:,} tokens**" not in readme
+        or f"{expected_ratio:.1f}×" not in readme
+    ):
         fail(errors, "README retained-source description-token comparison is missing")
 
 
@@ -306,7 +369,7 @@ def validate_evaluations(errors: list[str]) -> None:
             "5,613 tokens",
             "0.5 points",
             "more than 10%",
-            "against all 900 eligible expansion sources",
+            "against all 999 eligible baseline-plus-expansion sources",
             "Before any benchmark execution",
         ):
             if marker not in benchmark:
@@ -348,16 +411,24 @@ def validate_evaluations(errors: list[str]) -> None:
 
 
 def validate_similarity_gate(errors: list[str]) -> None:
+    ledger_path = ROOT / "research" / "source-ledger.csv"
     queue_path = ROOT / "research" / "expansion-queue.csv"
     validation_path = ROOT / "research" / "VALIDATION.md"
+    with ledger_path.open(newline="", encoding="utf-8") as handle:
+        baseline_hashes = [
+            row["file_sha"]
+            for row in csv.DictReader(handle)
+            if int(row["rank"]) <= 100
+        ]
     with queue_path.open(newline="", encoding="utf-8") as handle:
-        source_hashes = sorted(
+        expansion_hashes = [
             row["file_sha"]
             for row in csv.DictReader(handle)
             if row["review_status"] != "excluded-non-skill-placeholder"
-        )
-    if len(source_hashes) != 900 or len(source_hashes) != len(set(source_hashes)):
-        fail(errors, "similarity-gate source population must contain 900 unique hashes")
+        ]
+    source_hashes = sorted(baseline_hashes + expansion_hashes)
+    if len(source_hashes) != 999 or len(source_hashes) != len(set(source_hashes)):
+        fail(errors, "similarity-gate source population must contain 999 unique hashes")
         return
     source_checksum = hashlib.sha256(
         ("\n".join(source_hashes) + "\n").encode("utf-8")
@@ -384,12 +455,12 @@ def validate_similarity_gate(errors: list[str]) -> None:
         f"Public-surface checksum: `{public_checksum}`",
         (
             "Similarity check passed: "
-            f"{len(public_files)} public files compared with 900 external files "
+            f"{len(public_files)} public files compared with 999 external files "
             "at 20% containment."
         ),
     ):
         if marker not in validation:
-            fail(errors, f"full expansion similarity gate is stale or missing {marker!r}")
+            fail(errors, f"full-corpus similarity gate is stale or missing {marker!r}")
 
 
 def validate_expansion_queue(errors: list[str]) -> None:

@@ -4,15 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import ast
 import csv
 import io
-import re
 import sys
 from importlib.metadata import version
 from pathlib import Path
 
 import tiktoken
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,21 +36,16 @@ def frontmatter_description(text: str, source: Path) -> str:
     parts = text.split("---\n", 2)
     if len(parts) != 3:
         raise RuntimeError(f"unterminated YAML front matter in {source}")
-    match = re.search(r"(?m)^description:\s*(.+?)\s*$", parts[1])
-    if not match:
+    try:
+        frontmatter = yaml.safe_load(parts[1])
+    except yaml.YAMLError as error:
+        raise RuntimeError(f"invalid YAML front matter in {source}") from error
+    if not isinstance(frontmatter, dict) or "description" not in frontmatter:
         raise RuntimeError(f"missing front-matter description in {source}")
-    value = match.group(1)
-    if value[:1] in {'"', "'"}:
-        try:
-            parsed = ast.literal_eval(value)
-        except (SyntaxError, ValueError) as error:
-            raise RuntimeError(
-                f"invalid quoted front-matter description in {source}"
-            ) from error
-        if not isinstance(parsed, str):
-            raise RuntimeError(f"description is not text in {source}")
-        return parsed
-    return value
+    description = frontmatter["description"]
+    if not isinstance(description, str):
+        raise RuntimeError(f"description is not text in {source}")
+    return description
 
 
 def render() -> str:

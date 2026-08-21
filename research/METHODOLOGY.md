@@ -150,7 +150,7 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 - Treat the similarity checker as a mandatory release gate against every
   distributable skill file and the full separately held raw corpus. Rerun it
   whenever either population changes; the current gate covers 66 public files
-  against all 900 eligible expansion sources.
+  against all 999 eligible baseline-plus-expansion sources.
 - Treat unknown or missing source-license metadata as a reason for stronger separation, not as permission.
 - Withhold an implementation when its evidence is overwhelmingly derived from
   one restrictively licensed vendor lineage and independent corpus support is

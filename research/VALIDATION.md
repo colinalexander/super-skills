@@ -9,25 +9,24 @@ Date: 2026-08-20
 - Token counts: generated for every active skill with `cl100k_base` under pinned `tiktoken==0.11.0`; README description/core/full figures match the generated record. Description counts measure the always-loaded front-matter value and total 580 tokens across the 10-skill suite. Applying the same tokenizer to the 119 active evidence descriptions reconstructed transiently from GitSkills produced 5,613 tokens; no source description text was committed.
 - Source text reconstruction: 99/99 baseline hashes and all 900 eligible expansion hashes retrieved from GitSkills into temporary locations outside this repository.
 - Public source-text inclusion: none; only metadata, hashes, links, aggregate decisions, and newly written instructions are retained.
-- Baseline similarity check: the current 66 active skill, reference, and routing-metadata files pass against all 99 baseline sources. No pair reached the 20% smaller-document containment threshold using normalized eight-word shingles.
 
-### Full expansion similarity gate
+### Full-corpus similarity gate
 
 - Status: **passed before benchmark execution**.
-- Source population: all 900 eligible expansion source files, reconstructed by exact Git blob hash from GitSkills; the rank-24 non-skill placeholder is excluded.
-- Source-population checksum: `83204e8fe3947f4d8a0d01d3cf8d299c1c43efda50c6cc21af13af87ae3d0b00`.
+- Source population: all 999 eligible baseline-plus-expansion source files, reconstructed by exact Git blob hash from GitSkills; the rank-24 non-skill placeholder is excluded.
+- Source-population checksum: `26f462bb8d84d98c38ac86f8e3db572a20ce075110782c56bd3f13bca2100eb0`.
 - Public surface: all 66 files under the 10 active skill directories.
 - Public-surface checksum: `de1b0eef5ee49404dccb7d3640e2ea652a663faa02bc07613707a40719cbeeb6`.
-- Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-900-source-corpus`.
+- Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus`.
 - Parameters: normalized eight-word shingles; 20% smaller-document containment threshold.
-- Result: `Similarity check passed: 66 public files compared with 900 external files at 20% containment.`
+- Result: `Similarity check passed: 66 public files compared with 999 external files at 20% containment.`
 
 The source-population checksum is SHA-256 over the sorted, newline-terminated
-list of 900 content hashes. Because Git blob identifiers address exact source
+list of 999 content hashes. Because Git blob identifiers address exact source
 bytes, it fixes the external comparison population without storing its prose.
 The public-surface checksum is SHA-256 over each sorted repository-relative path
 and its file SHA-256 digest. Repository validation recomputes both checksums; any
-active skill edit invalidates this gate until the 900-source comparison is rerun
+active skill edit invalidates this gate until the 999-source comparison is rerun
 and the recorded public checksum is deliberately updated.
 
 This automated comparison detects suspicious phrase-level overlap; it does not make a legal determination or replace human review.
