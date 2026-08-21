@@ -22,6 +22,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_QUEUE = ROOT / "research" / "expansion-queue.csv"
+DEFAULT_LEDGER = ROOT / "research" / "source-ledger.csv"
 
 
 @dataclass(frozen=True)
@@ -438,7 +439,11 @@ class UnionFind:
             self.parent[max(left_root, right_root)] = min(left_root, right_root)
 
 
-def lineage_notes(records: list[dict[str, object]], threshold: float) -> dict[int, str]:
+def lineage_notes(
+    records: list[dict[str, object]],
+    threshold: float,
+    annotated_ranks: set[int],
+) -> tuple[dict[int, str], int, int]:
     ranks = [int(record["overall_rank"]) for record in records]
     contents = [normalized(str(record["content"])) for record in records]
     vectorizer = TfidfVectorizer(
@@ -451,7 +456,7 @@ def lineage_notes(records: list[dict[str, object]], threshold: float) -> dict[in
     matrix = vectorizer.fit_transform(contents)
     similarities = cosine_similarity(matrix, dense_output=False).tocoo()
     union_find = UnionFind(ranks)
-    strongest: dict[tuple[int, int], float] = {}
+    adjacency: dict[int, list[tuple[int, float]]] = defaultdict(list)
     for left, right, similarity in zip(
         similarities.row, similarities.col, similarities.data, strict=True
     ):
@@ -459,31 +464,37 @@ def lineage_notes(records: list[dict[str, object]], threshold: float) -> dict[in
             continue
         left_rank, right_rank = ranks[left], ranks[right]
         union_find.union(left_rank, right_rank)
-        strongest[(left_rank, right_rank)] = float(similarity)
+        score = float(similarity)
+        adjacency[left_rank].append((right_rank, score))
+        adjacency[right_rank].append((left_rank, score))
 
     groups: dict[int, list[int]] = defaultdict(list)
     for rank in ranks:
         groups[union_find.find(rank)].append(rank)
 
     notes: dict[int, str] = {}
+    group_count = 0
+    baseline_anchored_groups = 0
     for members in groups.values():
         if len(members) < 2:
             continue
+        group_count += 1
         root = min(members)
+        baseline_anchored_groups += int(root not in annotated_ranks)
         for rank in sorted(members):
+            if rank not in annotated_ranks:
+                continue
             if rank == root:
                 notes[rank] = f"near-duplicate lineage root; {len(members)} top-1000 variants"
                 continue
-            similarity = max(
-                (
-                    value
-                    for pair, value in strongest.items()
-                    if rank in pair and root in pair
-                ),
-                default=threshold,
+            neighbor, similarity = max(
+                adjacency[rank],
+                key=lambda item: (item[1], -item[0]),
             )
-            notes[rank] = f"near-duplicate of rank {root}; cosine >= {similarity:.3f}"
-    return notes
+            notes[rank] = (
+                f"near-duplicate of rank {neighbor}; cosine >= {similarity:.3f}"
+            )
+    return notes, group_count, baseline_anchored_groups
 
 
 def load_corpus(path: Path) -> list[dict[str, object]]:
@@ -509,16 +520,60 @@ def main() -> int:
     args = parser.parse_args()
 
     records = load_corpus(args.corpus)
-    if len(records) != 900:
-        raise SystemExit(f"expected 900 expansion records, found {len(records)}")
-
-    by_hash = {str(record["file_sha"]): record for record in records}
-    notes = lineage_notes(records, args.lineage_threshold)
-
     with args.queue.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         fields = reader.fieldnames or []
         queue_rows = list(reader)
+    with DEFAULT_LEDGER.open(newline="", encoding="utf-8") as handle:
+        baseline_rows = [
+            row for row in csv.DictReader(handle) if int(row["rank"]) <= 100
+        ]
+
+    eligible_queue_rows = [
+        row
+        for row in queue_rows
+        if row["review_status"] != "excluded-non-skill-placeholder"
+    ]
+    expected_by_hash = {
+        row["file_sha"]: int(row["rank"]) for row in baseline_rows
+    }
+    expected_by_hash.update(
+        {row["file_sha"]: int(row["overall_rank"]) for row in eligible_queue_rows}
+    )
+    if len(records) != len(expected_by_hash):
+        raise SystemExit(
+            f"expected {len(expected_by_hash)} baseline-plus-expansion records, "
+            f"found {len(records)}"
+        )
+
+    by_hash = {str(record["file_sha"]): record for record in records}
+    if len(by_hash) != len(records):
+        raise SystemExit("corpus contains duplicate content hashes")
+    missing_hashes = sorted(set(expected_by_hash) - set(by_hash))
+    unexpected_hashes = sorted(set(by_hash) - set(expected_by_hash))
+    if missing_hashes or unexpected_hashes:
+        raise SystemExit(
+            "corpus hash set differs from the expected eligible top-1,000 set: "
+            f"{len(missing_hashes)} missing, {len(unexpected_hashes)} unexpected"
+        )
+    rank_mismatches = sorted(
+        (file_sha, expected_rank, int(by_hash[file_sha]["overall_rank"]))
+        for file_sha, expected_rank in expected_by_hash.items()
+        if int(by_hash[file_sha]["overall_rank"]) != expected_rank
+    )
+    if rank_mismatches:
+        preview = ", ".join(
+            f"{file_sha}: expected {expected}, got {actual}"
+            for file_sha, expected, actual in rank_mismatches[:5]
+        )
+        raise SystemExit(
+            f"{len(rank_mismatches)} corpus ranks differ from ledger/queue ({preview})"
+        )
+
+    annotated_ranks = {int(row["overall_rank"]) for row in eligible_queue_rows}
+    notes, lineage_groups, baseline_anchored_groups = lineage_notes(
+        records, args.lineage_threshold, annotated_ranks
+    )
 
     status_counts: Counter[str] = Counter()
     category_counts: Counter[str] = Counter()
@@ -529,10 +584,16 @@ def main() -> int:
         record = by_hash.get(row["file_sha"])
         if record is None:
             raise SystemExit(f"queue hash missing from corpus: {row['file_sha']}")
+        rank = int(row["overall_rank"])
+        corpus_rank = int(record["overall_rank"])
+        if corpus_rank != rank:
+            raise SystemExit(
+                f"queue rank {rank} for {row['file_sha']} differs from corpus rank "
+                f"{corpus_rank}"
+            )
         category, status, classification_note = classify(
             str(record["name"] or ""), str(record["description"] or "")
         )
-        rank = int(row["overall_rank"])
         decision = REVIEW_DECISIONS.get(rank)
         if decision is not None:
             expected_hash = REVIEW_DECISION_HASHES[rank]
@@ -562,6 +623,10 @@ def main() -> int:
     for label, count in sorted(category_counts.items(), key=lambda item: (-item[1], item[0])):
         print(f"  {label}: {count}")
     print(f"Near-duplicate lineage members: {lineage_count}")
+    print(
+        f"Possible lineages: {lineage_groups} "
+        f"({baseline_anchored_groups} anchored by a baseline hash)"
+    )
 
     if args.write:
         with args.queue.open("w", newline="", encoding="utf-8") as handle:

@@ -33,7 +33,7 @@ def main() -> int:
     parser.add_argument(
         "--include-baseline",
         action="store_true",
-        help="Include hashes already present in research/source-ledger.csv",
+        help="Include the initial top-100 baseline hashes",
     )
     args = parser.parse_args()
     if args.limit < 100:
@@ -77,8 +77,12 @@ def main() -> int:
     with (ROOT / "research" / "source-ledger.csv").open(
         newline="", encoding="utf-8"
     ) as handle:
-        baseline_rows = list(csv.DictReader(handle))
-    baseline_ranks = {row["file_sha"]: int(row["rank"]) for row in baseline_rows}
+        ledger_rows = list(csv.DictReader(handle))
+    baseline_ranks = {
+        row["file_sha"]: int(row["rank"])
+        for row in ledger_rows
+        if int(row["rank"]) <= 100
+    }
     ranked_hashes = {file_sha: rank for rank, file_sha, *_ in rows}
 
     missing_baseline = sorted(set(baseline_ranks) - set(ranked_hashes))

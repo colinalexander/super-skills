@@ -41,9 +41,12 @@ This is an evidence-saturation rule, not a fixed-source quota. Record exclusions
 
 `scripts/triage_expansion.py` uses representative names and descriptions to
 propose categories, then uses content n-gram similarity to flag possible
-lineages. It commits only derived labels and similarity notes. Ambiguous
-records remain in manual review. A repeated cluster may become a new category
-only after substantive review establishes a distinct decision system and enough
+lineages across both the eligible baseline and expansion records. It annotates
+only expansion rows and commits only derived labels and similarity notes. Every
+direct-similarity note names an actually observed edge; transitive component
+membership is never reported as a fabricated pairwise score. Ambiguous records
+remain in manual review. A repeated cluster may become a new category only
+after substantive review establishes a distinct decision system and enough
 evidence to synthesize and evaluate it.
 
 ## Synthesis procedure

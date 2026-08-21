@@ -49,10 +49,13 @@ those categories; 23 variants added no distinct proposition. One
 than being treated as marketing. The public suite therefore contains 11
 categories.
 
-Content-similarity triage also flagged 205 records across 91 possible
-near-duplicate lineages. This is deliberately a review aid rather than a claim
-of common authorship: similar skill structures, templates, or independently
-convergent instructions can produce high similarity.
+Content-similarity triage also flagged 225 expansion records across 121 possible
+near-duplicate lineages after comparison with the eligible baseline content.
+Forty-one lineages are anchored by a baseline hash; the remaining 80 have an
+expansion record as their earliest ranked member. This is deliberately a review
+aid rather than a claim of common authorship: similar skill structures,
+templates, or independently convergent instructions can produce high
+similarity.
 
 Run the triage against a transient reconstructed corpus with:
 
@@ -63,7 +66,9 @@ python3 scripts/triage_expansion.py \
 ```
 
 Descriptions and source text are read only from the external corpus and are
-never written to the repository.
+never written to the repository. The transient corpus contains the 99 eligible
+baseline hashes plus the 900 eligible expansion hashes; rank 24 remains excluded
+as a non-skill placeholder. Only expansion rows receive committed annotations.
 
 The promoted evidence consists of three application-engineering, one
 software-delivery, three agent-tooling, 14 marketing-and-growth, five
@@ -82,11 +87,15 @@ never change those skills.
 The export must satisfy all of the following before the queue is accepted:
 
 - every baseline hash appears at its recorded rank;
+- promoted expansion hashes remain in the regenerated queue rather than being mistaken for baseline exclusions;
 - the baseline and queue contain 1,000 unique hashes;
 - combined ranks cover 1 through 1,000 exactly;
 - repository and occurrence counts are positive, with occurrences greater than or equal to repository count;
 - the known rank-24 placeholder remains explicitly excluded; and
 - no source-text or description column is present.
+
+The triage command additionally rejects missing, unexpected, duplicated, or
+rank-mismatched corpus hashes before applying any lineage annotation.
 
 An initial implementation incorrectly filtered to `content_fetched = 1` before aggregation. GitSkills uses that field to identify enriched rows, so the filter discarded most copies and produced a false hash-ordered ranking. The exporter now aggregates all non-null content hashes and fails if any of the 99 baseline ranks changes.
 

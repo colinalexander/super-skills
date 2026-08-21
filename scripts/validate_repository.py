@@ -214,7 +214,7 @@ def validate_expansion_queue(errors: list[str]) -> None:
         if "lineage root" in note:
             lineage_roots += 1
 
-    if (lineage_members, lineage_roots) != (205, 91):
+    if (lineage_members, lineage_roots) != (225, 80):
         fail(
             errors,
             "expansion lineage counts differ: "

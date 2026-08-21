@@ -30,10 +30,17 @@ The metadata-only top-1,000 queue has been generated, triaged, and committed:
 - All 99 baseline hashes reproduce their recorded ranks exactly.
 - The expansion records contain 900 eligible candidates and the rank-24 non-skill placeholder excluded from the initial baseline.
 - Triage yields 31 retained sources, 64 reviewed sources with no new contribution, 408 metadata-triaged records, and 397 manual-review records.
-- Content similarity flags 205 records across 91 possible near-duplicate lineages; these flags are not authorship claims.
+- Content similarity flags 225 expansion records across 121 possible near-duplicate lineages after comparison with eligible baseline content; 41 lineages are anchored by a baseline hash. These flags are not authorship claims.
 - Hashes are unique, ranks cover 1 through 1,000 exactly, and repository/occurrence counts satisfy the expected grain.
 - The export query counts every artifact occurrence. `content_fetched` is an enrichment flag and is deliberately not used as a pre-aggregation filter.
 - No third-party descriptions or source text are retained in the queue.
+
+Review-fix reproduction checks also passed:
+
+- a fresh default exporter run wrote 901 rows and matched every committed rank, hash, count, representative name, and sample location;
+- all 999 eligible baseline-plus-expansion corpus records passed exact hash/rank reconciliation;
+- an intentionally stale corpus rank was rejected before annotation; and
+- all 145 reported pairwise lineage notes were confirmed as actual similarity edges at or above the configured threshold.
 
 The 31 retained source reviews changed synthesis matrices, skills, or evals and
 established three additional categories. Manual classification, remaining
