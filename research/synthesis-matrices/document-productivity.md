@@ -1,5 +1,7 @@
 # Document productivity synthesis matrix
 
+> **Withheld from the active suite.** Ten of the 11 retained hashes exactly match historical Anthropic blobs, including eight source-available document-production skills. The category boundary and research decisions remain auditable here, but no installable skill or active benchmark cases are distributed. Reinstatement requires a materially independent, license-compatible evidence base; author judgment alone will not be presented as corpus synthesis.
+
 Baseline: 11 ranked hashes, 7 distinct names.
 
 Evidence labels: `pdf`, `pptx`, `xlsx`, `docx`, `doc-coauthoring`, `internal-comms`, `obsidian-markdown`.

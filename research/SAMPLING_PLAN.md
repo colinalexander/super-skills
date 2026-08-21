@@ -45,8 +45,10 @@ occurrence count, provisional category, triage status, similarity note, owner,
 or repository identity—except where identity is inseparable from the skill
 instructions—until the substantive decision is locked.
 
-Reviewers may use the existing 11 category definitions because the primary
-question is whether a source changes the current synthesis. After the decision
+Reviewers may use the 10 active category definitions plus the deliberately
+withheld document-productivity boundary because the primary question is whether
+a source changes the current synthesis or supplies independent evidence for the
+known gap. After the decision
 is recorded, provenance and lineage data are unmasked for deduplication and
 attribution checks.
 
@@ -112,7 +114,12 @@ new ordering. The rerank will:
 The primary family ranking will use unique-repository coverage, with
 unique-owner coverage as a required sensitivity view rather than silently
 combining the two measures. Occurrences remain descriptive and do not determine
-the primary order.
+the primary order. **Lineage family is the ranking unit.** Repeated collection
+signatures are correlated with lineage propagation, so they will not be applied
+as an additional multiplicative discount. Instead, each family will report the
+share of its coverage arising from repeated multi-hash signatures and from
+repositories containing at least 10 frame hashes as separate concentration
+sensitivity views.
 
 ## No-new-information checkpoints
 
@@ -124,5 +131,6 @@ sequences do not qualify.
 
 A review checkpoint is not a population-saturation claim. Any stronger claim
 must jointly report the random-probe estimate, family-reranked coverage,
-owner-level sensitivity, boundary behavior beyond rank 1,000, and unresolved
-manual-review records. The current 11 categories remain a revisable taxonomy.
+owner- and collection-level sensitivity, boundary behavior beyond rank 1,000,
+and unresolved manual-review records. The 10 active categories and one withheld
+boundary remain a revisable taxonomy.

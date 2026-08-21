@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import io
+import re
 import sys
 from importlib.metadata import version
 from pathlib import Path
@@ -21,10 +23,35 @@ FIELDS = (
     "skill",
     "tokenizer",
     "tokenizer_package_version",
+    "description_tokens",
     "core_tokens",
     "full_tokens",
     "reference_files",
 )
+
+
+def frontmatter_description(text: str, source: Path) -> str:
+    """Return the semantic description value from a skill's YAML front matter."""
+    if not text.startswith("---\n"):
+        raise RuntimeError(f"missing YAML front matter in {source}")
+    parts = text.split("---\n", 2)
+    if len(parts) != 3:
+        raise RuntimeError(f"unterminated YAML front matter in {source}")
+    match = re.search(r"(?m)^description:\s*(.+?)\s*$", parts[1])
+    if not match:
+        raise RuntimeError(f"missing front-matter description in {source}")
+    value = match.group(1)
+    if value[:1] in {'"', "'"}:
+        try:
+            parsed = ast.literal_eval(value)
+        except (SyntaxError, ValueError) as error:
+            raise RuntimeError(
+                f"invalid quoted front-matter description in {source}"
+            ) from error
+        if not isinstance(parsed, str):
+            raise RuntimeError(f"description is not text in {source}")
+        return parsed
+    return value
 
 
 def render() -> str:
@@ -44,7 +71,11 @@ def render() -> str:
             continue
         entry = directory / "SKILL.md"
         references = sorted((directory / "references").glob("*.md"))
-        core_tokens = len(encoding.encode(entry.read_text(encoding="utf-8")))
+        entry_text = entry.read_text(encoding="utf-8")
+        description_tokens = len(
+            encoding.encode(frontmatter_description(entry_text, entry))
+        )
+        core_tokens = len(encoding.encode(entry_text))
         reference_tokens = sum(
             len(encoding.encode(path.read_text(encoding="utf-8")))
             for path in references
@@ -54,6 +85,7 @@ def render() -> str:
                 "skill": directory.name,
                 "tokenizer": ENCODING,
                 "tokenizer_package_version": installed,
+                "description_tokens": description_tokens,
                 "core_tokens": core_tokens,
                 "full_tokens": core_tokens + reference_tokens,
                 "reference_files": len(references),

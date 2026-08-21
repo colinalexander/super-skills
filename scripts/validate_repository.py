@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -15,7 +16,6 @@ SKILLS = (
     "software-delivery",
     "agent-tooling-and-orchestration",
     "application-engineering",
-    "document-productivity",
     "game-development",
     "reasoning-modes",
     "systems-and-security",
@@ -23,6 +23,8 @@ SKILLS = (
     "connected-service-automation",
     "data-science-and-ml",
 )
+WITHHELD_CATEGORIES = ("document-productivity",)
+EVIDENCE_CATEGORIES = SKILLS + WITHHELD_CATEGORIES
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
 
 
@@ -106,8 +108,15 @@ def validate_ledger(errors: list[str]) -> None:
     if len(rows) != 130:
         fail(errors, f"source ledger contains {len(rows)} rows, expected 130")
     observed = {row["super_skill"] for row in rows}
-    if observed != set(SKILLS):
-        fail(errors, f"source ledger skill set differs: {sorted(observed)}")
+    if observed != set(EVIDENCE_CATEGORIES):
+        fail(errors, f"source ledger category set differs: {sorted(observed)}")
+    active_rows = [row for row in rows if row["super_skill"] in SKILLS]
+    withheld_rows = [row for row in rows if row["super_skill"] in WITHHELD_CATEGORIES]
+    if len(active_rows) != 119 or len(withheld_rows) != 11:
+        fail(
+            errors,
+            "source ledger must contain 119 active and 11 withheld evidence rows",
+        )
     hashes = [row["file_sha"] for row in rows]
     if len(hashes) != len(set(hashes)):
         fail(errors, "source ledger contains duplicate content hashes")
@@ -202,6 +211,7 @@ def validate_token_counts(errors: list[str]) -> None:
         "skill",
         "tokenizer",
         "tokenizer_package_version",
+        "description_tokens",
         "core_tokens",
         "full_tokens",
         "reference_files",
@@ -221,39 +231,61 @@ def validate_token_counts(errors: list[str]) -> None:
         fail(errors, f"token counts contain {len(rows)} rows, expected {len(SKILLS)}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    description_total = 0
     for number, row in enumerate(rows, start=2):
+        description = int(row["description_tokens"])
+        description_total += description
         core = int(row["core_tokens"])
         full = int(row["full_tokens"])
         references = int(row["reference_files"])
         if row["tokenizer"] != "cl100k_base" or row["tokenizer_package_version"] != "0.11.0":
             fail(errors, f"token count row {number}: tokenizer pin differs")
-        if core < 1 or full < core or references < 1:
+        if description < 1 or core < description or full < core or references < 1:
             fail(errors, f"token count row {number}: invalid counts")
         marker = f"| [`{row['skill']}`](skills/{row['skill']}/) |"
-        if marker not in readme or f"| {core:,} | {full:,} |" not in readme:
+        if (
+            marker not in readme
+            or f"| {description:,} | {core:,} | {full:,} |" not in readme
+        ):
             fail(errors, f"README token counts are stale for {row['skill']}")
+    if f"total **{description_total:,} tokens**" not in readme:
+        fail(errors, "README aggregate description-token count is stale")
+    if "**5,613 tokens**" not in readme or "9.7×" not in readme:
+        fail(errors, "README retained-source description-token comparison is missing")
 
 
 def validate_evaluations(errors: list[str]) -> None:
     category_dir = ROOT / "evals" / "category-specific"
+    evaluation_files = {path.stem for path in category_dir.glob("*.yaml")}
+    if evaluation_files != set(SKILLS):
+        fail(errors, f"category evaluation set differs: {sorted(evaluation_files)}")
     category_cases = sum(
         path.read_text(encoding="utf-8").count('  - id: "')
         for path in category_dir.glob("*.yaml")
     )
-    if category_cases != 60:
-        fail(errors, f"category evaluations contain {category_cases} cases, expected 60")
+    if category_cases != 56:
+        fail(errors, f"category evaluations contain {category_cases} cases, expected 56")
 
     negatives_path = ROOT / "evals" / "shared" / "true-negatives.yaml"
     if not negatives_path.is_file():
         fail(errors, "missing global true-negative evaluations")
     else:
         negatives = negatives_path.read_text(encoding="utf-8")
-        if negatives.count('  - id: "') != 12:
-            fail(errors, "global true-negative set must contain 12 cases")
-        if negatives.count("    should_activate: false") != 12:
+        if negatives.count('  - id: "') != 36:
+            fail(errors, "global true-negative set must contain 36 cases")
+        if negatives.count("    should_activate: false") != 36:
             fail(errors, "every global true negative must disable activation")
-        if negatives.count('    forbidden_activations: "all"') != 12:
+        if negatives.count('    forbidden_activations: "all"') != 36:
             fail(errors, "every global true negative must forbid all skills")
+        for withheld_id in ('id: "pdf-acronym"', 'id: "spreadsheet-definition"'):
+            if withheld_id in negatives:
+                fail(errors, f"global true negatives retain withheld-category case {withheld_id!r}")
+        for active_near_miss in (
+            'id: "financial-security-definition"',
+            'id: "athletic-training-definition"',
+        ):
+            if active_near_miss not in negatives:
+                fail(errors, f"global true negatives are missing {active_near_miss!r}")
 
     benchmark_path = ROOT / "evals" / "BENCHMARK.md"
     if not benchmark_path.is_file():
@@ -263,11 +295,19 @@ def validate_evaluations(errors: list[str]) -> None:
         for marker in (
             "**Unskilled:**",
             "**Best individual source:**",
-            "**Source suite:**",
+            "**Source-suite ceiling:**",
             "**Super suite:**",
-            "all 130 retained exact-hash sources",
+            "all 119 active-category retained exact-hash sources",
+            "upper bound on narrow-skill overhead",
             "global true-negative",
             "matched-budget sensitivity analysis",
+            "two independent human",
+            "Falsification criteria",
+            "5,613 tokens",
+            "0.5 points",
+            "more than 10%",
+            "against all 900 eligible expansion sources",
+            "Before any benchmark execution",
         ):
             if marker not in benchmark:
                 fail(errors, f"benchmark protocol is missing {marker!r}")
@@ -285,9 +325,71 @@ def validate_evaluations(errors: list[str]) -> None:
             "Existing product authority",
             "Audience and task",
             "Why majority vote fails",
+            "front-matter name",
         ):
             if marker not in conflict:
                 fail(errors, f"worked interface conflict is missing {marker!r}")
+
+    audit_path = ROOT / "research" / "CORPUS_AUDIT.md"
+    if not audit_path.is_file():
+        fail(errors, "missing research/CORPUS_AUDIT.md")
+    else:
+        audit = audit_path.read_text(encoding="utf-8")
+        for marker in (
+            "34.04%",
+            "41.88%",
+            "31,405",
+            "11 were frozen",
+            "Lineage family is the ranking unit",
+            "withholds the installable skill",
+        ):
+            if marker not in audit:
+                fail(errors, f"corpus audit is missing {marker!r}")
+
+
+def validate_similarity_gate(errors: list[str]) -> None:
+    queue_path = ROOT / "research" / "expansion-queue.csv"
+    validation_path = ROOT / "research" / "VALIDATION.md"
+    with queue_path.open(newline="", encoding="utf-8") as handle:
+        source_hashes = sorted(
+            row["file_sha"]
+            for row in csv.DictReader(handle)
+            if row["review_status"] != "excluded-non-skill-placeholder"
+        )
+    if len(source_hashes) != 900 or len(source_hashes) != len(set(source_hashes)):
+        fail(errors, "similarity-gate source population must contain 900 unique hashes")
+        return
+    source_checksum = hashlib.sha256(
+        ("\n".join(source_hashes) + "\n").encode("utf-8")
+    ).hexdigest()
+
+    public_files = sorted(
+        path
+        for path in (ROOT / "skills").rglob("*")
+        if path.is_file() and not path.name.startswith(".")
+    )
+    public_digest = hashlib.sha256()
+    for path in public_files:
+        public_digest.update(str(path.relative_to(ROOT)).encode("utf-8"))
+        public_digest.update(b"\0")
+        public_digest.update(hashlib.sha256(path.read_bytes()).digest())
+        public_digest.update(b"\n")
+    public_checksum = public_digest.hexdigest()
+
+    validation = validation_path.read_text(encoding="utf-8")
+    for marker in (
+        "Status: **passed before benchmark execution**",
+        f"Source-population checksum: `{source_checksum}`",
+        f"Public surface: all {len(public_files)} files",
+        f"Public-surface checksum: `{public_checksum}`",
+        (
+            "Similarity check passed: "
+            f"{len(public_files)} public files compared with 900 external files "
+            "at 20% containment."
+        ),
+    ):
+        if marker not in validation:
+            fail(errors, f"full expansion similarity gate is stale or missing {marker!r}")
 
 
 def validate_expansion_queue(errors: list[str]) -> None:
@@ -469,6 +571,7 @@ def main() -> int:
     validate_review_decisions(errors)
     validate_token_counts(errors)
     validate_evaluations(errors)
+    validate_similarity_gate(errors)
     validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
@@ -476,8 +579,9 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
     print(
-        "Repository validation passed: 11 skills, 130 evidence rows, "
-        "194 review decisions, 901 expansion records, and 72 eval cases."
+        "Repository validation passed: 10 active skills, 119 active and 11 "
+        "withheld evidence rows, 194 review decisions, 901 expansion records, "
+        "and 92 eval cases."
     )
     return 0
 

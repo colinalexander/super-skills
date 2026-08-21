@@ -14,6 +14,15 @@ every substantive outcome, including decisions not to retain a source, the
 specific synthesis rule that already covers it, and direct near-duplicate links
 where available. “Observed copy” must not be read as an authorship claim.
 
+The [occurrence, lineage, and concentration audit](CORPUS_AUDIT.md) found that
+34.04% of baseline repository–hash coverage belongs to repeated multi-skill
+collection signatures and 41.88% occurs in repositories containing at least 10
+baseline hashes. Occurrence rank therefore measures bundle inclusion as well as
+individual adoption. Historical-blob analysis also found 21 exact and two near
+Anthropic matches; 11 exact matches were frozen older upstream versions at the
+collection cutoff. These findings affect interpretation and reranking, not the
+byte-level occurrence counts themselves.
+
 ## Evidence expansion
 
 Popularity is useful for discovering common conventions but produces visibility, age, ecosystem, and copying biases. Expansion therefore uses the following sequence:
@@ -28,7 +37,12 @@ Thirty-one expansion hashes have passed substantive review and been promoted to
 the source ledger. Sixty-four additional sources were reviewed without adding a
 material proposition. The review established `marketing-and-growth`,
 `connected-service-automation`, and `data-science-and-ml` as distinct decision
-systems, bringing the suite to 11 categories. Application engineering and
+systems, bringing the observed taxonomy to 11 categories. The
+`document-productivity` category was subsequently withheld because 10 of its 11
+evidence hashes exactly match historical Anthropic blobs, including eight from
+the source-available document set. The active suite therefore contains 10
+skills supported by 119 retained hashes; all 130 research decisions remain in
+the provenance records. Application engineering and
 software delivery have each reached a recorded 20-source no-new-information
 checkpoint under the targeted ordering. Those checkpoints describe review
 history; they are not estimates of population saturation.
@@ -100,11 +114,16 @@ For each category:
 8. Test routing, behavior, and non-goals with category and cross-category evals.
 
 Comparative evaluation follows `evals/BENCHMARK.md`. Arm composition is fixed
-mechanically before execution: no skills, one rank-selected source, all 130
-retained sources, and all 11 super-skills. Global true negatives supply the
-negative denominator for activation precision. Natural-host results and a
-matched-token-budget sensitivity analysis are both required so lower context
-cost cannot substitute for task quality.
+mechanically before execution: no skills, one rank-selected source, all 119
+retained sources supporting active categories, and all 10 active super-skills.
+The exhaustive source arm is an upper
+bound on overhead and conflict exposure, not a typical deployment estimate.
+Thirty-six global true negatives supply the negative denominator for activation
+precision. Natural-host results and a matched-token-budget sensitivity analysis
+are both required so lower context cost cannot substitute for task quality.
+Two blinded independent human graders produce the primary quality outcome, and
+predeclared non-inferiority, false-activation, and critical-side-effect gates
+define results that falsify the consolidation hypothesis.
 
 ## Inclusion test
 
@@ -115,8 +134,13 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 - Do not store raw third-party skill text in this repository.
 - Do not reuse source scripts, examples, templates, names, or assets merely because they are popular.
 - Keep source URLs, hashes, and license metadata in the ledger.
+- Prefer verified file-level origin terms over repository-level metadata on an
+  observed copy; the latter is not evidence of relicensing.
 - Use the optional similarity checker against a separately held raw corpus before publication.
 - Treat unknown or missing source-license metadata as a reason for stronger separation, not as permission.
+- Withhold an implementation when its evidence is overwhelmingly derived from
+  one restrictively licensed vendor lineage and independent corpus support is
+  insufficient.
 
 Independently authored implementation materials are covered by the repository's Apache-2.0 license. Research materials in this directory are licensed under CC BY 4.0 and retain the GitSkills attribution and modification notice in `ATTRIBUTION.md`. Neither license applies to third-party source text, which is not distributed here.
 

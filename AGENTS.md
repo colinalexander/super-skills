@@ -1,6 +1,6 @@
 # Repository instructions
 
-This repository contains 11 original, category-level agent skills synthesized from public evidence.
+This repository contains 10 active, original, category-level agent skills synthesized from public evidence. A separately documented category is deliberately withheld.
 
 ## Non-negotiable rules
 
@@ -11,7 +11,7 @@ This repository contains 11 original, category-level agent skills synthesized fr
 - Keep external raw material outside the repository. Use it only as transient research input.
 - Record a source before using it as synthesis evidence.
 - Add a synthesis-matrix entry for every retained principle, material conflict, or deliberate omission.
-- Preserve the 11 public skill boundaries in `research/SUITE_MANIFEST.md`.
+- Preserve the 10 public skill boundaries and the withheld-category boundary in `research/SUITE_MANIFEST.md`.
 - Prefer general decision rules over product-version-specific instructions. Verify current framework details from primary documentation when applying a skill.
 - Do not introduce references to unrelated personal projects.
 

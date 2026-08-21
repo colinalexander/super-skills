@@ -47,3 +47,99 @@ cases:
     prompt: "Define the word 'brainstorm' without brainstorming anything."
     should_activate: false
     forbidden_activations: "all"
+  - id: "responsive-biology"
+    prompt: "In biology, what does it mean for an organism to be responsive to stimuli?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "bauhaus-history"
+    prompt: "In what year was the Bauhaus school founded?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "botanical-branch"
+    prompt: "What is the difference between a branch and a twig in botany?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "computer-bug-etymology"
+    prompt: "Where did the computing term 'bug' come from?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "human-skill-definition"
+    prompt: "What does 'skill acquisition' mean in learning psychology?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "orchestration-music"
+    prompt: "What does orchestration mean in classical music?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "api-definition"
+    prompt: "Expand the acronym API and define it in one sentence."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "react-chemistry"
+    prompt: "Why do sodium and water react? Give a short, nonprocedural explanation."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "financial-security-definition"
+    prompt: "In financial markets, what is a security?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "athletic-training-definition"
+    prompt: "What does interval training mean in athletics?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "board-game-recommendation"
+    prompt: "Name one classic board game suitable for four adults."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "virtual-reality-history"
+    prompt: "Who coined the term 'virtual reality'?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "zoom-photography"
+    prompt: "What is optical zoom in photography?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "grilling-definition"
+    prompt: "What does grilling mean as a cooking method?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "powershell-definition"
+    prompt: "What is PowerShell? Answer in one sentence without giving commands."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "linux-mascot"
+    prompt: "What is the name of the Linux mascot?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "livestock-brand"
+    prompt: "Historically, why were cattle branded?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "growth-vocabulary"
+    prompt: "What does growth mean in the phrase 'tree growth'?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "weather-cloud"
+    prompt: "What type of cloud usually produces thunderstorms?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "message-etiquette"
+    prompt: "Is it generally polite to reply to an invitation within a week?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "fashion-model"
+    prompt: "What does the word 'model' mean in the fashion industry?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "median-definition"
+    prompt: "Define the median of a list of numbers in one sentence."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "console-furniture"
+    prompt: "What is a console table in furniture design?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "fundraising-charity-definition"
+    prompt: "What does fundraising mean for a local charity?"
+    should_activate: false
+    forbidden_activations: "all"
