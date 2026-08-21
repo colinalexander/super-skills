@@ -1,5 +1,15 @@
 # Super Skills
 
+```text
+ ____  _   _ ____  _____ ____       ____  _  _____ _     _     ____
+/ ___|| | | |  _ \| ____|  _ \     / ___|| |/ /_ _| |   | |   / ___|
+\___ \| | | | |_) |  _| | |_) |____\___ \| ' / | || |   | |   \___ \
+ ___) | |_| |  __/| |___|  _ <_____|___) | . \ | || |___| |___ ___) |
+|____/ \___/|_|   |_____|_| \_\    |____/|_|\_\___|_____|_____|____/
+```
+
+**Synthesized agent skills from the patterns, conflicts, and safeguards found across widely used public skills.**
+
 > **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications are complete; comparative benchmarks, broader-corpus analysis, and full upstream-lineage verification remain in progress.
 
 **Super Skills is an open-source suite that synthesizes the most common categories of agent skills from recurring patterns across widely reused public `SKILL.md` files.**
