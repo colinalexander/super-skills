@@ -356,7 +356,7 @@ def validate_token_counts(errors: list[str]) -> None:
         if (
             row["rank"] != ledger_row["rank"]
             or row["super_skill"] != ledger_row["super_skill"]
-            or not row["original_name"]
+            or row["original_name"] != ledger_row["skill_name"]
             or row["installed_name"]
             != benchmark_installed_name(int(row["rank"]), row["original_name"])
             or row["tokenizer"] != "cl100k_base"
