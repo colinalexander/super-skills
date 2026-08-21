@@ -27,6 +27,13 @@ byte-level occurrence counts themselves.
 
 Popularity is useful for discovering common conventions but produces visibility, age, ecosystem, and copying biases. Expansion therefore uses the following sequence:
 
+1. Pull the top 1,000 distinct content hashes by repository count.
+2. Classify them into an existing category or an explicit taxonomy-review queue.
+3. Collapse exact copies and flag near-duplicates before substantive review.
+4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
+5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
+6. Treat 20 consecutive eligible, lineage-independent candidates with no new information as a review checkpoint, not a population-saturation claim.
+
 The top-1,000 ranking, metadata-only queue, provisional category triage, and
 near-duplicate flags are complete. Metadata classification is only a routing
 aid. Substantive review, no-new-information decisions, and any resulting
@@ -65,13 +72,6 @@ rate of the 805 unreviewed hashes. Under targeted selection, a rising, flat, or
 falling retention trajectory is confounded with changing targeting accuracy;
 no trajectory from this design can establish saturation.
 
-1. Pull the top 1,000 distinct content hashes by repository count.
-2. Classify them into an existing category or an explicit taxonomy-review queue.
-3. Collapse exact copies and flag near-duplicates before substantive review.
-4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
-5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
-6. Treat 20 consecutive eligible, lineage-independent candidates with no new information as a review checkpoint, not a population-saturation claim.
-
 Record exclusions and the reason for them. Population-level claims and future
 ordered review are governed by the preregistered definitions, random probe, and
 family-rerank requirements in `SAMPLING_PLAN.md`.
@@ -109,9 +109,15 @@ For each category:
    - observable task context;
    - supported specialist guidance;
    - conservative defaults.
-6. Add missing safeguards and boundary rules; frequency alone does not determine correctness.
-7. Write new instructions without consulting source wording line by line.
-8. Test routing, behavior, and non-goals with category and cross-category evals.
+6. Recheck recency and register before synthesis: verify prohibitions, worked examples, model-generation assumptions, and product-specific instructions against current primary sources; omit obsolete tactics or convert them into explicitly contextual modes.
+7. Add missing safeguards and boundary rules; frequency alone does not determine correctness.
+8. Write new instructions without consulting source wording line by line.
+9. Test routing, behavior, and non-goals with category and cross-category evals.
+
+A stale or vendor-specific copy may remain valid provenance, but it is not
+current authority. The synthesis record must distinguish a durable principle
+from an obsolete example, model-era prompting tactic, or superseded product
+constraint.
 
 Comparative evaluation follows `evals/BENCHMARK.md`. Arm composition is fixed
 mechanically before execution: no skills, one rank-selected source, all 119
@@ -134,9 +140,17 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 - Do not store raw third-party skill text in this repository.
 - Do not reuse source scripts, examples, templates, names, or assets merely because they are popular.
 - Keep source URLs, hashes, and license metadata in the ledger.
-- Prefer verified file-level origin terms over repository-level metadata on an
-  observed copy; the latter is not evidence of relicensing.
-- Use the optional similarity checker against a separately held raw corpus before publication.
+- Resolve licensing at file lineage: repository-level license metadata on a
+  redistributed file does not override verified upstream file-level terms and
+  is not evidence of relicensing.
+- Run exact and thresholded near-lineage checks before synthesis and release.
+  The baseline control found 23 of 99 hashes with exact or qualifying near
+  Anthropic lineage, including restrictively licensed document sources and
+  stale historical versions.
+- Treat the similarity checker as a mandatory release gate against every
+  distributable skill file and the full separately held raw corpus. Rerun it
+  whenever either population changes; the current gate covers 66 public files
+  against all 900 eligible expansion sources.
 - Treat unknown or missing source-license metadata as a reason for stronger separation, not as permission.
 - Withhold an implementation when its evidence is overwhelmingly derived from
   one restrictively licensed vendor lineage and independent corpus support is

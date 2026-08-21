@@ -169,7 +169,7 @@ The protocol freezes arm composition before execution, includes true negatives f
 
 The Super Skills files are newly authored. The repository does **not** contain third-party skill text, scripts, templates, or assets.
 
-Source material is used to identify underlying ideas, procedures, conflicts, and recurring patterns. Optional similarity checks can be run against source material held outside the repository to detect unintended textual overlap.
+Source material is used to identify underlying ideas, procedures, conflicts, and recurring patterns. Before release, the mandatory similarity gate checks every distributable skill file against the full externally held raw-source corpus for unintended textual overlap.
 
 A provenance entry records research influence. It does not imply incorporation, relicensing, endorsement, or ownership of the referenced source.
 
