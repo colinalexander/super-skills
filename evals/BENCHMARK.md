@@ -18,8 +18,10 @@ Before any benchmark execution, the current active public skill files must pass
 baseline-plus-expansion sources at the preregistered normalized eight-word-shingle
 and 20% smaller-document containment threshold. The checker must confirm that
 the external files' computed Git blob IDs exactly match the recorded frame
-before testing prose. It also checks exact bytes before shingling so copied
-files too short to form an eight-word shingle cannot pass as empty comparisons.
+before testing prose. It also checks exact bytes and normalized word-sequence
+equality before shingling so copied files too short to form an eight-word
+shingle cannot pass because of superficial formatting changes or empty
+comparisons.
 Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected
 material before collecting benchmark results. Record the corpus checksum,
@@ -154,8 +156,9 @@ skills' generated `full_tokens` counts in `research/token-counts.csv`; it is not
 selected from observed activations. The same permitted set, budget, and Arm 3
 subset apply to all three repetitions and do not depend on observed Arm 4
 activation, tokens, latency, or quality. Any Arm 4 activation outside the
-permitted set is a scored protocol failure, not a reason to raise the budget,
-rerun, or exclude the case. For Arm 3, eligible source bundles are those routed
+permitted set automatically fails the fixed-budget consolidation decision; it
+is not a reason to raise the budget, rerun, or exclude the case. For Arm 3,
+eligible source bundles are those routed
 to a permitted category, ordered by GitSkills rank;
 each bundle's budget cost uses the same file classes as the generated Arm 4
 `full_tokens` value: the entry `SKILL.md` plus every Markdown file directly in
@@ -262,7 +265,9 @@ decision-bearing contrasts. A category-specific claim additionally requires
 that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
 4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
 Arm 4 must also have no critical-failure event meeting gate 3 below. These are
-success conditions, not merely the absence of a failure signal.
+success conditions, not merely the absence of a failure signal. The
+fixed-budget claim additionally requires no out-of-permitted-set Arm 4
+activation in any fixed-budget case-run.
 
 Consolidation is treated as failed—and the affected category must be split or
 returned to narrower skills before a superiority claim—if any of these occurs:
@@ -278,6 +283,9 @@ returned to narrower skills before a superiority claim—if any of these occurs:
    accessibility failure on the same case in at least two repeated runs. This
    is an absolute blocker regardless of comparator behavior; matching Arm 2 or
    Arm 3 failures are reported separately as context, not used to waive it.
+4. Arm 4 activates any skill outside the case's preregistered permitted set in
+   a fixed-budget case-run. This fails the fixed-budget consolidation decision
+   regardless of the resulting quality score.
 
 If a quality lower bound is at or below -0.5 without its upper bound falling
 below -0.5, or the false-activation interval crosses 10%, the affected result is

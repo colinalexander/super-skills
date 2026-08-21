@@ -15,9 +15,18 @@ ROOT = Path(__file__).resolve().parents[1]
 WORD = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
 
 
-def shingles(path: Path, size: int) -> set[tuple[str, ...]]:
-    words = WORD.findall(path.read_text(encoding="utf-8", errors="ignore").lower())
-    return {tuple(words[index : index + size]) for index in range(len(words) - size + 1)}
+def normalized_words(path: Path) -> tuple[str, ...]:
+    """Return case- and formatting-insensitive words for textual comparison."""
+    return tuple(
+        WORD.findall(path.read_text(encoding="utf-8", errors="ignore").lower())
+    )
+
+
+def shingles(words: tuple[str, ...], size: int) -> set[tuple[str, ...]]:
+    return {
+        tuple(words[index : index + size])
+        for index in range(len(words) - size + 1)
+    }
 
 
 def score(left: set[tuple[str, ...]], right: set[tuple[str, ...]]) -> tuple[float, int]:
@@ -124,8 +133,14 @@ def main() -> int:
             f"Source corpus verified: {len(observed_hashes)} files match the "
             "recorded Git blob set."
         )
-    public_sets = {path: shingles(path, args.ngram) for path in public_files}
-    source_sets = {path: shingles(path, args.ngram) for path in source_files}
+    public_words = {path: normalized_words(path) for path in public_files}
+    source_words = {path: normalized_words(path) for path in source_files}
+    public_sets = {
+        path: shingles(words, args.ngram) for path, words in public_words.items()
+    }
+    source_sets = {
+        path: shingles(words, args.ngram) for path, words in source_words.items()
+    }
     public_digests = {
         path: hashlib.sha256(path.read_bytes()).digest() for path in public_files
     }
@@ -133,24 +148,34 @@ def main() -> int:
         path: hashlib.sha256(path.read_bytes()).digest() for path in source_files
     }
 
-    matches: list[tuple[float, int, Path, Path, bool]] = []
+    matches: list[tuple[float, int, Path, Path, str]] = []
     for public_path, public_shingles in public_sets.items():
         for source_path, source_shingles in source_sets.items():
             if public_digests[public_path] == source_digests[source_path]:
-                matches.append((1.0, 0, public_path, source_path, True))
+                matches.append((1.0, 0, public_path, source_path, "exact byte match"))
+                continue
+            if (
+                public_words[public_path]
+                and public_words[public_path] == source_words[source_path]
+            ):
+                matches.append(
+                    (1.0, 0, public_path, source_path, "normalized exact match")
+                )
                 continue
             containment, overlap = score(public_shingles, source_shingles)
             if overlap and containment >= args.threshold:
-                matches.append((containment, overlap, public_path, source_path, False))
+                matches.append(
+                    (containment, overlap, public_path, source_path, "")
+                )
 
     if matches:
         print("Potentially close source overlap detected:", file=sys.stderr)
-        for containment, overlap, public_path, source_path, exact in sorted(
+        for containment, overlap, public_path, source_path, exact_measure in sorted(
             matches, reverse=True
         ):
             measure = (
-                "exact byte match"
-                if exact
+                exact_measure
+                if exact_measure
                 else f"{containment:.1%} containment, {overlap} shingles"
             )
             print(

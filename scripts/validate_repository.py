@@ -442,8 +442,9 @@ def validate_evaluations(errors: list[str]) -> None:
             "checksum over the sorted closure records",
             "same file classes as the generated Arm 4",
             "permitted Arm 4 set",
-            "scored protocol failure",
-            "exact bytes before shingling",
+            "automatically fails the fixed-budget consolidation decision",
+            "normalized word-sequence",
+            "out-of-permitted-set Arm 4",
             "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
             "absolute blocker regardless of comparator behavior",
@@ -527,6 +528,9 @@ def validate_similarity_gate(errors: list[str]) -> None:
         public_digest.update(hashlib.sha256(path.read_bytes()).digest())
         public_digest.update(b"\n")
     public_checksum = public_digest.hexdigest()
+    checker_checksum = hashlib.sha256(
+        (ROOT / "scripts" / "check_similarity.py").read_bytes()
+    ).hexdigest()
 
     validation = validation_path.read_text(encoding="utf-8")
     for marker in (
@@ -534,7 +538,9 @@ def validate_similarity_gate(errors: list[str]) -> None:
         f"Source-population checksum: `{source_checksum}`",
         f"Public surface: all {len(public_files)} files",
         f"Public-surface checksum: `{public_checksum}`",
+        f"Checker checksum: `{checker_checksum}`",
         "--verify-gitskills-frame",
+        "exact-byte then normalized-word-sequence equality fallbacks",
         "Source corpus verified: 999 files match the recorded Git blob set.",
         (
             "Similarity check passed: "
