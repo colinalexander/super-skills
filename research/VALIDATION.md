@@ -44,5 +44,5 @@ Review-fix reproduction checks also passed:
 
 The 31 retained source reviews changed synthesis matrices, skills, or evals and
 established three additional categories. Manual classification, remaining
-lineage review, and evidence-saturation decisions continue for the rest of the
+lineage review, and preregistered no-new-information decisions continue for the rest of the
 expansion.
