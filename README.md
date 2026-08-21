@@ -23,6 +23,16 @@ The goal is simple: **fewer, broader, rigorously evaluated skills instead of hun
 
 Each skill keeps its main `SKILL.md` compact and loads specialized guidance from `references/` only when the task needs it.
 
+## Installation
+
+Copy the directory for the skill you want into the skills directory scanned by your agent host. For example:
+
+```bash
+cp -R skills/software-delivery /path/to/your-agent/skills/
+```
+
+You can install any subset of the eight skills. Consult your host's documentation for its skills-directory location and discovery rules.
+
 ## Why Super Skills?
 
 Public agent-skill ecosystems contain substantial duplication. Similar skills often:
@@ -39,7 +49,7 @@ For each category, the project identifies recurring principles, useful disagreem
 
 ## Example
 
-Instead of installing separate skills for debugging, TDD, code review, worktrees, E2E testing, and delivery discipline, install:
+Instead of installing separate skills for debugging, TDD, code review, worktrees, E2E testing, and delivery discipline, copy:
 
 ```text
 software-delivery/

@@ -132,9 +132,31 @@ def validate_licensing(errors: list[str]) -> None:
     attribution_text = attribution.read_text(encoding="utf-8")
     required_attribution = (
         "GitSkills: A Dataset of Agent Skills on GitHub",
+        "Giuseppe Destefanis",
+        "Daniel Graziotin",
+        "Matteo Vaccargiu",
+        "Marco Ortu",
         "https://huggingface.co/datasets/mvaccargiu/gitskills",
         "https://doi.org/10.5281/zenodo.21875637",
         "## Modifications",
+        "selects the ranked top-100 baseline and excludes one non-skill placeholder",
+        (
+            "groups the remaining 99 content hashes into eight synthesized "
+            "capability categories"
+        ),
+        (
+            "adds super-skill mappings, representative source URLs, "
+            "upstream-verification status, repository-license metadata, and "
+            "reuse-policy fields"
+        ),
+        (
+            "derives category counts, synthesis matrices, conflict decisions, "
+            "and evaluation specifications"
+        ),
+        (
+            "reformats selected metadata into repository-specific CSV and "
+            "Markdown artifacts"
+        ),
     )
     for marker in required_attribution:
         if marker not in attribution_text:
