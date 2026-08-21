@@ -14,7 +14,7 @@
 
 **These are not bundles of copied prompts or concatenated skills.** The current v0 contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications are complete; comparative benchmarks, broader-corpus analysis, and full upstream-lineage verification remain in progress.
+> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications and the top-1,000 metadata expansion are complete; evidence-saturation review, comparative benchmarks, and full upstream-lineage verification remain in progress.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -141,9 +141,11 @@ The top-100 corpus establishes the v0 architecture; it does not establish corpus
 - new conflicts or constraints;
 - new evaluation cases.
 
+The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the v0 baseline. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
+
 Expansion uses **evidence saturation** rather than an arbitrary source count: additional sources stop materially affecting a category once they cease producing new principles, modes, constraints, conflicts, or evaluation cases.
 
-Generate a metadata-only review queue without adding third-party source text to the repository:
+Regenerate the metadata-only review queue without adding third-party source text to the repository:
 
 ```bash
 python3 -m venv .venv

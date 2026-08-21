@@ -24,4 +24,13 @@ The repository includes a shared rubric and category-specific positive, boundary
 
 ## Expansion status
 
-The top-100 baseline establishes structure and initial behavior. The metadata-only top-1,000 queue and evidence-saturation review described in `METHODOLOGY.md` remain the next research phase.
+The metadata-only top-1,000 queue has been generated and committed:
+
+- 1,000 distinct ranked content hashes are covered by the 99-row baseline ledger plus 901 expansion records.
+- All 99 baseline hashes reproduce their recorded ranks exactly.
+- The expansion records contain 900 eligible unreviewed candidates and the rank-24 non-skill placeholder excluded from the v0 baseline.
+- Hashes are unique, ranks cover 1 through 1,000 exactly, and repository/occurrence counts satisfy the expected grain.
+- The export query counts every artifact occurrence. `content_fetched` is an enrichment flag and is deliberately not used as a pre-aggregation filter.
+- No third-party descriptions or source text are retained in the queue.
+
+Classification, near-duplicate review, evidence-saturation decisions, and any changes to synthesis matrices, skills, or evals remain in progress. The top-100 baseline still defines current synthesized behavior.

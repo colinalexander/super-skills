@@ -14,6 +14,9 @@ import duckdb
 
 ROOT = Path(__file__).resolve().parents[1]
 PARQUET_INDEX = "https://huggingface.co/api/datasets/mvaccargiu/gitskills/parquet"
+EXCLUDED_HASHES = {
+    "50a4f9b104357d96361e257adb70454604cd15c0": "excluded-non-skill-placeholder",
+}
 
 
 def main() -> int:
@@ -42,6 +45,10 @@ def main() -> int:
     connection = duckdb.connect()
     connection.execute("INSTALL httpfs")
     connection.execute("LOAD httpfs")
+    connection.execute("SET http_retries = 10")
+    connection.execute("SET http_retry_wait_ms = 1000")
+    connection.execute("SET http_retry_backoff = 2")
+    connection.execute("SET http_timeout = 60")
     rows = connection.execute(
         """
         WITH grouped AS (
@@ -52,7 +59,7 @@ def main() -> int:
                 MAX(name) AS representative_name,
                 MIN(repo_full_name || '/' || path) AS sample_location
             FROM read_parquet(?)
-            WHERE content_fetched = 1 AND file_sha IS NOT NULL
+            WHERE file_sha IS NOT NULL
             GROUP BY file_sha
         ), ranked AS (
             SELECT
@@ -67,10 +74,36 @@ def main() -> int:
         [artifact_urls, args.limit],
     ).fetchall()
 
-    baseline: set[str] = set()
-    if not args.include_baseline:
-        with (ROOT / "research" / "source-ledger.csv").open(newline="", encoding="utf-8") as handle:
-            baseline = {row["file_sha"] for row in csv.DictReader(handle)}
+    with (ROOT / "research" / "source-ledger.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        baseline_rows = list(csv.DictReader(handle))
+    baseline_ranks = {row["file_sha"]: int(row["rank"]) for row in baseline_rows}
+    ranked_hashes = {file_sha: rank for rank, file_sha, *_ in rows}
+
+    missing_baseline = sorted(set(baseline_ranks) - set(ranked_hashes))
+    if missing_baseline:
+        raise RuntimeError(
+            f"{len(missing_baseline)} baseline hashes are absent from the top {args.limit}; "
+            "ranking semantics may have changed"
+        )
+
+    rank_mismatches = sorted(
+        (file_sha, expected, ranked_hashes[file_sha])
+        for file_sha, expected in baseline_ranks.items()
+        if ranked_hashes[file_sha] != expected
+    )
+    if rank_mismatches:
+        preview = ", ".join(
+            f"{file_sha}: expected {expected}, got {actual}"
+            for file_sha, expected, actual in rank_mismatches[:5]
+        )
+        raise RuntimeError(
+            f"{len(rank_mismatches)} baseline ranks differ from the source ledger "
+            f"({preview})"
+        )
+
+    baseline = set() if args.include_baseline else set(baseline_ranks)
 
     output = args.output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -88,11 +121,12 @@ def main() -> int:
     ]
     written = 0
     with output.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for rank, file_sha, repositories, occurrences, name, location in rows:
             if file_sha in baseline:
                 continue
+            review_status = EXCLUDED_HASHES.get(file_sha, "unreviewed")
             writer.writerow(
                 {
                     "overall_rank": rank,
@@ -102,14 +136,21 @@ def main() -> int:
                     "representative_name": name or "",
                     "sample_location": location or "",
                     "proposed_super_skill": "",
-                    "review_status": "unreviewed",
+                    "review_status": review_status,
                     "novel_contribution": "",
-                    "source_diversity_note": "",
+                    "source_diversity_note": (
+                        "excluded in the v0 baseline as a non-skill template placeholder"
+                        if file_sha in EXCLUDED_HASHES
+                        else ""
+                    ),
                 }
             )
             written += 1
 
-    print(f"Wrote {written} metadata-only candidates to {output}")
+    print(
+        f"Verified {len(baseline_ranks)} baseline ranks and wrote {written} "
+        f"metadata-only candidates to {output}"
+    )
     return 0
 
 

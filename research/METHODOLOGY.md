@@ -14,6 +14,8 @@ The source ledger records both verified upstream locations and representative ob
 
 Popularity is useful for discovering common conventions but produces visibility, age, ecosystem, and copying biases. Expansion therefore uses the following sequence:
 
+The top-1,000 ranking and metadata-only queue are complete. Classification, near-duplicate review, evidence-saturation decisions, and any resulting changes to skills or evals remain separate review stages; queue membership alone is not synthesis evidence.
+
 1. Pull the top 1,000 distinct content hashes by repository count.
 2. Classify them into the existing eight categories or an explicit review queue.
 3. Collapse exact copies and flag near-duplicates before substantive review.

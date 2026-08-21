@@ -115,6 +115,75 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
 
 
+def validate_expansion_queue(errors: list[str]) -> None:
+    ledger = ROOT / "research" / "source-ledger.csv"
+    queue = ROOT / "research" / "expansion-queue.csv"
+    if not queue.is_file():
+        fail(errors, "missing research/expansion-queue.csv")
+        return
+
+    with ledger.open(newline="", encoding="utf-8") as handle:
+        baseline_rows = list(csv.DictReader(handle))
+    with queue.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        queue_fields = reader.fieldnames or []
+        queue_rows = list(reader)
+
+    expected_fields = [
+        "overall_rank",
+        "file_sha",
+        "repositories",
+        "occurrences",
+        "representative_name",
+        "sample_location",
+        "proposed_super_skill",
+        "review_status",
+        "novel_contribution",
+        "source_diversity_note",
+    ]
+    if queue_fields != expected_fields:
+        fail(errors, f"expansion queue fields differ: {queue_fields}")
+    if len(queue_rows) != 901:
+        fail(errors, f"expansion queue contains {len(queue_rows)} rows, expected 901")
+
+    combined = baseline_rows + queue_rows
+    hashes = [row["file_sha"] for row in combined]
+    if len(hashes) != 1000 or len(set(hashes)) != 1000:
+        fail(errors, "baseline and expansion queue must contain 1,000 unique hashes")
+
+    ranks = [int(row.get("rank") or row.get("overall_rank") or 0) for row in combined]
+    if set(ranks) != set(range(1, 1001)):
+        fail(errors, "baseline and expansion queue must cover ranks 1 through 1,000")
+
+    status_counts: dict[str, int] = {}
+    for number, row in enumerate(queue_rows, start=2):
+        status = row["review_status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+        if not re.fullmatch(r"[0-9a-f]{40}", row["file_sha"]):
+            fail(errors, f"expansion queue row {number}: invalid file_sha")
+        repositories = int(row["repositories"])
+        occurrences = int(row["occurrences"])
+        if repositories < 1 or occurrences < repositories:
+            fail(errors, f"expansion queue row {number}: invalid occurrence counts")
+        if not row["sample_location"]:
+            fail(errors, f"expansion queue row {number}: missing sample location")
+
+    expected_statuses = {
+        "unreviewed": 900,
+        "excluded-non-skill-placeholder": 1,
+    }
+    if status_counts != expected_statuses:
+        fail(errors, f"expansion queue status counts differ: {status_counts}")
+
+    excluded = [
+        row
+        for row in queue_rows
+        if row["review_status"] == "excluded-non-skill-placeholder"
+    ]
+    if not excluded or excluded[0]["overall_rank"] != "24":
+        fail(errors, "rank 24 must remain the excluded non-skill placeholder")
+
+
 def validate_licensing(errors: list[str]) -> None:
     root_license = ROOT / "LICENSE"
     research_license = ROOT / "research" / "LICENSE"
@@ -186,13 +255,17 @@ def main() -> int:
     errors: list[str] = []
     validate_suite(errors)
     validate_ledger(errors)
+    validate_expansion_queue(errors)
     validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print("Repository validation passed: 8 skills, 99 ledger rows, complete matrices and evals.")
+    print(
+        "Repository validation passed: 8 skills, 99 baseline rows, "
+        "901 expansion records, complete matrices and evals."
+    )
     return 0
 
 
