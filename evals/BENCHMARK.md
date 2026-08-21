@@ -6,7 +6,8 @@ This document preregisters the comparative design. The repository does not yet
 contain benchmark results.
 
 The primary product question is whether a small synthesized suite preserves or
-improves task behavior while reducing selection errors and instruction cost
+improves task behavior while meeting an absolute false-activation threshold and
+reducing instruction cost
 relative to installing the overlapping public source skills from which it was
 derived.
 
@@ -28,7 +29,7 @@ Every case is run under these conditions with the same host, model, tool access,
 task input, and sampling parameters:
 
 1. **Unskilled:** no source or super-skill is installed.
-2. **Best individual source:** one source skill is chosen before execution by
+2. **Highest-occurrence source:** one source skill is chosen before execution by
    the mechanical rule below.
 3. **Source-suite ceiling:** all 119 hashes marked `retained` in
    `research/review-decisions.csv` and routed to an active category are installed
@@ -79,6 +80,24 @@ cost or behavior. Its universal rename is a
 **protocol-imposed compatibility transform** that may itself affect routing; report that limitation and do not
 describe Arm 3 as an unmodified source-suite deployment.
 
+## Source dependency-closure gate
+
+Arms 2 and 3 may not run until every one of the 119 active retained entry hashes
+has a complete, pinned file-dependency closure. Starting from the exact
+`SKILL.md` occurrence, resolve a repository commit, include every file beneath
+that skill directory, and recursively include each relative file or directory
+referenced outside it. Record declared runtime packages and tools separately;
+they are environment dependencies, not substitutes for missing files. An
+unresolved commit, missing path, submodule, generated asset, or inaccessible
+dependency blocks benchmark execution rather than silently shrinking an arm.
+
+Raw closure files remain external. The run manifest records, for every source,
+the entry Git blob, pinned repository and commit, repository-relative path,
+every dependency path, byte size, Git blob or SHA-256 digest, executable bit,
+and a checksum over the sorted closure records. The Arm 3 name transform changes
+only the entry file's front-matter `name`; all dependency bytes remain unchanged,
+and the manifest records both the original and transformed entry digests.
+
 ## Evaluation population
 
 Category cases include positive tasks and close boundary cases. The shared
@@ -108,7 +127,7 @@ Report arm-level and case-level results for:
   output tokens, latency, and cost; and
 - conflict symptoms, tool calls, side effects, and verification failures.
 
-The unskilled and individual-source arms establish behavioral baselines. The
+The unskilled and highest-occurrence-source arms establish behavioral baselines. The
 source-suite and super-suite arms answer the product question.
 
 Installed description tokens are the sum of the front-matter description value
@@ -120,18 +139,22 @@ is 580 tokens for Arm 4 and 5,613 tokens for the externally reconstructed Arm 3
 under `cl100k_base` and `tiktoken==0.11.0`; a run must recompute these figures
 and explain any difference before execution.
 
-## Natural and matched-budget comparisons
+## Natural and fixed-budget comparisons
 
 The primary comparison uses each arm's natural host behavior and reports its
 actual token and latency cost. Efficiency is not itself evidence of equal task
 quality.
 
-A matched-budget sensitivity analysis compares Arms 3 and 4 on should-fire
-cases. The budget equals the super suite's actual loaded instruction tokens for
-that case. For Arm 3, eligible sources are those routed to the locked expected
-category, ordered by GitSkills rank; whole source skills are included in that
-order until the next file would exceed the budget. Files are never truncated,
-and unused budget is reported. This subset is computed before model execution.
+A fixed-budget sensitivity analysis compares Arms 3 and 4 on should-fire cases.
+Before any run, each case's budget is fixed to the generated `full_tokens` count
+of its locked primary super-skill in `research/token-counts.csv`. The same budget
+and Arm 3 subset apply to all three repetitions and do not depend on observed
+Arm 4 activation, tokens, latency, or quality. For Arm 3, eligible source bundles
+are those routed to the locked expected category, ordered by GitSkills rank;
+each bundle's budget cost is all textual instruction and dependency content in
+its verified closure. Whole bundles are included in order until the next would
+exceed the budget. Files are never truncated, and unused budget is reported.
+Natural-host results separately report the actual loaded tokens for every run.
 
 Report quality against cost jointly:
 
@@ -142,7 +165,7 @@ Report quality against cost jointly:
 
 No superiority claim may be based on cost, quality, or routing alone. In
 particular, a lower instruction bill for Arm 4 does not compensate for a
-material quality loss under the matched-budget comparison.
+material quality loss under the fixed-budget comparison.
 
 ## Independent grading
 
@@ -189,14 +212,18 @@ resample cases with replacement within each category at the original category
 sample size, recompute the 10 category means and their equal-weight mean, and
 take the 2.5th and 97.5th percentiles. Use NumPy `Generator(PCG64)` with seed
 `20260821`. Each resampled case carries all arm scores together, preserving the
-pairing. Apply the same estimator separately to the natural-host primary result
-and matched-budget sensitivity result; never pool those conditions.
+pairing. Apply the same estimator to three decision-bearing contrasts: Arm 4
+versus Arm 2 under natural-host behavior, Arm 4 versus Arm 3 under natural-host
+behavior, and Arm 4 versus the fixed-budget Arm 3 subset. Never pool those
+conditions.
 
 Publish a category-specific paired interval using the same case-level means and
-bootstrap procedure. The 10 category decisions use Bonferroni-adjusted 99.5%
-two-sided percentile intervals, providing 95% simultaneous coverage. Also
-publish ordinary 95% category intervals as descriptive estimates, but do not
-use them to decide whether a category must split.
+bootstrap procedure. The decision family contains 30 category contrasts: 10
+categories across the three contrasts above. Every category decision therefore
+uses a Bonferroni-adjusted 99.8333% two-sided percentile interval
+(`1 - 0.05 / 30`), providing at least 95% simultaneous coverage across the full
+family. Also publish ordinary 95% category intervals as descriptive estimates,
+but do not use them to decide whether a category must split.
 
 Activation precision uses correct activated-skill events as its numerator and
 all activated-skill events as its denominator; activation recall uses one
@@ -204,36 +231,47 @@ required-primary-activation outcome per should-fire case-run. Report two-sided
 95% Wilson score intervals without continuity correction for these binomial
 rates. For false activation, one trial is one Arm 4 global-negative case-run,
 yielding 108 preregistered trials from 36 cases and three runs. The falsification
-gate uses the pooled 108-trial rate and its two-sided 95% Wilson interval. Also
-report a 36-case sensitivity where a case is positive if any of its three runs
-falsely activates. Report activation rates both overall and by category;
+gate uses the pooled 108-trial rate and its two-sided 95% Wilson interval. Report
+the same rates for comparator arms descriptively, but do not interpret their
+difference as the preregistered gate. Also report a 36-case sensitivity where a
+case is positive if any of its three runs falsely activates. Report activation
+rates both overall and by category;
 category rates are descriptive unless a gate below explicitly names them.
 
 ## Falsification criteria
 
 The consolidation hypothesis is that Arm 4 preserves task quality within a
 preregistered non-inferiority margin while reducing discovery or loaded-context
-cost and without increasing false activation or unsafe side effects. The
-quality margin is **0.5 points on the ten-point rubric total**.
+cost, keeping its absolute false-activation rate acceptable, and avoiding unsafe
+side effects. The quality margin is **0.5 points on the ten-point rubric total**;
+the absolute false-activation threshold is **10%**.
+
+A suite-wide consolidation claim requires the lower bound of the paired 95%
+interval for `Arm 4 minus comparator` to exceed -0.5 in all three
+decision-bearing contrasts. A category-specific claim additionally requires
+that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
+4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
+These are success conditions, not merely the absence of a failure signal.
 
 Consolidation is treated as failed—and the affected category must be split or
 returned to narrower skills before a superiority claim—if any of these occurs:
 
-1. Against either Arm 2 or Arm 3 on should-fire cases, the upper bound of the
-   suite-level paired 95% interval for `Arm 4 minus comparator` is below -0.5,
-   or a category's Bonferroni-adjusted 99.5% upper bound is below -0.5. A suite
+1. In any decision-bearing contrast, the upper bound of the suite-level paired
+   95% interval for `Arm 4 minus comparator` is below -0.5, or a category's
+   Bonferroni-adjusted 99.8333% upper bound is below -0.5. A suite
    failure blocks a suite-wide consolidation claim; a category failure requires
    that category to split or return to narrower skills.
-2. Arm 4 falsely activates on more than 10% of global true-negative trials and
-   the lower bound of its two-sided 95% Wilson score interval exceeds 5%.
+2. The lower bound of Arm 4's two-sided 95% Wilson false-activation interval
+   exceeds 10%.
 3. Arm 4 causes a critical unauthorized, destructive, privacy, security, or
    accessibility failure on the same case in at least two repeated runs when
    neither Arm 2 nor Arm 3 does.
 
-If the intervals are too wide to establish non-inferiority or falsification,
-the result is **inconclusive**, not evidence for consolidation. Passing these
-gates permits a consolidation claim only when the joint quality-and-cost results
-also support it; it does not by itself establish superiority.
+If a quality lower bound is at or below -0.5 without its upper bound falling
+below -0.5, or the false-activation interval crosses 10%, the affected result is
+**inconclusive**, not evidence for consolidation. Meeting the success conditions
+permits a consolidation claim only when the joint quality-and-cost results also
+support it; it does not by itself establish superiority.
 
 ## Run discipline
 

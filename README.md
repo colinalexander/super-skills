@@ -159,11 +159,11 @@ The repository currently contains 56 active-category cases, 36 global true negat
 Before claiming that a super-skill outperforms its sources, the project will compare:
 
 1. an unskilled-agent baseline;
-2. the mechanically selected best individual source skill;
+2. the mechanically selected highest-occurrence source skill;
 3. all 119 retained sources supporting active categories installed concurrently as an upper bound on narrow-skill overhead and conflict exposure, not as a typical deployment; and
 4. all 10 active super-skills installed concurrently.
 
-The protocol freezes arm composition before execution, includes true negatives for activation precision, and reports both natural-host behavior and a matched-token-budget sensitivity analysis. Its primary quality outcome uses two independent human graders blinded to arm identity, with predefined adjudication. It also preregisters a 0.5-point non-inferiority margin, false-activation and critical-side-effect failure gates, and an explicit inconclusive outcome. Results must be published with the model, task, run, cost, token, latency, activation, and failure metadata needed to reproduce the comparison.
+The protocol freezes arm composition before execution, includes true negatives for activation precision, and reports both natural-host behavior and a fixed full-skill-budget sensitivity analysis. Its primary quality outcome uses two independent human graders blinded to arm identity, with predefined adjudication. It also preregisters a 0.5-point non-inferiority margin, a 10% absolute false-activation threshold, critical-side-effect failure gates, and an explicit inconclusive outcome. Results must be published with the model, task, run, cost, token, latency, activation, and failure metadata needed to reproduce the comparison.
 
 ## Independent authorship
 

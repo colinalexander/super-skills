@@ -125,7 +125,7 @@ retained sources supporting active categories, and all 10 active super-skills.
 The exhaustive source arm is an upper
 bound on overhead and conflict exposure, not a typical deployment estimate.
 Thirty-six global true negatives supply the negative denominator for activation
-precision. Natural-host results and a matched-token-budget sensitivity analysis
+precision. Natural-host results and a fixed full-skill-budget sensitivity analysis
 are both required so lower context cost cannot substitute for task quality.
 Two blinded independent human graders produce the primary quality outcome, and
 predeclared non-inferiority, false-activation, and critical-side-effect gates

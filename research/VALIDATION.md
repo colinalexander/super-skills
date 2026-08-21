@@ -60,7 +60,7 @@ rubric, and a preregistered four-arm benchmark protocol: 92 evaluation cases in
 total. The source-suite arm installs all 119 active-category retained sources as a ceiling on
 narrow-skill overhead rather than a typical deployment, and the super-suite arm
 installs all 10 active super-skills; arm membership is not selected after seeing a
-task. Natural and matched-token-budget comparisons are both required. Primary
+task. Natural and fixed full-skill-budget comparisons are both required. Primary
 quality scores use two blinded independent human graders with adjudication, and
 the protocol defines quality, false-activation, and critical-side-effect
 falsification gates. These are authored evaluation specifications; they have
