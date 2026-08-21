@@ -14,8 +14,9 @@ The committed evidence set consists of:
 
 | Record class | Count | Status |
 | --- | ---: | --- |
-| Synthesized initial baseline | 99 | Recorded in `source-ledger.csv` |
-| New eligible candidates | 900 | Metadata triage complete; source review in progress |
+| Synthesized initial baseline | 99 | Substantively reviewed and recorded in `source-ledger.csv` |
+| Reviewed expansion candidates | 95 | 31 retained; 64 added no new contribution |
+| Unreviewed eligible candidates | 805 | Metadata and lineage triage only |
 | Non-skill template placeholder | 1 | Excluded at rank 24 |
 | **Total ranked hashes** | **1,000** | Complete rank coverage |
 
@@ -76,11 +77,55 @@ connected-service-automation, and five data-science-and-ML hashes. The source
 ledger records provenance before retained propositions appear in public skills.
 
 Application engineering and software delivery each reached the current
-saturation threshold: after the last retained source in each ranked stream, 20
+no-new-information review checkpoint: after the last retained source in each ranked stream, 20
 eligible, non-lineage-duplicate candidates added no material principle, mode,
 constraint, conflict, safeguard, or evaluation case. This is a checkpoint for
-this corpus ordering, not proof that specialist or lower-ranked evidence can
-never change those skills.
+this targeted corpus ordering, not evidence of population saturation. Because
+targeting quality changes as obvious candidates are consumed, no rising, flat,
+or falling retention trajectory from this review design is interpretable as a
+saturation test.
+
+## Rank-band review counts
+
+The following counts report review progress; they are not a trend analysis.
+
+| Rank band | Substantively reviewed | Retained | Unreviewed |
+| --- | ---: | ---: | ---: |
+| 101–200 | 39 | 8 | 61 |
+| 201–300 | 14 | 5 | 86 |
+| 301–400 | 4 | 3 | 96 |
+| 401–500 | 8 | 6 | 92 |
+| 501–600 | 6 | 2 | 94 |
+| 601–700 | 3 | 1 | 97 |
+| 701–800 | 4 | 1 | 96 |
+| 801–900 | 6 | 1 | 94 |
+| 901–1,000 | 11 | 4 | 89 |
+
+The cells are underpowered and uneven: several bands contain only three to eight
+reviews, so a single classification would move a percentage by 12.5 to 33.3
+points. Counts are therefore reported without inferring a trend.
+
+The final rank band still contributed marketing-and-growth evidence at ranks
+929 and 931 and data-science-and-ML evidence at ranks 905 and 980. This is
+consistent with both a frame-edge truncation effect and structural
+undersampling of categories discovered during expansion. It does not distinguish
+between them, establish completeness, or rule out additional categories beyond
+rank 1,000.
+
+## Next sampling and reranking steps
+
+Before further ordered review, the project will draw a uniform random probe of
+50 hashes from the 805 unreviewed records. The sample, masking protocol, outcome
+definitions, and reporting rules are preregistered in `SAMPLING_PLAN.md`; the
+sample will be drawn only after that plan is merged.
+
+The subsequent family-level rerank will aggregate probable variants before
+ranking and report both unique-repository and unique-owner coverage. This will
+change frame membership, not merely ordering: families assembled from hashes
+outside the current frame may enter, while some current hashes may belong to
+low-coverage families. All 130 retained evidence hashes will be reclassified
+against the reranked frame and reported as inside-frame or legacy evidence;
+legacy evidence will not be silently discarded.
 
 ## Quality controls
 
@@ -107,7 +152,7 @@ The 900 eligible additions are not synthesis evidence until they are:
 1. classified into an existing super-skill or an explicit out-of-scope/new-category queue;
 2. checked for near-duplicate lineages and source diversity;
 3. reviewed for a material new principle, mode, constraint, conflict, safeguard, or evaluation case; and
-4. incorporated only when they pass the inclusion and evidence-saturation rules in `METHODOLOGY.md`.
+4. incorporated only when they pass the inclusion and preregistered material-outcome rules in `METHODOLOGY.md` and `SAMPLING_PLAN.md`.
 
 Only promoted ledger entries are evidence for public skill instructions. Queue
 membership and metadata classification remain routing aids, not votes.

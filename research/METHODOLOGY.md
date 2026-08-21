@@ -16,7 +16,7 @@ Popularity is useful for discovering common conventions but produces visibility,
 
 The top-1,000 ranking, metadata-only queue, provisional category triage, and
 near-duplicate flags are complete. Metadata classification is only a routing
-aid. Substantive review, evidence-saturation decisions, and any resulting
+aid. Substantive review, no-new-information decisions, and any resulting
 changes to skills or evals remain separate stages; queue membership and a
 proposed category alone are not synthesis evidence.
 
@@ -25,17 +25,38 @@ the source ledger. Sixty-four additional sources were reviewed without adding a
 material proposition. The review established `marketing-and-growth`,
 `connected-service-automation`, and `data-science-and-ml` as distinct decision
 systems, bringing the suite to 11 categories. Application engineering and
-software delivery have each reached the 20-source saturation checkpoint; other
-candidate streams remain under review.
+software delivery have each reached a recorded 20-source no-new-information
+checkpoint under the targeted ordering. Those checkpoints describe review
+history; they are not estimates of population saturation.
+
+The resulting coverage accounting is:
+
+| Measure | Count |
+| --- | ---: |
+| Ranked sampling frame | 1,000 |
+| Eligible hashes | 999 |
+| Substantively reviewed | 194 |
+| Retained as synthesis evidence | 130 |
+| Metadata/lineage triage only | 805 |
+
+The expansion review was targeted using metadata, category gaps, and likely
+distinctiveness. Its 31 retained hashes out of 900 expansion candidates are a
+3.4% **frame yield**, while 31 retained out of 95 substantively reviewed hashes
+are a 32.6% **review retention rate**. Neither estimates the residual information
+rate of the 805 unreviewed hashes. Under targeted selection, a rising, flat, or
+falling retention trajectory is confounded with changing targeting accuracy;
+no trajectory from this design can establish saturation.
 
 1. Pull the top 1,000 distinct content hashes by repository count.
 2. Classify them into an existing category or an explicit taxonomy-review queue.
 3. Collapse exact copies and flag near-duplicates before substantive review.
 4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
 5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
-6. Stop a category after 20 consecutive eligible candidates contribute no new principle, mode, constraint, conflict, or eval case.
+6. Treat 20 consecutive eligible, lineage-independent candidates with no new information as a review checkpoint, not a population-saturation claim.
 
-This is an evidence-saturation rule, not a fixed-source quota. Record exclusions and the reason for them.
+Record exclusions and the reason for them. Population-level claims and future
+ordered review are governed by the preregistered definitions, random probe, and
+family-rerank requirements in `SAMPLING_PLAN.md`.
 
 `scripts/export_expansion_candidates.py` creates the metadata-only review queue. Raw text used during review must remain in a separate, uncommitted research location.
 

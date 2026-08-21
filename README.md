@@ -14,7 +14,7 @@
 
 **These are not bundles of copied prompts or concatenated skills.** The suite currently contains 11 independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Private research build. The top-1,000 metadata and lineage triage is complete. Substantive review has promoted 31 expansion sources, including the evidence that established three additional categories. Comparative benchmarks, remaining candidate review, and full upstream-lineage verification continue.
+> **Status:** Private research build. Super Skills is sourced from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as synthesis evidence; the remaining 805 have received metadata and lineage triage only. Comparative benchmarks, remaining candidate review, and full upstream-lineage verification continue.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -78,9 +78,7 @@ The skill determines which modes apply rather than imposing every source practic
 
 ## Synthesis methodology
 
-The initial research baseline uses **99 ranked content hashes from the GitSkills top 100**, excluding one non-skill placeholder.
-
-Those sources established eight initial capability categories. Substantive review of the top-1,000 expansion established three more. All categories are analyzed for:
+The research uses a ranked top-1,000 GitSkills frame. Its initial substantive review covered 99 eligible hashes in the top 100; subsequent targeted review covered 95 expansion hashes. Together, those reviews retained 130 hashes as synthesis evidence and established the current 11 capability categories. All categories are analyzed for:
 
 1. recurring principles;
 2. distinctive specialist guidance;
@@ -100,6 +98,8 @@ The repository includes the artifacts used to make synthesis decisions:
 ```text
 research/
 ├── source-ledger.csv
+├── TOP_1000_EXPANSION.md
+├── SAMPLING_PLAN.md
 ├── synthesis-matrices/
 ├── conflict-decisions/
 ├── ATTRIBUTION.md
@@ -136,7 +136,7 @@ A provenance entry records research influence. It does not imply incorporation, 
 
 ## Expanding the evidence base
 
-The top-100 corpus established the initial architecture; it did not establish corpus-wide completeness. The top-1,000 expansion added three category boundaries and continues to be screened for:
+The top-100 review established the initial architecture; it did not establish corpus-wide completeness. Work within the top-1,000 frame added three category boundaries, but the current 11-category taxonomy is neither claimed to be saturated nor assumed to be complete. The remaining evidence is being screened for:
 
 - additional specialist coverage;
 - genuinely distinct approaches;
@@ -146,7 +146,7 @@ The top-100 corpus established the initial architecture; it did not establish co
 
 The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the initial baseline. The additions have provisional category routing and near-duplicate flags, while ambiguous records remain in an explicit review queue. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
 
-Expansion uses **evidence saturation** rather than an arbitrary source count: additional sources stop materially affecting a category once they cease producing new principles, modes, constraints, conflicts, or evaluation cases.
+Targeted-review yield is not treated as evidence of saturation: candidate selection confounds yield with the quality of the targeting signal, and the reviewed counts within rank bands are too small for a meaningful trend test. Before further ordered review, the project will run the preregistered random probe in [research/SAMPLING_PLAN.md](research/SAMPLING_PLAN.md). Family-level reranking and any future no-new-information claim must also follow that plan.
 
 Regenerate the metadata-only review queue without adding third-party source text to the repository:
 
