@@ -126,19 +126,35 @@ def main() -> int:
         )
     public_sets = {path: shingles(path, args.ngram) for path in public_files}
     source_sets = {path: shingles(path, args.ngram) for path in source_files}
+    public_digests = {
+        path: hashlib.sha256(path.read_bytes()).digest() for path in public_files
+    }
+    source_digests = {
+        path: hashlib.sha256(path.read_bytes()).digest() for path in source_files
+    }
 
-    matches: list[tuple[float, int, Path, Path]] = []
+    matches: list[tuple[float, int, Path, Path, bool]] = []
     for public_path, public_shingles in public_sets.items():
         for source_path, source_shingles in source_sets.items():
+            if public_digests[public_path] == source_digests[source_path]:
+                matches.append((1.0, 0, public_path, source_path, True))
+                continue
             containment, overlap = score(public_shingles, source_shingles)
             if overlap and containment >= args.threshold:
-                matches.append((containment, overlap, public_path, source_path))
+                matches.append((containment, overlap, public_path, source_path, False))
 
     if matches:
         print("Potentially close source overlap detected:", file=sys.stderr)
-        for containment, overlap, public_path, source_path in sorted(matches, reverse=True):
+        for containment, overlap, public_path, source_path, exact in sorted(
+            matches, reverse=True
+        ):
+            measure = (
+                "exact byte match"
+                if exact
+                else f"{containment:.1%} containment, {overlap} shingles"
+            )
             print(
-                f"- {containment:.1%} containment, {overlap} shingles: "
+                f"- {measure}: "
                 f"{public_path.relative_to(ROOT)} <> {source_path}",
                 file=sys.stderr,
             )

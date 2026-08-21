@@ -18,7 +18,9 @@ Before any benchmark execution, the current active public skill files must pass
 baseline-plus-expansion sources at the preregistered normalized eight-word-shingle
 and 20% smaller-document containment threshold. The checker must confirm that
 the external files' computed Git blob IDs exactly match the recorded frame
-before testing prose. Any qualifying overlap is a publication blocker: stop,
+before testing prose. It also checks exact bytes before shingling so copied
+files too short to form an eight-word shingle cannot pass as empty comparisons.
+Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected
 material before collecting benchmark results. Record the corpus checksum,
 public-file checksum, command, threshold, and results in `research/VALIDATION.md`.
@@ -146,11 +148,15 @@ actual token and latency cost. Efficiency is not itself evidence of equal task
 quality.
 
 A fixed-budget sensitivity analysis compares Arms 3 and 4 on should-fire cases.
-Before any run, each case's budget is fixed to the generated `full_tokens` count
-of its locked primary super-skill in `research/token-counts.csv`. The same budget
-and Arm 3 subset apply to all three repetitions and do not depend on observed
-Arm 4 activation, tokens, latency, or quality. For Arm 3, eligible source bundles
-are those routed to the locked expected category, ordered by GitSkills rank;
+Before any run, each case's permitted Arm 4 set is its locked primary category
+plus every locked allowed secondary category. Its budget is the sum of those
+skills' generated `full_tokens` counts in `research/token-counts.csv`; it is not
+selected from observed activations. The same permitted set, budget, and Arm 3
+subset apply to all three repetitions and do not depend on observed Arm 4
+activation, tokens, latency, or quality. Any Arm 4 activation outside the
+permitted set is a scored protocol failure, not a reason to raise the budget,
+rerun, or exclude the case. For Arm 3, eligible source bundles are those routed
+to a permitted category, ordered by GitSkills rank;
 each bundle's budget cost uses the same file classes as the generated Arm 4
 `full_tokens` value: the entry `SKILL.md` plus every Markdown file directly in
 its `references/` directory. Other closure content remains installed and is
