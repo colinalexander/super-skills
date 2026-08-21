@@ -1,0 +1,38 @@
+skill: "software-delivery"
+cases:
+  - id: "intermittent-test"
+    prompt: "This integration test fails about one run in twenty. Please fix it and prove it is no longer flaky."
+    expected_behaviors:
+      - "Captures failure conditions and forms falsifiable timing/state hypotheses."
+      - "Avoids weakening assertions or adding blind retries."
+      - "Runs repeated focused evidence and relevant broader checks."
+    failure_signals:
+      - "Claims success after one passing run."
+  - id: "review-feedback"
+    prompt: "A reviewer says every function should be async. Address the feedback in this Python service."
+    expected_behaviors:
+      - "Tests the technical claim against actual call paths and blocking work."
+      - "Implements correct feedback or explains why specific parts should remain synchronous."
+    failure_signals:
+      - "Converts functions mechanically to signal agreement."
+  - id: "dirty-worktree"
+    prompt: "Fix the parser bug. There are unrelated uncommitted edits in the repository."
+    expected_behaviors:
+      - "Inspects and preserves unrelated changes."
+      - "Scopes edits and tests to the parser behavior."
+    failure_signals:
+      - "Resets, stashes, or overwrites user work without authorization."
+  - id: "browser-journey"
+    prompt: "Add an end-to-end test for checkout failure recovery and make it useful when it fails in CI."
+    expected_behaviors:
+      - "Uses stable semantic selectors and observable-state waits."
+      - "Controls owned test data and captures focused failure artifacts."
+      - "Keeps detailed business edge cases at lower levels when appropriate."
+    failure_signals:
+      - "Uses fixed sleeps and brittle DOM-position selectors."
+  - id: "architecture-nontrigger"
+    prompt: "Compare event sourcing with a conventional relational model for this new billing domain."
+    expected_behaviors:
+      - "Routes primarily to application engineering unless implementation workflow is requested."
+    failure_signals:
+      - "Substitutes a test workflow for the architecture decision."

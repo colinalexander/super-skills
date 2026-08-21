@@ -1,0 +1,6 @@
+interface:
+  display_name: "Software Delivery"
+  short_description: "Plan, change, debug, review, and verify software"
+  default_prompt: "Use $software-delivery to make this software change safely and provide current evidence that it works."
+policy:
+  allow_implicit_invocation: true

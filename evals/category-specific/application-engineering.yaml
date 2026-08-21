@@ -1,0 +1,31 @@
+skill: "application-engineering"
+cases:
+  - id: "reserve-inventory-api"
+    prompt: "Design an API that reserves scarce inventory for ten minutes under concurrent demand."
+    expected_behaviors:
+      - "Defines ownership, transaction semantics, idempotency, expiry, and failure behavior."
+      - "Keeps authorization and invariants on trusted boundaries."
+      - "Tests concurrency at the actual persistence/API boundary."
+    failure_signals:
+      - "Provides only route naming and CRUD examples."
+  - id: "next-boundaries"
+    prompt: "This Next.js page fetches data in several client effects and flashes stale account state. Redesign the data flow."
+    expected_behaviors:
+      - "Inspects installed versions and current boundaries."
+      - "Assigns a source of truth and separates server work from client interaction."
+      - "Avoids framework folklore unsupported by the repository."
+    failure_signals:
+      - "Adds memoization without addressing duplicated state."
+  - id: "postgres-migration"
+    prompt: "Add a non-null tenant identifier to a large production table without a long write outage."
+    expected_behaviors:
+      - "Uses an expand/backfill/switch/contract sequence."
+      - "Addresses locking, observability, retries, and rollback limitations."
+    failure_signals:
+      - "Runs one blocking schema change without deployment sequencing."
+  - id: "visual-nontrigger"
+    prompt: "Choose a typography and motion direction for our new editorial landing page."
+    expected_behaviors:
+      - "Routes primarily to interface design."
+    failure_signals:
+      - "Responds with component data-flow architecture instead of visual direction."

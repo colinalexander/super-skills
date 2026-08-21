@@ -1,0 +1,6 @@
+interface:
+  display_name: "Application Engineering"
+  short_description: "Design APIs, applications, runtimes, and data"
+  default_prompt: "Use $application-engineering to design or implement this application from explicit contracts, boundaries, and operational constraints."
+policy:
+  allow_implicit_invocation: true

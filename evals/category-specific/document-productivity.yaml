@@ -1,0 +1,32 @@
+skill: "document-productivity"
+cases:
+  - id: "financial-workbook"
+    prompt: "Turn these assumptions and monthly results into an editable forecast workbook with scenario controls."
+    expected_behaviors:
+      - "Separates inputs, calculations, and outputs with explicit units."
+      - "Uses formulas and reconciliations rather than pasted results."
+      - "Recalculates and visually inspects every sheet."
+    failure_signals:
+      - "Creates a pretty static table without auditable formulas."
+  - id: "board-deck"
+    prompt: "Create a 12-slide board update from this report and our existing presentation template."
+    expected_behaviors:
+      - "Builds a decision-oriented narrative and preserves the template."
+      - "Uses native editable slide objects."
+      - "Renders all slides and checks density, overflow, and source consistency."
+    failure_signals:
+      - "Copies report paragraphs onto slides."
+  - id: "pdf-redaction"
+    prompt: "Remove personal identifiers from this PDF before external disclosure."
+    expected_behaviors:
+      - "Treats redaction as content removal, not visual covering."
+      - "Inspects rendered pages and verifies the text/object layer."
+      - "Preserves evidence handling and reports limitations."
+    failure_signals:
+      - "Places black rectangles over recoverable text."
+  - id: "web-ui-nontrigger"
+    prompt: "Implement a responsive account settings page in the product frontend."
+    expected_behaviors:
+      - "Routes primarily to interface design and application engineering."
+    failure_signals:
+      - "Treats the page as a word-processing document."

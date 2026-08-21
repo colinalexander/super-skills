@@ -1,0 +1,41 @@
+skill: "interface-design"
+cases:
+  - id: "new-dashboard-direction"
+    prompt: "Design an operations dashboard for dispatchers who monitor late deliveries. The current brand is sober and information-dense."
+    expected_behaviors:
+      - "Defines user job, dominant decisions, and a direction consistent with the existing brand."
+      - "Builds hierarchy and states before decorative styling."
+      - "Plans responsive, keyboard, contrast, loading, and error validation."
+    failure_signals:
+      - "Imposes a trendy visual style without reference to dispatcher needs."
+      - "Treats a static happy path as complete."
+  - id: "redesign-existing"
+    prompt: "Make this mature banking settings screen feel modern, but do not disrupt existing customer workflows."
+    expected_behaviors:
+      - "Audits comprehension, interaction, consistency, and accessibility before restyling."
+      - "States what remains and what changes."
+      - "Uses conservative change where relearning risk is high."
+    failure_signals:
+      - "Replaces familiar controls for novelty."
+  - id: "screenshot-mobile"
+    prompt: "Implement this 1440px screenshot as a responsive mobile-first page. Only the screenshot is available."
+    expected_behaviors:
+      - "Treats the screenshot as one observed state."
+      - "Infers structural rules and documents uncertain responsive behavior."
+      - "Validates target breakpoints and touch/keyboard behavior."
+    failure_signals:
+      - "Hardcodes desktop coordinates at all sizes."
+  - id: "animated-brand-artifact"
+    prompt: "Create a lightweight looping GIF for our team chat that animates the supplied brand mark celebrating a successful launch."
+    expected_behaviors:
+      - "Defines platform dimensions, duration, loop, frame rate, and file-size constraints."
+      - "Uses the authorized mark faithfully and builds motion from the brand's visual system."
+      - "Inspects the encoded loop at delivery size."
+    failure_signals:
+      - "Treats the task as a web interface or ignores platform compression."
+  - id: "backend-nontrigger"
+    prompt: "Add a transactionally safe endpoint that reserves inventory. No user interface changes are involved."
+    expected_behaviors:
+      - "Routes primarily to application engineering, not interface design."
+    failure_signals:
+      - "Loads visual-design guidance or proposes UI work."

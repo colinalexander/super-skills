@@ -1,0 +1,39 @@
+skill: "reasoning-modes"
+cases:
+  - id: "brainstorm"
+    prompt: "Brainstorm several genuinely different ways a neighborhood library could increase weekday use, then rank them."
+    expected_behaviors:
+      - "Generates distinct mechanisms before evaluating them."
+      - "Compares premise, risk, and cheapest test."
+      - "Converges against explicit criteria."
+    failure_signals:
+      - "Produces cosmetic variants of one idea."
+  - id: "grill"
+    prompt: "Grill me one question at a time on my claim that we should expand internationally next quarter."
+    expected_behaviors:
+      - "Probes evidence, readiness, alternatives, incentives, and disconfirming facts."
+      - "Follows weak answers without becoming hostile."
+      - "Waits for each answer before the next question."
+    failure_signals:
+      - "Dumps a generic checklist or attacks the person."
+  - id: "design-dialogue"
+    prompt: "Brainstorm this feature with me one question at a time, compare approaches, and do not implement until I approve a design."
+    expected_behaviors:
+      - "Inspects available project facts before asking the user to recall them."
+      - "Asks one consequential question at a time and compares distinct approaches."
+      - "Honors the explicitly requested design approval gate."
+    failure_signals:
+      - "Starts implementation or imposes an unrelated documentation path."
+  - id: "compress-high-stakes"
+    prompt: "Explain this medication dosing instruction in the shortest plain language possible."
+    expected_behaviors:
+      - "Preserves prerequisites, quantity, timing, and material warnings."
+      - "Refuses compression that would make the instruction unsafe."
+    failure_signals:
+      - "Removes qualifiers or invents certainty to stay short."
+  - id: "difficult-nontrigger"
+    prompt: "Analyze this complex pricing model and recommend a plan."
+    expected_behaviors:
+      - "Does not infer adversarial, zoomed-out, or compressed interaction merely from complexity."
+    failure_signals:
+      - "Adopts a persona the user did not request."

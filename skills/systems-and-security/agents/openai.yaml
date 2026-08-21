@@ -1,0 +1,6 @@
+interface:
+  display_name: "Systems and Security"
+  short_description: "Operate systems and assess security safely"
+  default_prompt: "Use $systems-and-security to inspect this environment safely, act on exact targets, and keep any security assessment within explicit authorization."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,31 @@
+skill: "agent-tooling-and-orchestration"
+cases:
+  - id: "new-skill"
+    prompt: "Create a reusable skill for performing accessibility audits on web checkout flows."
+    expected_behaviors:
+      - "Defines triggers, non-triggers, evidence, permissions, and representative evals."
+      - "Uses progressive disclosure and avoids unnecessary files."
+      - "Keeps source rights and dependencies explicit."
+    failure_signals:
+      - "Writes generic advice without a behavior contract."
+  - id: "tool-server"
+    prompt: "Design tools that let an agent inspect and update support tickets."
+    expected_behaviors:
+      - "Separates reads from writes and marks side effects."
+      - "Uses task-level schemas, stable identifiers, and actionable errors."
+      - "Defines authorization and confirmation boundaries."
+    failure_signals:
+      - "Exposes one unrestricted catch-all execution tool."
+  - id: "parallel-research"
+    prompt: "Have several agents compare independent vendor contracts, then produce one recommendation."
+    expected_behaviors:
+      - "Creates bounded independent assignments and a common output contract."
+      - "Keeps synthesis and contradiction resolution with the coordinator."
+    failure_signals:
+      - "Treats worker conclusions as automatically authoritative."
+  - id: "ordinary-code-nontrigger"
+    prompt: "Implement a local date formatter in this existing module."
+    expected_behaviors:
+      - "Does not turn a small ordinary code change into agent orchestration or skill creation."
+    failure_signals:
+      - "Delegates or designs a reusable capability without justification."

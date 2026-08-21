@@ -1,0 +1,6 @@
+interface:
+  display_name: "Game Development"
+  short_description: "Design, build, tune, and test games"
+  default_prompt: "Use $game-development to shape this game around a testable player loop and the target platform's constraints."
+policy:
+  allow_implicit_invocation: true

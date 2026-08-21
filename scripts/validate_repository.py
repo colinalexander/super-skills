@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Validate the public structure and source-separation invariants."""
+
+from __future__ import annotations
+
+import csv
+import re
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SKILLS = (
+    "interface-design",
+    "software-delivery",
+    "agent-tooling-and-orchestration",
+    "application-engineering",
+    "document-productivity",
+    "game-development",
+    "reasoning-modes",
+    "systems-and-security",
+)
+DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
+
+
+def fail(errors: list[str], message: str) -> None:
+    errors.append(message)
+
+
+def parse_frontmatter(path: Path, errors: list[str]) -> dict[str, str]:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        fail(errors, f"{path}: missing YAML frontmatter")
+        return {}
+    try:
+        block = text.split("---\n", 2)[1]
+    except IndexError:
+        fail(errors, f"{path}: unterminated YAML frontmatter")
+        return {}
+    result: dict[str, str] = {}
+    for line in block.splitlines():
+        if not line.strip():
+            continue
+        if ":" not in line:
+            fail(errors, f"{path}: malformed frontmatter line: {line!r}")
+            continue
+        key, value = line.split(":", 1)
+        result[key.strip()] = value.strip().strip('"')
+    return result
+
+
+def validate_skill(skill: str, errors: list[str]) -> None:
+    directory = ROOT / "skills" / skill
+    entry = directory / "SKILL.md"
+    metadata = directory / "agents" / "openai.yaml"
+    references = directory / "references"
+    for required in (entry, metadata, references):
+        if not required.exists():
+            fail(errors, f"missing {required.relative_to(ROOT)}")
+            return
+
+    fields = parse_frontmatter(entry, errors)
+    if fields.get("name") != skill:
+        fail(errors, f"{entry}: name must be {skill!r}")
+    if not fields.get("description") or "Use " not in fields["description"]:
+        fail(errors, f"{entry}: description must say when to use the skill")
+    if set(fields) != {"name", "description"}:
+        fail(errors, f"{entry}: only name and description are allowed in frontmatter")
+
+    entry_text = entry.read_text(encoding="utf-8")
+    for marker in DISALLOWED_MARKERS:
+        if marker in entry_text:
+            fail(errors, f"{entry}: contains scaffold marker {marker!r}")
+    for link in re.findall(r"\]\((references/[^)]+)\)", entry_text):
+        if not (directory / link).is_file():
+            fail(errors, f"{entry}: broken reference link {link}")
+
+    yaml_text = metadata.read_text(encoding="utf-8")
+    if f"$${skill}" in yaml_text:
+        fail(errors, f"{metadata}: default prompt has an escaped skill name")
+    if f"${skill}" not in yaml_text:
+        fail(errors, f"{metadata}: default_prompt must mention ${skill}")
+    if "allow_implicit_invocation: true" not in yaml_text:
+        fail(errors, f"{metadata}: implicit invocation policy is missing")
+    short_match = re.search(r'^\s*short_description:\s*"([^"]+)"', yaml_text, re.M)
+    if not short_match or not 25 <= len(short_match.group(1)) <= 64:
+        fail(errors, f"{metadata}: short_description must be 25-64 characters")
+
+    reference_files = sorted(references.glob("*.md"))
+    if not reference_files:
+        fail(errors, f"{references}: must contain focused reference files")
+    for path in reference_files:
+        text = path.read_text(encoding="utf-8")
+        for marker in DISALLOWED_MARKERS:
+            if marker in text:
+                fail(errors, f"{path}: contains scaffold marker {marker!r}")
+
+
+def validate_ledger(errors: list[str]) -> None:
+    ledger = ROOT / "research" / "source-ledger.csv"
+    with ledger.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) != 99:
+        fail(errors, f"source ledger contains {len(rows)} rows, expected 99")
+    observed = {row["super_skill"] for row in rows}
+    if observed != set(SKILLS):
+        fail(errors, f"source ledger skill set differs: {sorted(observed)}")
+    hashes = [row["file_sha"] for row in rows]
+    if len(hashes) != len(set(hashes)):
+        fail(errors, "source ledger contains duplicate content hashes")
+    for number, row in enumerate(rows, start=2):
+        if not row["reference_url"].startswith("https://"):
+            fail(errors, f"source ledger row {number}: missing HTTPS reference URL")
+        if row["reuse_policy"] != "ideas-only synthesis; no source prose, code, or assets copied":
+            fail(errors, f"source ledger row {number}: unexpected reuse policy")
+
+
+def validate_suite(errors: list[str]) -> None:
+    skill_dirs = {path.name for path in (ROOT / "skills").iterdir() if path.is_dir()}
+    if skill_dirs != set(SKILLS):
+        fail(errors, f"skills directory differs: {sorted(skill_dirs)}")
+    for skill in SKILLS:
+        validate_skill(skill, errors)
+        matrix = ROOT / "research" / "synthesis-matrices" / f"{skill}.md"
+        evaluation = ROOT / "evals" / "category-specific" / f"{skill}.yaml"
+        if not matrix.is_file():
+            fail(errors, f"missing {matrix.relative_to(ROOT)}")
+        if not evaluation.is_file():
+            fail(errors, f"missing {evaluation.relative_to(ROOT)}")
+
+    all_skill_files = list(ROOT.rglob("SKILL.md"))
+    allowed = {(ROOT / "skills" / skill / "SKILL.md").resolve() for skill in SKILLS}
+    unexpected = [path for path in all_skill_files if path.resolve() not in allowed]
+    if unexpected:
+        fail(errors, "unexpected SKILL.md files: " + ", ".join(str(p) for p in unexpected))
+
+def main() -> int:
+    errors: list[str] = []
+    validate_suite(errors)
+    validate_ledger(errors)
+    if errors:
+        print("Repository validation failed:", file=sys.stderr)
+        for error in errors:
+            print(f"- {error}", file=sys.stderr)
+        return 1
+    print("Repository validation passed: 8 skills, 99 ledger rows, complete matrices and evals.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

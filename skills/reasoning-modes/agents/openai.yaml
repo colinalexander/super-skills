@@ -1,0 +1,6 @@
+interface:
+  display_name: "Reasoning Modes"
+  short_description: "Change how ideas are explored or challenged"
+  default_prompt: "Use $reasoning-modes to adopt the interaction mode I requested while preserving evidence, safety, and domain requirements."
+policy:
+  allow_implicit_invocation: true

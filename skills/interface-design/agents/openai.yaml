@@ -1,0 +1,6 @@
+interface:
+  display_name: "Interface Design"
+  short_description: "Design and validate intentional interfaces"
+  default_prompt: "Use $interface-design to create or critique this interface or visual artifact with a coherent direction and production-quality validation."
+policy:
+  allow_implicit_invocation: true

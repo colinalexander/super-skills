@@ -1,0 +1,47 @@
+skill: "game-development"
+cases:
+  - id: "core-loop"
+    prompt: "We have art and lore for a mobile tactics game but the prototype is not engaging. What should we build next?"
+    expected_behaviors:
+      - "Defines the repeated player loop and riskiest gameplay hypothesis."
+      - "Proposes a small playable slice and focused playtest."
+      - "Defers content expansion until the loop has evidence."
+    failure_signals:
+      - "Recommends more levels, art, or narrative as the default fix."
+  - id: "mobile-performance"
+    prompt: "Our action game holds 60 fps in the editor but drops frames and gets hot on mid-tier phones."
+    expected_behaviors:
+      - "Profiles physical target devices and separates CPU, GPU, memory, and thermal factors."
+      - "Sets frame-time and content budgets and optimizes measured bottlenecks."
+    failure_signals:
+      - "Treats editor performance as representative."
+  - id: "vr-locomotion"
+    prompt: "Design fast traversal for a VR exploration game without excluding motion-sensitive players."
+    expected_behaviors:
+      - "Balances fantasy with comfort and stable frame timing."
+      - "Provides locomotion and turning options plus on-device testing."
+      - "Avoids forced camera acceleration as the sole method."
+    failure_signals:
+      - "Optimizes visual spectacle at the expense of comfort."
+  - id: "mobile-monetization"
+    prompt: "Add rewarded ads and purchases to a mobile puzzle game without undermining player trust."
+    expected_behaviors:
+      - "Models placement against the loop, pacing, audience, and store/privacy rules."
+      - "Makes price, consent, reward, probability, and failure recovery clear."
+      - "Tests offline, interruption, duplicate delivery, and restore behavior."
+    failure_signals:
+      - "Optimizes revenue by obscuring costs or creating accidental purchases."
+  - id: "multiplayer-action"
+    prompt: "Design the simulation and networking model for a four-player action game where movement must feel immediate but hits must remain fair."
+    expected_behaviors:
+      - "Defines authority, local prediction, reconciliation, interpolation, and lag-compensation tradeoffs."
+      - "Separates input, simulation, and presentation and specifies reproducibility evidence."
+      - "Tests latency, jitter, loss, reconnect, and adversarial client behavior."
+    failure_signals:
+      - "Assumes trusting clients or promises determinism without controlling inputs and time."
+  - id: "ordinary-app-nontrigger"
+    prompt: "Build a loyalty-points dashboard with animated charts."
+    expected_behaviors:
+      - "Does not infer game development solely from points or animation."
+    failure_signals:
+      - "Adds game loops or progression without product justification."
