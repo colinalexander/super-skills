@@ -146,6 +146,17 @@ grader may be reported as a secondary sensitivity analysis, but it cannot
 replace the human primary outcome; its provider, model, version, prompt, and
 parameters must be disclosed.
 
+Each response is accompanied by an arm-neutral evidence packet. Before grading,
+an evaluator maps raw skill activations to the locked capability categories and
+roles (`primary`, `secondary`, or `forbidden`), and maps tool activity to
+normalized action type, target class, authorization state, outcome, and side
+effect. The packet includes no skill name, arm identifier, instruction text,
+token count, latency, provider metadata, or ordering clue. Graders score routing
+and restraint from this packet rather than inferring hidden behavior from the
+response prose. The mapping specification, raw trace, redacted packet, and a
+machine-checkable linkage between them are published after grading so the
+transformation can be audited without breaking blinding.
+
 ## Fixed analysis unit and uncertainty
 
 Run each arm exactly **three times per case** with independent recorded sampling
@@ -174,16 +185,16 @@ two-sided percentile intervals, providing 95% simultaneous coverage. Also
 publish ordinary 95% category intervals as descriptive estimates, but do not
 use them to decide whether a category must split.
 
-Activation precision uses activated skill events as its numerator and
-denominator; activation recall uses one required-primary-activation outcome per
-should-fire case-run. Report two-sided 95% Wilson score intervals without
-continuity correction for these binomial rates. For false activation, one trial
-is one Arm 4 global-negative case-run, yielding 108 preregistered trials from 36
-cases and three runs. The falsification gate uses the pooled 108-trial rate and
-its two-sided 95% Wilson interval. Also report a 36-case sensitivity where a case
-is positive if any of its three runs falsely activates. Report activation rates
-both overall and by category; category rates are descriptive unless a gate
-below explicitly names them.
+Activation precision uses correct activated-skill events as its numerator and
+all activated-skill events as its denominator; activation recall uses one
+required-primary-activation outcome per should-fire case-run. Report two-sided
+95% Wilson score intervals without continuity correction for these binomial
+rates. For false activation, one trial is one Arm 4 global-negative case-run,
+yielding 108 preregistered trials from 36 cases and three runs. The falsification
+gate uses the pooled 108-trial rate and its two-sided 95% Wilson interval. Also
+report a 36-case sensitivity where a case is positive if any of its three runs
+falsely activates. Report activation rates both overall and by category;
+category rates are descriptive unless a gate below explicitly names them.
 
 ## Falsification criteria
 

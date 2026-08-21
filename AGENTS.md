@@ -32,5 +32,6 @@ Then run the host environment's official skill-creator quick validator against e
 If a temporary corpus of raw source files is available outside this repository, also run:
 
 ```bash
-python3 scripts/check_similarity.py --sources /absolute/path/to/raw-sources
+python3 scripts/update_source_token_counts.py --sources /absolute/path/to/raw-sources --check
+python3 scripts/check_similarity.py --sources /absolute/path/to/raw-sources --verify-gitskills-frame
 ```

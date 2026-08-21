@@ -26,7 +26,6 @@ SKILLS = (
 WITHHELD_CATEGORIES = ("document-productivity",)
 EVIDENCE_CATEGORIES = SKILLS + WITHHELD_CATEGORIES
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
-RETAINED_SOURCE_DESCRIPTION_TOKENS = 5_613
 LEDGER_FIELDS = (
     "rank",
     "super_skill",
@@ -309,12 +308,60 @@ def validate_token_counts(errors: list[str]) -> None:
             fail(errors, f"README token counts are stale for {row['skill']}")
     if f"total **{description_total:,} tokens**" not in readme:
         fail(errors, "README aggregate description-token count is stale")
-    expected_ratio = RETAINED_SOURCE_DESCRIPTION_TOKENS / description_total
+    source_counts_path = ROOT / "research" / "source-description-token-counts.csv"
+    source_fields = (
+        "rank",
+        "file_sha",
+        "super_skill",
+        "tokenizer",
+        "tokenizer_package_version",
+        "description_tokens",
+    )
+    with source_counts_path.open(newline="", encoding="utf-8") as handle:
+        source_reader = csv.DictReader(handle)
+        observed_source_fields = tuple(source_reader.fieldnames or ())
+        source_rows = list(source_reader)
+    if observed_source_fields != source_fields:
+        fail(errors, f"source token count fields differ: {observed_source_fields}")
+
+    with (ROOT / "research" / "source-ledger.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        active_ledger_rows = {
+            row["file_sha"]: row
+            for row in csv.DictReader(handle)
+            if row["super_skill"] in SKILLS
+        }
+    observed_source_hashes = {row["file_sha"] for row in source_rows}
+    if len(source_rows) != 119 or observed_source_hashes != set(active_ledger_rows):
+        fail(errors, "source token counts do not match the 119 active ledger hashes")
+
+    source_total = 0
+    for number, row in enumerate(source_rows, start=2):
+        ledger_row = active_ledger_rows.get(row["file_sha"])
+        if ledger_row is None:
+            continue
+        if (
+            row["rank"] != ledger_row["rank"]
+            or row["super_skill"] != ledger_row["super_skill"]
+            or row["tokenizer"] != "cl100k_base"
+            or row["tokenizer_package_version"] != "0.11.0"
+        ):
+            fail(errors, f"source token count row {number}: ledger or tokenizer differs")
+        count = int(row["description_tokens"])
+        if count < 1:
+            fail(errors, f"source token count row {number}: invalid count")
+        source_total += count
+
+    expected_ratio = source_total / description_total
+    benchmark = (ROOT / "evals" / "BENCHMARK.md").read_text(encoding="utf-8")
     if (
-        f"**{RETAINED_SOURCE_DESCRIPTION_TOKENS:,} tokens**" not in readme
+        f"**{source_total:,} tokens**" not in readme
         or f"{expected_ratio:.1f}×" not in readme
     ):
         fail(errors, "README retained-source description-token comparison is missing")
+    if f"{source_total:,} tokens for the externally reconstructed Arm 3" not in benchmark:
+        fail(errors, "benchmark retained-source description-token count is stale")
 
 
 def validate_evaluations(errors: list[str]) -> None:
@@ -371,8 +418,10 @@ def validate_evaluations(errors: list[str]) -> None:
             "Bonferroni-adjusted 99.5%",
             "Wilson score intervals",
             "continuity correction",
+            "correct activated-skill events",
+            "arm-neutral evidence packet",
+            "machine-checkable linkage",
             "Falsification criteria",
-            "5,613 tokens",
             "0.5 points",
             "more than 10%",
             "all 999 eligible",

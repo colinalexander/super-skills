@@ -6,7 +6,7 @@ Date: 2026-08-20
 
 - Ledger rows: 130 distinct content hashes across 11 observed categories: 99 baseline hashes and 31 promoted expansion hashes. Eleven document-productivity hashes are preserved as withheld research evidence; 119 hashes support the 10-skill active suite.
 - Review-decision rows: 194 distinct substantively reviewed hashes: 130 retained and 64 not retained, with a nonempty hash-level reason and synthesis target for every row.
-- Token counts: generated for every active skill with `cl100k_base` under pinned `tiktoken==0.11.0`; README description/core/full figures match the generated record. Description counts measure the always-loaded front-matter value and total 580 tokens across the 10-skill suite. Applying the same tokenizer to the 119 active evidence descriptions reconstructed transiently from GitSkills produced 5,613 tokens; no source description text was committed.
+- Token counts: generated for every active skill with `cl100k_base` under pinned `tiktoken==0.11.0`; README description/core/full figures match the generated record. Description counts measure the always-loaded front-matter value and total 580 tokens across the 10-skill suite. The per-hash [source description-token record](source-description-token-counts.csv) binds the 5,613-token comparison to all 119 active retained hashes; it was generated from the exact reconstructed corpus without committing source prose.
 - Source text reconstruction: 99/99 baseline hashes and all 900 eligible expansion hashes retrieved from GitSkills into temporary locations outside this repository.
 - Public source-text inclusion: none; only metadata, hashes, links, aggregate decisions, and newly written instructions are retained.
 
@@ -48,6 +48,7 @@ This automated comparison detects suspicious phrase-level overlap; it does not m
 
 - `scripts/validate_repository.py`: passed.
 - `scripts/update_token_counts.py --check`: passed under Python 3.12 with the pinned validation requirements.
+- `scripts/update_source_token_counts.py --sources /absolute/path/to/reconstructed-999-source-corpus --check`: passed for all 119 active retained hashes.
 - Official skill-creator `quick_validate.py`: passed for all 10 active skill directories.
 - Python compilation: passed for all repository scripts.
 - Git whitespace check: passed.
