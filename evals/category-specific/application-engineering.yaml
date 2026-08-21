@@ -29,3 +29,24 @@ cases:
       - "Routes primarily to interface design."
     failure_signals:
       - "Responds with component data-flow architecture instead of visual direction."
+  - id: "architecture-decision-record"
+    prompt: "Choose between a shared database and database-per-service for this system, and leave a record the team can revisit."
+    expected_behaviors:
+      - "Identifies the constraints and viable alternatives before selecting."
+      - "Records material tradeoffs, rationale, and evidence that would trigger reconsideration."
+    failure_signals:
+      - "Presents the chosen topology as a context-free permanent best practice."
+  - id: "domain-language"
+    prompt: "Our API, database, and support team use three different meanings for an account being active. Repair the model before adding another endpoint."
+    expected_behaviors:
+      - "Tests the competing terms against concrete lifecycle scenarios and invariants."
+      - "Aligns code and contracts around the resolved meanings rather than publishing a detached glossary."
+    failure_signals:
+      - "Renames fields without resolving the contradictory behaviors."
+  - id: "container-boundary"
+    prompt: "Define the production container contract for a background worker that currently runs only through a developer Compose file."
+    expected_behaviors:
+      - "Separates the immutable runtime artifact from injected configuration and secrets."
+      - "Defines privilege, health, resources, graceful shutdown, and production network exposure."
+    failure_signals:
+      - "Copies development mounts, ports, and credentials into production unchanged."

@@ -1,6 +1,6 @@
 # Application engineering synthesis matrix
 
-Baseline: 14 ranked hashes, 13 distinct names.
+Evidence: 14 baseline hashes plus 3 retained top-1,000 expansion hashes.
 
 Evidence labels: `fastapi`, `vercel-composition-patterns`, `supabase-postgres-best-practices`, `vercel-react-best-practices`, `vercel-react-native-skills`, `design-an-interface`, `next-best-practices`, `api-design`, `api-patterns`, `python-patterns`, `nodejs-best-practices`, `database-design`, `django-patterns`.
 
@@ -14,5 +14,8 @@ Evidence labels: `fastapi`, `vercel-composition-patterns`, `supabase-postgres-be
 | Boundary correction | Interface option generation is routed to `interface-design`, with agent coordination only when genuinely useful | A source's observed category does not override the suite's decision ownership |
 | Hosted platforms | Use native security and lifecycle primitives deliberately | Platform advice must be checked against current primary docs and installed versions |
 | Omission repair | Added compatibility, migrations, observability, and failure contracts | Happy-path framework patterns alone are insufficient architecture |
+| Decision records | Preserve constraints, alternatives, tradeoffs, rationale, and a revisit signal for consequential choices | Documentation captures a decision's conditions without making it permanent doctrine |
+| Domain language | Validate terms and invariants against concrete scenarios, then align code and contracts | A glossary is not authoritative when implementation behavior contradicts it |
+| Deployment units | Separate build artifacts from runtime configuration; expose privilege, health, resources, and shutdown | Local-development mounts, ports, and credentials do not define safe production defaults |
 
 Resulting modes: system architecture, API contracts, data/persistence, and runtime/framework implementation.

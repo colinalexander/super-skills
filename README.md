@@ -14,7 +14,7 @@
 
 **These are not bundles of copied prompts or concatenated skills.** The current v0 contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications and the top-1,000 metadata expansion are complete; evidence-saturation review, comparative benchmarks, and full upstream-lineage verification remain in progress.
+> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications and the top-1,000 metadata/lineage triage are complete; seven expansion sources have been retained, with application engineering and software delivery at the current saturation checkpoint. Other category reviews, comparative benchmarks, and full upstream-lineage verification continue.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -107,13 +107,13 @@ evals/
 └── category-specific/
 ```
 
-The [source ledger](research/source-ledger.csv) records content hashes, representative repository locations, available commit lineage, and repository-license metadata. Verified upstream lineage is currently available for ten baseline entries; remaining entries are explicitly marked as observed copies pending resolution.
+The [source ledger](research/source-ledger.csv) records 99 baseline hashes and seven promoted expansion hashes, along with representative repository locations, available commit lineage, and repository-license metadata. Verified upstream lineage is currently available for ten baseline entries; remaining entries are explicitly marked as observed copies pending resolution.
 
 Per-category synthesis matrices record retained rules, contextual decisions, conflict resolutions, and added safeguards. Evaluation specifications cover intended behavior and important non-trigger cases so broad skills do not become broad **always-on** prompts.
 
 ## Evaluation status
 
-The repository currently contains 38 behavioral evaluation cases and a shared rubric. These are evaluation **specifications**, not comparative benchmark results.
+The repository currently contains 44 behavioral evaluation cases and a shared rubric. These are evaluation **specifications**, not comparative benchmark results.
 
 Before claiming that a super-skill outperforms its sources, the project will compare:
 
@@ -141,7 +141,7 @@ The top-100 corpus establishes the v0 architecture; it does not establish corpus
 - new conflicts or constraints;
 - new evaluation cases.
 
-The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the v0 baseline. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
+The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the v0 baseline. The additions have provisional category routing and near-duplicate flags, while ambiguous and outside-taxonomy records remain explicit review queues. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
 
 Expansion uses **evidence saturation** rather than an arbitrary source count: additional sources stop materially affecting a category once they cease producing new principles, modes, constraints, conflicts, or evaluation cases.
 

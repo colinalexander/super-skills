@@ -17,7 +17,9 @@ Super Skills makes the following changes to the GitSkills metadata and aggregati
 
 - selects the ranked top-100 baseline and excludes one non-skill placeholder;
 - ranks the top 1,000 distinct content hashes and publishes a metadata-only expansion queue;
+- adds provisional category routing, taxonomy-review labels, and content-similarity lineage flags without redistributing descriptions or source text;
 - groups the remaining 99 content hashes into eight synthesized capability categories;
+- promotes seven expansion hashes to the provenance ledger after substantive review;
 - adds super-skill mappings, representative source URLs, upstream-verification status, repository-license metadata, and reuse-policy fields;
 - derives category counts, synthesis matrices, conflict decisions, and evaluation specifications; and
 - reformats selected metadata into repository-specific CSV and Markdown artifacts.

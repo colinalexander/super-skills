@@ -12,7 +12,8 @@ Design agent capabilities as contracts with measurable behavior. Prefer the smal
 - Creating or revising a reusable skill: [skill-lifecycle.md](references/skill-lifecycle.md).
 - Designing tools, resources, prompts, or an MCP-style server: [tool-interface-design.md](references/tool-interface-design.md).
 - Splitting work among multiple agents: [orchestration.md](references/orchestration.md).
-- Finding, evaluating, or installing an existing capability: [capability-discovery.md](references/capability-discovery.md).
+- Finding, evaluating, or installing an existing capability: [capability-discovery.md](references/capability-discovery.md);
+- Designing observations, runtime context, or persistent-agent operations: [runtime-and-context.md](references/runtime-and-context.md).
 
 Do not turn one-off domain instructions into a reusable skill unless repetition, error cost, or specialized resources justify it.
 

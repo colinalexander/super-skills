@@ -15,7 +15,7 @@ The committed evidence set consists of:
 | Record class | Count | Status |
 | --- | ---: | --- |
 | Synthesized v0 baseline | 99 | Recorded in `source-ledger.csv` |
-| New eligible candidates | 900 | Unreviewed metadata queue |
+| New eligible candidates | 900 | Metadata triage complete; source review in progress |
 | Non-skill template placeholder | 1 | Excluded at rank 24 |
 | **Total ranked hashes** | **1,000** | Complete rank coverage |
 
@@ -29,6 +29,53 @@ The underlying GitSkills mining runs span 9–20 July 2026. This repository reta
 - The cutoff intersects a tie: 37 groups have 81 repositories and occupy ranks 992–1,028. Occurrence count and then content hash determine which tied groups enter the top 1,000.
 
 These statistics describe content-group reuse, not independent authorship, quality, or causal influence.
+
+## Metadata triage and lineage flags
+
+The 900 eligible additions have completed a reproducible first-pass triage:
+
+| Triage result | Count | Meaning |
+| --- | ---: | --- |
+| Retained after source review | 7 | Added a material decision rule or evaluation case |
+| Reviewed without a new contribution | 40 | Existing synthesis already covered the material behavior |
+| Existing-category proposal | 408 | One category had a clear metadata-rule lead |
+| Manual category review | 397 | No rule matched strongly or multiple boundaries tied |
+| Taxonomy review | 48 | The subject appears outside the current eight-skill suite |
+
+The taxonomy-review set contains 37 marketing/business, six service-automation,
+and five data-science/ML candidates. These are observations about the top-1,000
+sample, not decisions to add new public skills.
+
+Content-similarity triage also flagged 205 records across 91 possible
+near-duplicate lineages. This is deliberately a review aid rather than a claim
+of common authorship: similar skill structures, templates, or independently
+convergent instructions can produce high similarity.
+
+Run the triage against a transient reconstructed corpus with:
+
+```bash
+python3 scripts/triage_expansion.py \
+  --corpus /absolute/path/to/review-corpus.parquet \
+  --write
+```
+
+Descriptions and source text are read only from the external corpus and are
+never written to the repository.
+
+The first promoted evidence consists of three application-engineering, one
+software-delivery, and three agent-tooling hashes. Their retained propositions
+cover architecture-decision records, domain language, deployment-unit
+boundaries, durable destructive-operation guardrails, observation contracts,
+task-scoped context, and persistent-agent operations.
+The source ledger records their provenance before those propositions appear in
+the public skills.
+
+Application engineering and software delivery each reached the current
+saturation threshold: after the last retained source in each ranked stream, 20
+eligible, non-lineage-duplicate candidates added no material principle, mode,
+constraint, conflict, safeguard, or evaluation case. This is a checkpoint for
+this corpus ordering, not proof that specialist or lower-ranked evidence can
+never change those skills.
 
 ## Quality controls
 
@@ -45,7 +92,8 @@ An initial implementation incorrectly filtered to `content_fetched = 1` before a
 
 ## Interpretation boundary
 
-This expansion completes corpus selection, not synthesis. The 900 eligible additions remain `unreviewed` until they are:
+This expansion completes corpus selection and metadata triage, not synthesis.
+The 900 eligible additions are not synthesis evidence until they are:
 
 1. classified into an existing super-skill or an explicit out-of-scope/new-category queue;
 2. checked for near-duplicate lineages and source diversity;

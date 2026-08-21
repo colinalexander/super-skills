@@ -14,7 +14,17 @@ The source ledger records both verified upstream locations and representative ob
 
 Popularity is useful for discovering common conventions but produces visibility, age, ecosystem, and copying biases. Expansion therefore uses the following sequence:
 
-The top-1,000 ranking and metadata-only queue are complete. Classification, near-duplicate review, evidence-saturation decisions, and any resulting changes to skills or evals remain separate review stages; queue membership alone is not synthesis evidence.
+The top-1,000 ranking, metadata-only queue, provisional category triage, and
+near-duplicate flags are complete. Metadata classification is only a routing
+aid. Substantive review, evidence-saturation decisions, and any resulting
+changes to skills or evals remain separate stages; queue membership and a
+proposed category alone are not synthesis evidence.
+
+Seven expansion hashes have passed substantive review and been promoted to the
+source ledger. Forty additional sources were reviewed without adding a material
+proposition. Application engineering and software delivery have each reached
+the 20-source saturation checkpoint; the remaining categories retain
+provisional or review-queue status.
 
 1. Pull the top 1,000 distinct content hashes by repository count.
 2. Classify them into the existing eight categories or an explicit review queue.
@@ -26,6 +36,12 @@ The top-1,000 ranking and metadata-only queue are complete. Classification, near
 This is an evidence-saturation rule, not a fixed-source quota. Record exclusions and the reason for them.
 
 `scripts/export_expansion_candidates.py` creates the metadata-only review queue. Raw text used during review must remain in a separate, uncommitted research location.
+
+`scripts/triage_expansion.py` uses representative names and descriptions to
+propose categories, then uses content n-gram similarity to flag possible
+lineages. It commits only derived labels and similarity notes. Ambiguous
+records remain in manual review, and apparent categories outside the current
+suite remain explicit taxonomy-review candidates.
 
 ## Synthesis procedure
 

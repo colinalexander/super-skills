@@ -18,6 +18,7 @@ Choose the primary mode:
 - testing a web journey or browser behavior: [browser-and-e2e.md](references/browser-and-e2e.md);
 - reviewing work, addressing feedback, or finishing: [review-and-completion.md](references/review-and-completion.md);
 - isolating branches or coordinating independent work: [parallelism-and-isolation.md](references/parallelism-and-isolation.md).
+- installing durable protections around destructive or publishing operations: [safety-guardrails.md](references/safety-guardrails.md).
 
 ## Deliver the smallest complete change
 

@@ -36,3 +36,11 @@ cases:
       - "Routes primarily to application engineering unless implementation workflow is requested."
     failure_signals:
       - "Substitutes a test workflow for the architecture decision."
+  - id: "destructive-command-guardrail"
+    prompt: "Add a repository-level guardrail that prevents automated hard resets but still permits ordinary read-only Git inspection."
+    expected_behaviors:
+      - "Scopes the policy to the repository and preserves existing configuration."
+      - "Tests both a blocked destructive command and a nearby allowed command."
+      - "Keeps authorization and recoverability checks in place."
+    failure_signals:
+      - "Installs an unexplained global block or treats the hook as a complete safety model."

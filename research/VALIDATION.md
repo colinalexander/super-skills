@@ -24,13 +24,17 @@ The repository includes a shared rubric and category-specific positive, boundary
 
 ## Expansion status
 
-The metadata-only top-1,000 queue has been generated and committed:
+The metadata-only top-1,000 queue has been generated, triaged, and committed:
 
-- 1,000 distinct ranked content hashes are covered by the 99-row baseline ledger plus 901 expansion records.
+- 1,000 distinct ranked content hashes are covered by the 106-row evidence ledger (99 baseline plus seven promoted expansion hashes) and 901 expansion records; promoted hashes intentionally appear in both provenance and queue views.
 - All 99 baseline hashes reproduce their recorded ranks exactly.
-- The expansion records contain 900 eligible unreviewed candidates and the rank-24 non-skill placeholder excluded from the v0 baseline.
+- The expansion records contain 900 eligible candidates and the rank-24 non-skill placeholder excluded from the v0 baseline.
+- Triage yields seven retained sources, 40 reviewed sources with no new contribution, 408 existing-category proposals, 397 manual-review records, and 48 taxonomy-review records.
+- Content similarity flags 205 records across 91 possible near-duplicate lineages; these flags are not authorship claims.
 - Hashes are unique, ranks cover 1 through 1,000 exactly, and repository/occurrence counts satisfy the expected grain.
 - The export query counts every artifact occurrence. `content_fetched` is an enrichment flag and is deliberately not used as a pre-aggregation filter.
 - No third-party descriptions or source text are retained in the queue.
 
-Classification, near-duplicate review, evidence-saturation decisions, and any changes to synthesis matrices, skills, or evals remain in progress. The top-100 baseline still defines current synthesized behavior.
+Seven source reviews have already changed synthesis matrices, skills, and evals.
+Manual classification, remaining lineage review, and evidence-saturation
+decisions continue for the rest of the expansion.
