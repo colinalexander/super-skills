@@ -5,7 +5,8 @@ This repository contains 11 original, category-level agent skills synthesized fr
 ## Non-negotiable rules
 
 - Do not copy, vendor, paraphrase closely, or commit third-party skill prose, code, examples, or assets.
-- Treat `research/source-ledger.csv` as the authoritative provenance record.
+- Treat `research/source-ledger.csv` as the authoritative retained-evidence provenance record.
+- Treat `research/review-decisions.csv` as the authoritative substantive-review outcome record.
 - Preserve the CC BY 4.0 scope and GitSkills attribution for material under `research/`.
 - Keep external raw material outside the repository. Use it only as transient research input.
 - Record a source before using it as synthesis evidence.
@@ -20,7 +21,11 @@ Run before sharing changes:
 
 ```bash
 python3 scripts/validate_repository.py
+python3 scripts/update_token_counts.py --check
 ```
+
+Install the pinned validation dependency from `requirements-validation.txt`
+before checking token counts.
 
 Then run the host environment's official skill-creator quick validator against each `skills/<skill-name>` directory.
 

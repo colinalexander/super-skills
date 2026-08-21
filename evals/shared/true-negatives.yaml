@@ -1,0 +1,49 @@
+cases:
+  - id: "capital-question"
+    prompt: "What is the capital of Portugal?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "plain-translation"
+    prompt: "Translate 'thank you for your patience' into Spanish."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "simple-arithmetic"
+    prompt: "What is 17 multiplied by 24?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "paragraph-summary"
+    prompt: "Summarize this paragraph in one sentence: Bees communicate the location of food through movement patterns that encode direction and distance."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "ordinary-rewrite"
+    prompt: "Rewrite this sentence politely: Send the figures today."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "debugging-joke"
+    prompt: "Tell me a short joke about debugging."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "database-definition"
+    prompt: "In one paragraph, explain what a database index is."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "conversion-vocabulary"
+    prompt: "What does the word 'conversion' mean in the sentence 'the barn conversion took a year'?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "chess-history"
+    prompt: "Who became world chess champion in 1972?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "birthday-draft"
+    prompt: "Draft a friendly two-sentence birthday message for Sam. Do not send it."
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "shell-definition"
+    prompt: "What is the difference between a shell and a terminal?"
+    should_activate: false
+    forbidden_activations: "all"
+  - id: "brainstorm-definition"
+    prompt: "Define the word 'brainstorm' without brainstorming anything."
+    should_activate: false
+    forbidden_activations: "all"

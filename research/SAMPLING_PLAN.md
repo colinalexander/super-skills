@@ -3,6 +3,17 @@
 Effective date: this plan takes effect when its pull request is merged. No probe
 sample may be drawn before that merge.
 
+Protocol amendment before sampling: no probe had been drawn when the product-
+validation foundation was specified. The draw is deferred until the four-arm
+benchmark protocol, global true negatives, review-decision register, worked
+conflict example, and validation-enforced token counts are merged. This changes
+execution order only; the population, seed rule, sample size, masking, and
+analysis plan below remain unchanged.
+
+The public seed commit is
+`080777b878c37912a63627b344dc51b0e2df1e0c`, the squash merge that activated
+this plan. Later documentation changes do not replace that seed.
+
 ## Purpose
 
 Estimate the residual information content of the unreviewed portion of the
