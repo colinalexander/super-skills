@@ -115,6 +115,32 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
 
 
+def validate_licensing(errors: list[str]) -> None:
+    root_license = ROOT / "LICENSE"
+    research_license = ROOT / "research" / "LICENSE"
+    attribution = ROOT / "research" / "ATTRIBUTION.md"
+    for required in (root_license, research_license, attribution):
+        if not required.is_file():
+            fail(errors, f"missing {required.relative_to(ROOT)}")
+            return
+
+    if "Apache License" not in root_license.read_text(encoding="utf-8"):
+        fail(errors, "root LICENSE must contain Apache-2.0 terms")
+    if "CC-BY-4.0" not in research_license.read_text(encoding="utf-8"):
+        fail(errors, "research/LICENSE must identify CC-BY-4.0")
+
+    attribution_text = attribution.read_text(encoding="utf-8")
+    required_attribution = (
+        "GitSkills: A Dataset of Agent Skills on GitHub",
+        "https://huggingface.co/datasets/mvaccargiu/gitskills",
+        "https://doi.org/10.5281/zenodo.21875637",
+        "## Modifications",
+    )
+    for marker in required_attribution:
+        if marker not in attribution_text:
+            fail(errors, f"research/ATTRIBUTION.md is missing {marker!r}")
+
+
 def validate_suite(errors: list[str]) -> None:
     skill_dirs = {path.name for path in (ROOT / "skills").iterdir() if path.is_dir()}
     if skill_dirs != set(SKILLS):
@@ -138,6 +164,7 @@ def main() -> int:
     errors: list[str] = []
     validate_suite(errors)
     validate_ledger(errors)
+    validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
         for error in errors:

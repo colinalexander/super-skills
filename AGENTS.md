@@ -6,6 +6,7 @@ This repository contains eight original, category-level agent skills synthesized
 
 - Do not copy, vendor, paraphrase closely, or commit third-party skill prose, code, examples, or assets.
 - Treat `research/source-ledger.csv` as the authoritative provenance record.
+- Preserve the CC BY 4.0 scope and GitSkills attribution for material under `research/`.
 - Keep external raw material outside the repository. Use it only as transient research input.
 - Record a source before using it as synthesis evidence.
 - Add a synthesis-matrix entry for every retained principle, material conflict, or deliberate omission.
