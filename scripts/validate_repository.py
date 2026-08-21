@@ -440,8 +440,10 @@ def validate_evaluations(errors: list[str]) -> None:
             "protocol-imposed compatibility transform",
             "complete, pinned file-dependency closure",
             "checksum over the sorted closure records",
-            "These are success conditions",
+            "same file classes as the generated Arm 4",
+            "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
+            "absolute blocker regardless of comparator behavior",
             "Falsification criteria",
             "0.5 points",
             "all 999 eligible",
@@ -513,7 +515,7 @@ def validate_similarity_gate(errors: list[str]) -> None:
     public_files = sorted(
         path
         for path in (ROOT / "skills").rglob("*")
-        if path.is_file() and not path.name.startswith(".")
+        if path.is_file()
     )
     public_digest = hashlib.sha256()
     for path in public_files:
@@ -679,6 +681,8 @@ def validate_licensing(errors: list[str]) -> None:
             "upstream-verification status, repository-license metadata, and "
             "reuse-policy fields"
         ),
+        "renames `repository_license_metadata` to `license_metadata`",
+        "researched upstream file-level terms where lineage is verified",
         (
             "derives category counts, synthesis matrices, conflict decisions, "
             "evaluation specifications, and instruction token counts"

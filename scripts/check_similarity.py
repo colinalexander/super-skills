@@ -29,7 +29,8 @@ def score(left: set[tuple[str, ...]], right: set[tuple[str, ...]]) -> tuple[floa
 
 
 def files_under(root: Path) -> list[Path]:
-    return sorted(path for path in root.rglob("*") if path.is_file() and not path.name.startswith("."))
+    """Return every regular file, including dot-prefixed distributable files."""
+    return sorted(path for path in root.rglob("*") if path.is_file())
 
 
 def require_external_source_root(path: Path) -> Path:

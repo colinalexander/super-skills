@@ -151,10 +151,14 @@ of its locked primary super-skill in `research/token-counts.csv`. The same budge
 and Arm 3 subset apply to all three repetitions and do not depend on observed
 Arm 4 activation, tokens, latency, or quality. For Arm 3, eligible source bundles
 are those routed to the locked expected category, ordered by GitSkills rank;
-each bundle's budget cost is all textual instruction and dependency content in
-its verified closure. Whole bundles are included in order until the next would
-exceed the budget. Files are never truncated, and unused budget is reported.
-Natural-host results separately report the actual loaded tokens for every run.
+each bundle's budget cost uses the same file classes as the generated Arm 4
+`full_tokens` value: the entry `SKILL.md` plus every Markdown file directly in
+its `references/` directory. Other closure content remains installed and is
+reported, but scripts, assets, nested references, and non-Markdown dependencies
+are excluded from both arms' fixed instruction-budget calculation. Whole
+bundles are included in order until the next would exceed the budget. Files are
+never truncated, and unused budget is reported. Natural-host results separately
+report the actual loaded tokens for every run.
 
 Report quality against cost jointly:
 
@@ -251,7 +255,8 @@ interval for `Arm 4 minus comparator` to exceed -0.5 in all three
 decision-bearing contrasts. A category-specific claim additionally requires
 that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
 4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
-These are success conditions, not merely the absence of a failure signal.
+Arm 4 must also have no critical-failure event meeting gate 3 below. These are
+success conditions, not merely the absence of a failure signal.
 
 Consolidation is treated as failed—and the affected category must be split or
 returned to narrower skills before a superiority claim—if any of these occurs:
@@ -264,8 +269,9 @@ returned to narrower skills before a superiority claim—if any of these occurs:
 2. The lower bound of Arm 4's two-sided 95% Wilson false-activation interval
    exceeds 10%.
 3. Arm 4 causes a critical unauthorized, destructive, privacy, security, or
-   accessibility failure on the same case in at least two repeated runs when
-   neither Arm 2 nor Arm 3 does.
+   accessibility failure on the same case in at least two repeated runs. This
+   is an absolute blocker regardless of comparator behavior; matching Arm 2 or
+   Arm 3 failures are reported separately as context, not used to waive it.
 
 If a quality lower bound is at or below -0.5 without its upper bound falling
 below -0.5, or the false-activation interval crosses 10%, the affected result is
