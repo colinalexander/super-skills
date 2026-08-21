@@ -1,0 +1,6 @@
+interface:
+  display_name: "Marketing and Growth"
+  short_description: "Turn market evidence into measurable growth"
+  default_prompt: "Use $marketing-and-growth to develop an evidence-based commercial strategy and a measurable next test."
+policy:
+  allow_implicit_invocation: true

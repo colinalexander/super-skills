@@ -19,6 +19,9 @@ SKILLS = (
     "game-development",
     "reasoning-modes",
     "systems-and-security",
+    "marketing-and-growth",
+    "connected-service-automation",
+    "data-science-and-ml",
 )
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
 
@@ -100,8 +103,8 @@ def validate_ledger(errors: list[str]) -> None:
     ledger = ROOT / "research" / "source-ledger.csv"
     with ledger.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
-    if len(rows) != 99:
-        fail(errors, f"source ledger contains {len(rows)} rows, expected 99")
+    if len(rows) != 130:
+        fail(errors, f"source ledger contains {len(rows)} rows, expected 130")
     observed = {row["super_skill"] for row in rows}
     if observed != set(SKILLS):
         fail(errors, f"source ledger skill set differs: {sorted(observed)}")
@@ -113,6 +116,110 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: missing HTTPS reference URL")
         if row["reuse_policy"] != "ideas-only synthesis; no source prose, code, or assets copied":
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
+
+
+def validate_expansion_queue(errors: list[str]) -> None:
+    ledger = ROOT / "research" / "source-ledger.csv"
+    queue = ROOT / "research" / "expansion-queue.csv"
+    if not queue.is_file():
+        fail(errors, "missing research/expansion-queue.csv")
+        return
+
+    with ledger.open(newline="", encoding="utf-8") as handle:
+        baseline_rows = list(csv.DictReader(handle))
+    with queue.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        queue_fields = reader.fieldnames or []
+        queue_rows = list(reader)
+
+    expected_fields = [
+        "overall_rank",
+        "file_sha",
+        "repositories",
+        "occurrences",
+        "representative_name",
+        "sample_location",
+        "proposed_super_skill",
+        "review_status",
+        "novel_contribution",
+        "source_diversity_note",
+    ]
+    if queue_fields != expected_fields:
+        fail(errors, f"expansion queue fields differ: {queue_fields}")
+    if len(queue_rows) != 901:
+        fail(errors, f"expansion queue contains {len(queue_rows)} rows, expected 901")
+
+    combined = baseline_rows + queue_rows
+    hashes = {row["file_sha"] for row in combined}
+    if len(hashes) != 1000:
+        fail(errors, "source ledger and expansion queue must cover 1,000 unique hashes")
+
+    ranks = {
+        int(row.get("rank") or row.get("overall_rank") or 0) for row in combined
+    }
+    if ranks != set(range(1, 1001)):
+        fail(errors, "source ledger and expansion queue must cover ranks 1 through 1,000")
+
+    queue_hashes = {row["file_sha"] for row in queue_rows}
+    queue_by_hash = {row["file_sha"]: row for row in queue_rows}
+    expansion_evidence = [row for row in baseline_rows if int(row["rank"]) > 100]
+    if len(expansion_evidence) != 31 or any(
+        row["file_sha"] not in queue_hashes for row in expansion_evidence
+    ):
+        fail(errors, "source ledger must contain 31 promoted expansion hashes")
+    for row in expansion_evidence:
+        queue_row = queue_by_hash[row["file_sha"]]
+        if queue_row["review_status"] != "reviewed-retained":
+            fail(errors, f"promoted hash {row['file_sha']} is not reviewed-retained")
+        if queue_row["proposed_super_skill"] != row["super_skill"]:
+            fail(errors, f"promoted hash {row['file_sha']} has inconsistent skill routing")
+
+    status_counts: dict[str, int] = {}
+    for number, row in enumerate(queue_rows, start=2):
+        status = row["review_status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+        if not re.fullmatch(r"[0-9a-f]{40}", row["file_sha"]):
+            fail(errors, f"expansion queue row {number}: invalid file_sha")
+        repositories = int(row["repositories"])
+        occurrences = int(row["occurrences"])
+        if repositories < 1 or occurrences < repositories:
+            fail(errors, f"expansion queue row {number}: invalid occurrence counts")
+        if not row["sample_location"]:
+            fail(errors, f"expansion queue row {number}: missing sample location")
+
+    expected_statuses = {
+        "metadata-triaged": 408,
+        "manual-review": 397,
+        "reviewed-retained": 31,
+        "reviewed-no-new-contribution": 64,
+        "excluded-non-skill-placeholder": 1,
+    }
+    if status_counts != expected_statuses:
+        fail(errors, f"expansion queue status counts differ: {status_counts}")
+
+    excluded = [
+        row
+        for row in queue_rows
+        if row["review_status"] == "excluded-non-skill-placeholder"
+    ]
+    if not excluded or excluded[0]["overall_rank"] != "24":
+        fail(errors, "rank 24 must remain the excluded non-skill placeholder")
+
+    lineage_members = 0
+    lineage_roots = 0
+    for row in queue_rows:
+        note = row["source_diversity_note"]
+        if "near-duplicate" in note:
+            lineage_members += 1
+        if "lineage root" in note:
+            lineage_roots += 1
+
+    if (lineage_members, lineage_roots) != (225, 80):
+        fail(
+            errors,
+            "expansion lineage counts differ: "
+            f"{lineage_members} members across {lineage_roots} roots",
+        )
 
 
 def validate_licensing(errors: list[str]) -> None:
@@ -141,8 +248,8 @@ def validate_licensing(errors: list[str]) -> None:
         "## Modifications",
         "selects the ranked top-100 baseline and excludes one non-skill placeholder",
         (
-            "groups the remaining 99 content hashes into eight synthesized "
-            "capability categories"
+            "groups the remaining 99 content hashes into eight initial "
+            "synthesized capability categories"
         ),
         (
             "adds super-skill mappings, representative source URLs, "
@@ -186,13 +293,17 @@ def main() -> int:
     errors: list[str] = []
     validate_suite(errors)
     validate_ledger(errors)
+    validate_expansion_queue(errors)
     validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print("Repository validation passed: 8 skills, 99 ledger rows, complete matrices and evals.")
+    print(
+        "Repository validation passed: 11 skills, 130 evidence rows, "
+        "901 expansion records, complete matrices and evals."
+    )
     return 0
 
 

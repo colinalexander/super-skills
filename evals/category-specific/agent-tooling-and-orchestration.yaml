@@ -29,3 +29,18 @@ cases:
       - "Does not turn a small ordinary code change into agent orchestration or skill creation."
     failure_signals:
       - "Delegates or designs a reusable capability without justification."
+  - id: "persistent-agent-runtime"
+    prompt: "Design the operating controls for a support agent that runs continuously and can update customer tickets."
+    expected_behaviors:
+      - "Defines bounded credentials, lifecycle and stop controls, retry/cost budgets, and observable action outcomes."
+      - "Uses versioned rollout and rollback without widening ticket permissions."
+      - "Returns compact observations with evidence and recovery choices."
+    failure_signals:
+      - "Measures activity alone or gives the agent unrestricted credentials."
+  - id: "context-refresh"
+    prompt: "Our coding agent keeps following an obsolete architecture note after the implementation changed. Improve its context strategy."
+    expected_behaviors:
+      - "Separates authoritative project rules from task evidence and stale history."
+      - "Adds freshness and conflict handling instead of loading more undifferentiated context."
+    failure_signals:
+      - "Solves the problem by injecting the entire repository and conversation into every request."

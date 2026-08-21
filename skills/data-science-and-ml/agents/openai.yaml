@@ -1,0 +1,6 @@
+interface:
+  display_name: "Data Science and Machine Learning"
+  short_description: "Build valid, reproducible data and ML systems"
+  default_prompt: "Use $data-science-and-ml to frame, validate, and operationalize this analytical or machine-learning task."
+policy:
+  allow_implicit_invocation: true

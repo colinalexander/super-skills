@@ -1,6 +1,6 @@
 # Software delivery synthesis matrix
 
-Baseline: 19 ranked hashes, 13 distinct names.
+Evidence: 19 baseline hashes plus 1 retained top-1,000 expansion hash.
 
 Evidence labels: `verification-before-completion`, `webapp-testing`, `systematic-debugging`, `receiving-code-review`, `test-driven-development`, `diagnose`, `finishing-a-development-branch`, `using-git-worktrees`, `executing-plans`, `writing-plans`, `requesting-code-review`, `e2e-testing`, `caveman-review`.
 
@@ -15,5 +15,6 @@ Evidence labels: `verification-before-completion`, `webapp-testing`, `systematic
 | Completion | Obtain current command and behavior evidence immediately before claims | Stale or partial checks cannot support “done” |
 | Isolation | Parallelize only independent work and integrate explicitly | Worktrees and agents are tools, not mandatory workflow rituals |
 | Omission repair | Preserve unrelated user work and report skipped validation | A clean workspace may never be manufactured destructively |
+| Durable guardrails | Place narrow policy checks before repeated destructive or publishing operations | Guardrails require project/global scoping and allowed-path tests; they do not replace authorization |
 
 Resulting modes: planning/execution, testing/debugging, browser/E2E, review/completion, and parallelism/isolation.

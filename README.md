@@ -12,9 +12,9 @@
 
 **Super Skills is an open-source project for synthesizing broad agent capabilities from patterns found across widely reused public skills.** The [GitSkills dataset](https://huggingface.co/datasets/mvaccargiu/gitskills) provides the initial empirical foundation.
 
-**These are not bundles of copied prompts or concatenated skills.** The current v0 contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
+**These are not bundles of copied prompts or concatenated skills.** The suite currently contains 11 independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications are complete; comparative benchmarks, broader-corpus analysis, and full upstream-lineage verification remain in progress.
+> **Status:** Private research build. The top-1,000 metadata and lineage triage is complete. Substantive review has promoted 31 expansion sources, including the evidence that established three additional categories. Comparative benchmarks, remaining candidate review, and full upstream-lineage verification continue.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -30,6 +30,9 @@ The goal is simple: **fewer, broader, rigorously evaluated skills instead of hun
 | [`game-development`](skills/game-development/) | Game design and engineering across 2D, mobile, PC/console, audio, and XR |
 | [`reasoning-modes`](skills/reasoning-modes/) | Brainstorming, adversarial review, abstraction shifts, and compressed communication |
 | [`systems-and-security`](skills/systems-and-security/) | Bash/Linux, PowerShell/Windows, and scoped security assessment |
+| [`marketing-and-growth`](skills/marketing-and-growth/) | Market research, positioning, pricing, acquisition, conversion, and fundraising |
+| [`connected-service-automation`](skills/connected-service-automation/) | Safe operation of messaging, notes, media, files, sharing, and connected services |
+| [`data-science-and-ml`](skills/data-science-and-ml/) | Data quality, experiments, modeling, training, evaluation, and model operations |
 
 Each skill keeps its main `SKILL.md` compact and loads specialized guidance from `references/` only when the task needs it.
 
@@ -77,7 +80,7 @@ The skill determines which modes apply rather than imposing every source practic
 
 The initial research baseline uses **99 ranked content hashes from the GitSkills top 100**, excluding one non-skill placeholder.
 
-Those sources were grouped into eight capability categories and analyzed for:
+Those sources established eight initial capability categories. Substantive review of the top-1,000 expansion established three more. All categories are analyzed for:
 
 1. recurring principles;
 2. distinctive specialist guidance;
@@ -107,13 +110,13 @@ evals/
 └── category-specific/
 ```
 
-The [source ledger](research/source-ledger.csv) records content hashes, representative repository locations, available commit lineage, and repository-license metadata. Verified upstream lineage is currently available for ten baseline entries; remaining entries are explicitly marked as observed copies pending resolution.
+The [source ledger](research/source-ledger.csv) records 99 baseline hashes and 31 promoted expansion hashes, along with representative repository locations, available commit lineage, and repository-license metadata. Verified upstream lineage is currently available for ten baseline entries; remaining entries are explicitly marked as observed copies pending resolution.
 
 Per-category synthesis matrices record retained rules, contextual decisions, conflict resolutions, and added safeguards. Evaluation specifications cover intended behavior and important non-trigger cases so broad skills do not become broad **always-on** prompts.
 
 ## Evaluation status
 
-The repository currently contains 38 behavioral evaluation cases and a shared rubric. These are evaluation **specifications**, not comparative benchmark results.
+The repository currently contains 60 behavioral evaluation cases and a shared rubric. These are evaluation **specifications**, not comparative benchmark results.
 
 Before claiming that a super-skill outperforms its sources, the project will compare:
 
@@ -133,7 +136,7 @@ A provenance entry records research influence. It does not imply incorporation, 
 
 ## Expanding the evidence base
 
-The top-100 corpus establishes the v0 architecture; it does not establish corpus-wide completeness. Broader GitSkills samples can be screened for:
+The top-100 corpus established the initial architecture; it did not establish corpus-wide completeness. The top-1,000 expansion added three category boundaries and continues to be screened for:
 
 - additional specialist coverage;
 - genuinely distinct approaches;
@@ -141,9 +144,11 @@ The top-100 corpus establishes the v0 architecture; it does not establish corpus
 - new conflicts or constraints;
 - new evaluation cases.
 
+The committed [top-1,000 expansion queue](research/expansion-queue.csv) contains 900 new eligible content hashes plus the non-skill placeholder excluded from the initial baseline. The additions have provisional category routing and near-duplicate flags, while ambiguous records remain in an explicit review queue. See [research/TOP_1000_EXPANSION.md](research/TOP_1000_EXPANSION.md) for the profile, quality checks, and interpretation limits.
+
 Expansion uses **evidence saturation** rather than an arbitrary source count: additional sources stop materially affecting a category once they cease producing new principles, modes, constraints, conflicts, or evaluation cases.
 
-Generate a metadata-only review queue without adding third-party source text to the repository:
+Regenerate the metadata-only review queue without adding third-party source text to the repository:
 
 ```bash
 python3 -m venv .venv
@@ -163,7 +168,10 @@ super-skills/
 │   ├── document-productivity/
 │   ├── game-development/
 │   ├── reasoning-modes/
-│   └── systems-and-security/
+│   ├── systems-and-security/
+│   ├── marketing-and-growth/
+│   ├── connected-service-automation/
+│   └── data-science-and-ml/
 ├── research/
 ├── evals/
 ├── scripts/
