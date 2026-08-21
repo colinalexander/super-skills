@@ -19,6 +19,9 @@ SKILLS = (
     "game-development",
     "reasoning-modes",
     "systems-and-security",
+    "marketing-and-growth",
+    "connected-service-automation",
+    "data-science-and-ml",
 )
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
 
@@ -100,8 +103,8 @@ def validate_ledger(errors: list[str]) -> None:
     ledger = ROOT / "research" / "source-ledger.csv"
     with ledger.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
-    if len(rows) != 106:
-        fail(errors, f"source ledger contains {len(rows)} rows, expected 106")
+    if len(rows) != 130:
+        fail(errors, f"source ledger contains {len(rows)} rows, expected 130")
     observed = {row["super_skill"] for row in rows}
     if observed != set(SKILLS):
         fail(errors, f"source ledger skill set differs: {sorted(observed)}")
@@ -158,11 +161,18 @@ def validate_expansion_queue(errors: list[str]) -> None:
         fail(errors, "source ledger and expansion queue must cover ranks 1 through 1,000")
 
     queue_hashes = {row["file_sha"] for row in queue_rows}
+    queue_by_hash = {row["file_sha"]: row for row in queue_rows}
     expansion_evidence = [row for row in baseline_rows if int(row["rank"]) > 100]
-    if len(expansion_evidence) != 7 or any(
+    if len(expansion_evidence) != 31 or any(
         row["file_sha"] not in queue_hashes for row in expansion_evidence
     ):
-        fail(errors, "source ledger must contain seven promoted expansion hashes")
+        fail(errors, "source ledger must contain 31 promoted expansion hashes")
+    for row in expansion_evidence:
+        queue_row = queue_by_hash[row["file_sha"]]
+        if queue_row["review_status"] != "reviewed-retained":
+            fail(errors, f"promoted hash {row['file_sha']} is not reviewed-retained")
+        if queue_row["proposed_super_skill"] != row["super_skill"]:
+            fail(errors, f"promoted hash {row['file_sha']} has inconsistent skill routing")
 
     status_counts: dict[str, int] = {}
     for number, row in enumerate(queue_rows, start=2):
@@ -180,9 +190,8 @@ def validate_expansion_queue(errors: list[str]) -> None:
     expected_statuses = {
         "metadata-triaged": 408,
         "manual-review": 397,
-        "taxonomy-review": 48,
-        "reviewed-retained": 7,
-        "reviewed-no-new-contribution": 40,
+        "reviewed-retained": 31,
+        "reviewed-no-new-contribution": 64,
         "excluded-non-skill-placeholder": 1,
     }
     if status_counts != expected_statuses:
@@ -196,26 +205,15 @@ def validate_expansion_queue(errors: list[str]) -> None:
     if not excluded or excluded[0]["overall_rank"] != "24":
         fail(errors, "rank 24 must remain the excluded non-skill placeholder")
 
-    taxonomy_counts: dict[str, int] = {}
     lineage_members = 0
     lineage_roots = 0
     for row in queue_rows:
-        if row["review_status"] == "taxonomy-review":
-            label = row["proposed_super_skill"]
-            taxonomy_counts[label] = taxonomy_counts.get(label, 0) + 1
         note = row["source_diversity_note"]
         if "near-duplicate" in note:
             lineage_members += 1
         if "lineage root" in note:
             lineage_roots += 1
 
-    expected_taxonomy = {
-        "taxonomy-review:marketing-business": 37,
-        "taxonomy-review:service-automation": 6,
-        "taxonomy-review:data-science-ml": 5,
-    }
-    if taxonomy_counts != expected_taxonomy:
-        fail(errors, f"expansion taxonomy counts differ: {taxonomy_counts}")
     if (lineage_members, lineage_roots) != (205, 91):
         fail(
             errors,
@@ -250,8 +248,8 @@ def validate_licensing(errors: list[str]) -> None:
         "## Modifications",
         "selects the ranked top-100 baseline and excludes one non-skill placeholder",
         (
-            "groups the remaining 99 content hashes into eight synthesized "
-            "capability categories"
+            "groups the remaining 99 content hashes into eight initial "
+            "synthesized capability categories"
         ),
         (
             "adds super-skill mappings, representative source URLs, "
@@ -303,7 +301,7 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
     print(
-        "Repository validation passed: 8 skills, 106 evidence rows, "
+        "Repository validation passed: 11 skills, 130 evidence rows, "
         "901 expansion records, complete matrices and evals."
     )
     return 0

@@ -6,7 +6,7 @@ Produce one coherent, high-utility skill per category from a body of public skil
 
 ## Baseline corpus
 
-The initial baseline uses the top 100 GitSkills content groups ranked by repository count. One placeholder row was excluded, leaving 99 content hashes across eight categories. Identical hashes are exact byte matches; repeated names may still represent different versions.
+The initial baseline uses the top 100 GitSkills content groups ranked by repository count. One placeholder row was excluded, leaving 99 content hashes across eight initial categories. Identical hashes are exact byte matches; repeated names may still represent different versions.
 
 The source ledger records both verified upstream locations and representative observed copies. “Observed copy” must not be read as an authorship claim.
 
@@ -20,14 +20,16 @@ aid. Substantive review, evidence-saturation decisions, and any resulting
 changes to skills or evals remain separate stages; queue membership and a
 proposed category alone are not synthesis evidence.
 
-Seven expansion hashes have passed substantive review and been promoted to the
-source ledger. Forty additional sources were reviewed without adding a material
-proposition. Application engineering and software delivery have each reached
-the 20-source saturation checkpoint; the remaining categories retain
-provisional or review-queue status.
+Thirty-one expansion hashes have passed substantive review and been promoted to
+the source ledger. Sixty-four additional sources were reviewed without adding a
+material proposition. The review established `marketing-and-growth`,
+`connected-service-automation`, and `data-science-and-ml` as distinct decision
+systems, bringing the suite to 11 categories. Application engineering and
+software delivery have each reached the 20-source saturation checkpoint; other
+candidate streams remain under review.
 
 1. Pull the top 1,000 distinct content hashes by repository count.
-2. Classify them into the existing eight categories or an explicit review queue.
+2. Classify them into an existing category or an explicit taxonomy-review queue.
 3. Collapse exact copies and flag near-duplicates before substantive review.
 4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
 5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
@@ -40,8 +42,9 @@ This is an evidence-saturation rule, not a fixed-source quota. Record exclusions
 `scripts/triage_expansion.py` uses representative names and descriptions to
 propose categories, then uses content n-gram similarity to flag possible
 lineages. It commits only derived labels and similarity notes. Ambiguous
-records remain in manual review, and apparent categories outside the current
-suite remain explicit taxonomy-review candidates.
+records remain in manual review. A repeated cluster may become a new category
+only after substantive review establishes a distinct decision system and enough
+evidence to synthesize and evaluate it.
 
 ## Synthesis procedure
 
@@ -75,6 +78,6 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 
 Independently authored implementation materials are covered by the repository's Apache-2.0 license. Research materials in this directory are licensed under CC BY 4.0 and retain the GitSkills attribution and modification notice in `ATTRIBUTION.md`. Neither license applies to third-party source text, which is not distributed here.
 
-## Versioning
+## Releases
 
-A release should state its corpus cutoff, ledger row count, synthesis-matrix version, and eval results. Material changes to routing boundaries or safety rules require a major or minor release note; source-only additions that do not alter behavior may be a patch.
+A release should state its corpus cutoff, ledger row count, synthesis-matrix revision, and eval results. Material changes to routing boundaries or safety rules must be called out explicitly; source-only additions that do not alter behavior still require an auditable ledger update.

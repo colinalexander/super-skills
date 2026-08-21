@@ -23,3 +23,15 @@ A requested interaction mode changes how a problem is explored or communicated. 
 ## Systems operation versus security assessment
 
 Routine shell and operating-system work does not imply permission to scan, exploit, or broaden security scope. Security assessment activates only when explicitly requested and remains bounded to the named systems and authorization.
+
+## Marketing strategy versus interface and artifact production
+
+`marketing-and-growth` owns the audience, offer, channel, pricing, conversion hypothesis, and commercial measurement. `interface-design` owns visual and interaction direction; `document-productivity` owns office-artifact fidelity. They may compose, but a persuasive objective does not give marketing rules authority over accessibility, factual integrity, or file-format correctness.
+
+## Connected-service operation versus integration design
+
+`connected-service-automation` operates an already connected service for a user, with explicit account, target, authority, and verification. `application-engineering` implements product integrations; `agent-tooling-and-orchestration` designs reusable tool interfaces. A one-off external action should not silently expand into connector development, and a connector implementation should not be treated as permission to mutate user data.
+
+## Data science versus application engineering
+
+`data-science-and-ml` owns data-generating assumptions, statistical validity, learned-model behavior, training, evaluation, and monitoring. `application-engineering` owns the surrounding service and product architecture. Use both when a model becomes a product component, while keeping model-quality evidence distinct from API reliability and product impact.

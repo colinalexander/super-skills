@@ -36,16 +36,18 @@ The 900 eligible additions have completed a reproducible first-pass triage:
 
 | Triage result | Count | Meaning |
 | --- | ---: | --- |
-| Retained after source review | 7 | Added a material decision rule or evaluation case |
-| Reviewed without a new contribution | 40 | Existing synthesis already covered the material behavior |
+| Retained after source review | 31 | Added a material decision rule, category boundary, or evaluation case |
+| Reviewed without a new contribution | 64 | Existing synthesis already covered the material behavior |
 | Existing-category proposal | 408 | One category had a clear metadata-rule lead |
 | Manual category review | 397 | No rule matched strongly or multiple boundaries tied |
-| Taxonomy review | 48 | The subject appears outside the current eight-skill suite |
 
-The taxonomy-review set contains 37 marketing/business, six service-automation,
-and five data-science/ML candidates. These are observations about the top-1,000
-sample, not decisions to add new public skills. The public suite therefore
-still contains eight categories.
+Substantive review of the former taxonomy queue established three additional
+decision systems: `marketing-and-growth`, `connected-service-automation`, and
+`data-science-and-ml`. Twenty-four representative hashes were retained for
+those categories; 23 variants added no distinct proposition. One
+`codebase-onboarding` record was corrected to application engineering rather
+than being treated as marketing. The public suite therefore contains 11
+categories.
 
 Content-similarity triage also flagged 205 records across 91 possible
 near-duplicate lineages. This is deliberately a review aid rather than a claim
@@ -63,13 +65,10 @@ python3 scripts/triage_expansion.py \
 Descriptions and source text are read only from the external corpus and are
 never written to the repository.
 
-The first promoted evidence consists of three application-engineering, one
-software-delivery, and three agent-tooling hashes. Their retained propositions
-cover architecture-decision records, domain language, deployment-unit
-boundaries, durable destructive-operation guardrails, observation contracts,
-task-scoped context, and persistent-agent operations.
-The source ledger records their provenance before those propositions appear in
-the public skills.
+The promoted evidence consists of three application-engineering, one
+software-delivery, three agent-tooling, 14 marketing-and-growth, five
+connected-service-automation, and five data-science-and-ML hashes. The source
+ledger records provenance before retained propositions appear in public skills.
 
 Application engineering and software delivery each reached the current
 saturation threshold: after the last retained source in each ranked stream, 20
@@ -101,4 +100,5 @@ The 900 eligible additions are not synthesis evidence until they are:
 3. reviewed for a material new principle, mode, constraint, conflict, safeguard, or evaluation case; and
 4. incorporated only when they pass the inclusion and evidence-saturation rules in `METHODOLOGY.md`.
 
-Until those stages are complete, the top-100 baseline remains the evidence base for the public skill instructions.
+Only promoted ledger entries are evidence for public skill instructions. Queue
+membership and metadata classification remain routing aids, not votes.

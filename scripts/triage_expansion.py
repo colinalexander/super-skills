@@ -34,28 +34,24 @@ def rules(*patterns: str) -> tuple[Rule, ...]:
     return tuple(Rule(re.compile(pattern, re.I)) for pattern in patterns)
 
 
-TAXONOMY_REVIEW_RULES = {
-    "marketing-business": rules(
+CATEGORY_RULES = {
+    "marketing-and-growth": rules(
         r"\bseo\b|schema markup|search engine",
         r"\bcro\b|conversion|signup flow|onboarding|paywall|funnel",
         r"marketing|advertis|ad creative|copywriting|growth hack",
         r"investor|fundrais|market research|competitive analysis|startup analyst",
         r"pricing strategy|product strateg|sales|lead generation|monetization",
     ),
-    "data-science-ml": rules(
+    "data-science-and-ml": rules(
         r"fine[- ]?tun|pytorch|tensorflow|machine learning|deep learning",
         r"data scien|statistical|feature engineering|model training|mlops",
         r"hugging ?face|transformers|computer vision|nlp\b",
     ),
-    "service-automation": rules(
+    "connected-service-automation": rules(
         r"\bautomation\b.*\b(?:asana|shopify|whatsapp|docusign|slack|notion|telegram)\b",
         r"\b(?:sonos|imessage|spotify|apple notes|feishu)\b",
         r"send and receive|control .* speakers",
     ),
-}
-
-
-CATEGORY_RULES = {
     "interface-design": rules(
         r"\bui\b|\bux\b|user interface|user experience",
         r"frontend[- ]design|web design|design system|design taste",
@@ -217,6 +213,82 @@ for reviewed_rank in (
     )
 
 
+NEW_CATEGORY_CONTRIBUTIONS = {
+    102: ("marketing-and-growth", "cross-asset factual consistency for fundraising materials"),
+    125: ("marketing-and-growth", "search discovery, technical quality, content utility, and measurement"),
+    131: ("marketing-and-growth", "decision-led market research with sourced ranges and explicit uncertainty"),
+    209: ("connected-service-automation", "recipient, channel, platform permission, and send-state verification"),
+    255: ("marketing-and-growth", "verified relevance and consistent claims in investor outreach"),
+    294: ("connected-service-automation", "record identity, search completeness, edit semantics, and recoverable deletion"),
+    299: ("data-science-and-ml", "reproducible device-aware training and data-pipeline validation"),
+    310: ("connected-service-automation", "account and device resolution before media state changes"),
+    378: ("marketing-and-growth", "behavioral principles bounded by evidence, trust, and user welfare"),
+    420: ("connected-service-automation", "stable resource targeting for cloud-file mutations"),
+    423: ("marketing-and-growth", "value metrics, packaging, economics, evidence, and migration"),
+    434: ("connected-service-automation", "least-privilege collaborator changes with access verification"),
+    455: ("marketing-and-growth", "scaled search pages gated by unique value and reliable data"),
+    456: ("data-science-and-ml", "statistical framing, experimental validity, and stakeholder decision context"),
+    466: ("marketing-and-growth", "dated shared commercial context separating facts from assumptions"),
+    502: ("marketing-and-growth", "message construction from audience, proof, objection, and one intended action"),
+    570: ("marketing-and-growth", "conversion diagnosis across traffic, offer, trust, experience, and measurement"),
+    648: ("marketing-and-growth", "interruptive conversion patterns bounded by timing, relevance, and respect"),
+    735: ("data-science-and-ml", "perception evaluation across capture conditions, geometry, and deployment constraints"),
+    874: ("marketing-and-growth", "signup friction decisions tied to commitment, consent, and downstream quality"),
+    905: ("data-science-and-ml", "distributed training selected from measured memory and communication constraints"),
+    929: ("marketing-and-growth", "activation defined by delivered value and validated against retention"),
+    931: ("marketing-and-growth", "ad variants organized as testable message hypotheses"),
+    980: ("data-science-and-ml", "fine-tuning method chosen from data, quality, resource, and serving tradeoffs"),
+}
+
+for reviewed_rank, (category, contribution) in NEW_CATEGORY_CONTRIBUTIONS.items():
+    REVIEW_DECISIONS[reviewed_rank] = (
+        category,
+        "reviewed-retained",
+        contribution,
+    )
+
+for reviewed_rank in (
+    433,
+    540,
+    542,
+    552,
+    578,
+    609,
+    641,
+    746,
+    747,
+    754,
+    809,
+    831,
+    832,
+    886,
+    889,
+    907,
+    908,
+    930,
+    933,
+    988,
+    992,
+    996,
+):
+    REVIEW_DECISIONS[reviewed_rank] = (
+        "marketing-and-growth",
+        "reviewed-no-new-contribution",
+        "covered by retained market, positioning, acquisition, conversion, pricing, or fundraising rules",
+    )
+
+REVIEW_DECISIONS[497] = (
+    "connected-service-automation",
+    "reviewed-no-new-contribution",
+    "covered by the retained record-management and safe-mutation rules",
+)
+REVIEW_DECISIONS[330] = (
+    "application-engineering",
+    "reviewed-no-new-contribution",
+    "codebase orientation is not a marketing capability and adds no new application rule",
+)
+
+
 REVIEW_DECISION_HASHES = {
     101: "3e4f6ad3411d31cd53c90f3d7e1d6e266cd211f8",
     107: "d943c68219d0f47512f10c5018a11fd8358e9bb5",
@@ -265,6 +337,54 @@ REVIEW_DECISION_HASHES = {
     245: "13a8961d94881f9d92323f51f11be4731dd475d9",
     249: "210d666118023f47746414b2ee027584370f9df9",
     344: "be991103fe2b13f7e5f6f5da9d3c6029ad30ac64",
+    102: "e392706af5d1b6b7c03738526c1251f122873f1e",
+    125: "682fea80b08a35552266feea7be97c6f6659e2dc",
+    131: "12ffa034b4f40ccd989ab3a2413bae8c424d1c26",
+    209: "82df6a6ecf8a81e9ff265fe2d70cabb44b0ebc6c",
+    255: "4fc69f4c288f26a1c0aedc166789795671d2204b",
+    294: "61e8cf76d9a4a8f8e6cad3d7458170cecb719242",
+    299: "8b56d81529300eac854fafe1c5a663e0dd9d142b",
+    310: "040da793fd869f9bd56803715c81648a9f5f0347",
+    330: "a008205c12fab4c8ccb52226c9e529b925c5557a",
+    378: "5b23873fb55490b805abbf4ae94817a53ed7580f",
+    420: "6b46eec7c8798ef0083348a083d1883d3ed9cf4a",
+    423: "3651310a1a7f4dfe16bdf4dc03e1dc9dd76a1bc0",
+    433: "ecf0a1e56bd137b9e19da0e1e68071cf1733461a",
+    434: "1ce5db8b86c52d53a2687a630e102e8355cfd101",
+    455: "b3e150eb8418bff9081edc296ec1b5611cf8ffc7",
+    456: "c61c186893eb0afda5d391a9d1ad70f6edad11b9",
+    466: "4ba17e616350c0bb3e9dc3d25671a911b6da795e",
+    497: "020f0d641df4074d69d6c31cf816afcd42d583c7",
+    502: "cbf9adff01b55fd12511faea71da44b548b80c10",
+    540: "dd3ed3c85d5329be335f4b34a9640f9914e36c6c",
+    542: "f34860e42913a67adc65d3fc5b74cf996f524e69",
+    552: "42bf746b426600c416c0a5969a043592ff14ba7b",
+    570: "2bdffe5269a8b1a08e95d1a84825c3bf56c3adcf",
+    578: "6979118584a6e46bd32318321c84d546b6350c09",
+    609: "f00f7678ac70063822085da8823fdcfe986b1fa8",
+    641: "5883b6527d2ef5a5a68ffa24301c2ddc3ad33883",
+    648: "5dd86483d389b69d51c5c20171b665225b37a13d",
+    735: "6d69f63f6dbaa57c525a1a32d1f37eb4412c8aa8",
+    746: "ef3e782c46de14767d7a86d299e4980827ba5ee9",
+    747: "715c5a20aa858e71a5b77a24a2606311278bd40a",
+    754: "503b05bf8cb3707dad7a62a918c8932d8f6ee7e5",
+    809: "e6eb588cac767a67570b36930d9c28ac5697e0ef",
+    831: "b80991c92514a1ec4371c26f7b7f62cdbe4356e6",
+    832: "15f1fd56ce8590dcaf1d3daecb7cee32ac827a69",
+    874: "26615e089246c5cd619c03a71bad11cccb278764",
+    886: "eddedb4c9ce5357c358cbdedb8af9faa48cea179",
+    889: "630f11a8bd04abf9bc274ab71565bca599caca14",
+    905: "9e16f446ff7601ba63cc898eca4eb47b12b663d2",
+    907: "5ae86ff7e1aad7ccbae671f2707429505421924c",
+    908: "5cb2c1030a5d02bd47d029b79ce3fd2fe2f43b10",
+    929: "af71b61cc7e430b42eb797cc37c7edad005ef2ce",
+    930: "e8544a7235687a58639bf6873aa372fe60a67611",
+    931: "acf77e503d9f9c0efb535365894be3339547adfd",
+    933: "1abb41607062b6d620c795a4522a9885ecb379a4",
+    980: "6f920713034307123bd172b2828e2149bb0823b3",
+    988: "0b2f338b9ca93e96255935a710582eba73a019da",
+    992: "baeaae74515ad6d5b255bba6d6bb1c9f5c6860de",
+    996: "4933f61bd31fe691e393e1758ac952ef55147e74",
 }
 
 
@@ -282,13 +402,6 @@ def classify(name: str, description: str) -> tuple[str, str, str]:
     description_text = normalized(description)
     combined = f"{name_text} {description_text}"
 
-    review_scores = {
-        label: 3 * rule_score(name_text, category_rules)
-        + rule_score(description_text, category_rules)
-        for label, category_rules in TAXONOMY_REVIEW_RULES.items()
-    }
-    review_label, review_score = max(review_scores.items(), key=lambda item: item[1])
-
     scores = {
         category: 3 * rule_score(name_text, category_rules)
         + rule_score(description_text, category_rules)
@@ -298,10 +411,6 @@ def classify(name: str, description: str) -> tuple[str, str, str]:
     best_category, best_score = ranked[0]
     runner_up_score = ranked[1][1]
 
-    if review_score >= 3 and review_score >= best_score:
-        return f"taxonomy-review:{review_label}", "taxonomy-review", (
-            f"metadata rule score {review_score}; outside current suite boundary"
-        )
     if best_score < 3 or best_score == runner_up_score:
         candidates = ",".join(
             category for category, score in ranked if score == best_score and score > 0
