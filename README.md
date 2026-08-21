@@ -10,11 +10,11 @@
 
 **Synthesized agent skills from the patterns, conflicts, and safeguards found across widely used public skills.**
 
+**Super Skills is an open-source project for synthesizing broad agent capabilities from patterns found across widely reused public skills.** The [GitSkills dataset](https://huggingface.co/datasets/mvaccargiu/gitskills) provides the initial empirical foundation.
+
+**These are not bundles of copied prompts or concatenated skills.** The current v0 contains eight independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
+
 > **Status:** Private v0 research build. The top-100 synthesis and evaluation specifications are complete; comparative benchmarks, broader-corpus analysis, and full upstream-lineage verification remain in progress.
-
-**Super Skills is an open-source suite that synthesizes the most common categories of agent skills from recurring patterns across widely reused public `SKILL.md` files.**
-
-The current v0 contains eight independently installable super-skills. These are not bundles of copied prompts or concatenated skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -41,7 +41,7 @@ Copy the directory for the skill you want into the skills directory scanned by y
 cp -R skills/software-delivery /path/to/your-agent/skills/
 ```
 
-You can install any subset of the eight skills. Consult your host's documentation for its skills-directory location and discovery rules.
+You can install any subset of the suite. Consult your host's documentation for its skills-directory location and discovery rules.
 
 ## Why Super Skills?
 
@@ -133,7 +133,7 @@ A provenance entry records research influence. It does not imply incorporation, 
 
 ## Expanding the evidence base
 
-The top-100 corpus establishes the initial architecture. Broader GitSkills samples can be screened for:
+The top-100 corpus establishes the v0 architecture; it does not establish corpus-wide completeness. Broader GitSkills samples can be screened for:
 
 - additional specialist coverage;
 - genuinely distinct approaches;
