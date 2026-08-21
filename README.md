@@ -14,7 +14,7 @@
 
 **These are not bundles of copied prompts or concatenated skills.** The suite currently contains 10 independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Pre-release research build. Super Skills draws from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the 10-skill active suite; the remaining 805 hashes have received metadata and lineage triage only. The full-corpus similarity gate has passed. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
+> **Status:** Active research project. Super Skills draws from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the 10-skill active suite; the remaining 805 hashes have received metadata and lineage triage only. The full-corpus similarity gate has passed. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
