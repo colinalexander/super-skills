@@ -29,8 +29,8 @@ FIELDS = (
 )
 
 
-def frontmatter_description(text: str, source: Path) -> str:
-    """Return the semantic description value from a skill's YAML front matter."""
+def frontmatter_fields(text: str, source: Path) -> dict[str, object]:
+    """Return semantic values from a skill's YAML front matter."""
     if not text.startswith("---\n"):
         raise RuntimeError(f"missing YAML front matter in {source}")
     parts = text.split("---\n", 2)
@@ -40,7 +40,15 @@ def frontmatter_description(text: str, source: Path) -> str:
         frontmatter = yaml.safe_load(parts[1])
     except yaml.YAMLError as error:
         raise RuntimeError(f"invalid YAML front matter in {source}") from error
-    if not isinstance(frontmatter, dict) or "description" not in frontmatter:
+    if not isinstance(frontmatter, dict):
+        raise RuntimeError(f"front matter is not a mapping in {source}")
+    return frontmatter
+
+
+def frontmatter_description(text: str, source: Path) -> str:
+    """Return the semantic description value from a skill's YAML front matter."""
+    frontmatter = frontmatter_fields(text, source)
+    if "description" not in frontmatter:
         raise RuntimeError(f"missing front-matter description in {source}")
     description = frontmatter["description"]
     if not isinstance(description, str):

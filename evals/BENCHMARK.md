@@ -32,8 +32,9 @@ task input, and sampling parameters:
    the mechanical rule below.
 3. **Source-suite ceiling:** all 119 hashes marked `retained` in
    `research/review-decisions.csv` and routed to an active category are installed
-   as separate skills from an external reconstructed corpus. Exact hashes and
-   the preregistered active-category list, not researcher-selected conflict sets,
+   as separate skills from an external reconstructed corpus, using the fixed
+   collision-safe naming transform below. Exact source hashes and the
+   preregistered active-category list, not researcher-selected conflict sets,
    determine membership.
 4. **Super suite:** all 10 active independently authored super-skills are installed.
 
@@ -51,11 +52,21 @@ Arm membership is frozen before any model run.
   Arm 2 activation estimate.
 - Arm 3 always installs all 119 active-category retained exact-hash sources. It is never reduced
   after inspecting a task or observed conflict.
+- Arm 3 applies the same naming transform to every source, not only collisions.
+  Normalize the source's original front-matter `name` to lowercase, replace
+  each non-`[a-z0-9]` run with `-`, trim separators, truncate to 48 characters,
+  and use `skill` if empty. The installed directory and front-matter name are
+  `gs-rRRRR-<slug>`, where `RRRR` is the source's unique zero-padded GitSkills
+  rank. The rank prefix makes all 119 identifiers collision-free while retaining
+  a recognizable source-name suffix. Only the `name` scalar changes; the
+  description and instruction body remain byte-for-byte source-derived.
 - Arm 4 always installs all 10 active super-skills. It is never reduced after inspecting
   a task.
-- The installed names, descriptions, content hashes, byte counts, and token
-  counts are recorded in the run manifest. Any source that cannot be reconstructed
-  is reported before execution; it is not silently replaced.
+- The committed source token record fixes each original and installed Arm 3
+  name. The run manifest records both names, the original Git blob hash, the
+  transformed file hash, descriptions, byte counts, and token counts. Any source
+  that cannot be reconstructed or transformed exactly is reported before
+  execution; it is not silently replaced.
 
 These rules deliberately avoid the post hoc judgment implicit in “all relevant
 skills.” Arm 3 is an **upper bound on narrow-skill overhead and conflict
@@ -64,7 +75,9 @@ sources is intentionally exhaustive and unlikely to match ordinary practice.
 It tests whether the synthesized suite preserves the retained evidence under
 the hardest mechanically reproducible source-suite comparison. Results from
 this arm must not be presented as an estimate of a typical user's narrow-skill
-cost or behavior.
+cost or behavior. Its universal rename is a
+**protocol-imposed compatibility transform** that may itself affect routing; report that limitation and do not
+describe Arm 3 as an unmodified source-suite deployment.
 
 ## Evaluation population
 

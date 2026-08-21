@@ -32,6 +32,16 @@ def files_under(root: Path) -> list[Path]:
     return sorted(path for path in root.rglob("*") if path.is_file() and not path.name.startswith("."))
 
 
+def require_external_source_root(path: Path) -> Path:
+    """Return a resolved source directory that cannot overlap the repository."""
+    source_root = path.expanduser().resolve()
+    if not source_root.is_dir():
+        raise RuntimeError(f"source directory does not exist: {source_root}")
+    if ROOT == source_root or ROOT in source_root.parents or source_root in ROOT.parents:
+        raise RuntimeError("raw sources must be outside the repository")
+    return source_root
+
+
 def git_blob_id(path: Path) -> str:
     """Return the Git blob identifier for a file's exact bytes."""
     data = path.read_bytes()
@@ -77,11 +87,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    source_root = args.sources.expanduser().resolve()
-    if not source_root.is_dir():
-        parser.error(f"source directory does not exist: {source_root}")
-    if ROOT == source_root or ROOT in source_root.parents or source_root in ROOT.parents:
-        parser.error("raw sources must be outside the repository")
+    try:
+        source_root = require_external_source_root(args.sources)
+    except RuntimeError as error:
+        parser.error(str(error))
     if args.ngram < 5:
         parser.error("ngram must be at least 5 words")
     if not 0 < args.threshold <= 1:

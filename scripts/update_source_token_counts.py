@@ -6,17 +6,24 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import re
 import sys
 from importlib.metadata import version
 from pathlib import Path
 
 import tiktoken
 
-from check_similarity import expected_gitskills_frame, files_under, git_blob_id
+from check_similarity import (
+    expected_gitskills_frame,
+    files_under,
+    git_blob_id,
+    require_external_source_root,
+)
 from update_token_counts import (
     ENCODING,
     TIKTOKEN_VERSION,
     frontmatter_description,
+    frontmatter_fields,
 )
 
 
@@ -26,6 +33,8 @@ FIELDS = (
     "rank",
     "file_sha",
     "super_skill",
+    "original_name",
+    "installed_name",
     "tokenizer",
     "tokenizer_package_version",
     "description_tokens",
@@ -65,6 +74,13 @@ def verified_source_map(source_root: Path) -> dict[str, Path]:
     return observed
 
 
+def benchmark_installed_name(rank: int, original_name: str) -> str:
+    """Return the collision-free Arm 3 name fixed by the benchmark protocol."""
+    slug = re.sub(r"[^a-z0-9]+", "-", original_name.lower()).strip("-")
+    slug = slug[:48].rstrip("-") or "skill"
+    return f"gs-r{rank:04d}-{slug}"
+
+
 def render(source_root: Path) -> str:
     """Render the retained-source description-token record."""
     installed = version("tiktoken")
@@ -84,14 +100,20 @@ def render(source_root: Path) -> str:
     writer.writeheader()
     for row in sorted(rows, key=lambda item: int(item["rank"])):
         source = sources[row["file_sha"]]
-        description = frontmatter_description(
-            source.read_text(encoding="utf-8"), source
-        )
+        source_text = source.read_text(encoding="utf-8")
+        fields = frontmatter_fields(source_text, source)
+        original_name = fields.get("name")
+        if not isinstance(original_name, str) or not original_name.strip():
+            raise RuntimeError(f"missing front-matter name in {source}")
+        description = frontmatter_description(source_text, source)
+        rank = int(row["rank"])
         writer.writerow(
             {
-                "rank": row["rank"],
+                "rank": rank,
                 "file_sha": row["file_sha"],
                 "super_skill": row["super_skill"],
+                "original_name": original_name,
+                "installed_name": benchmark_installed_name(rank, original_name),
                 "tokenizer": ENCODING,
                 "tokenizer_package_version": installed,
                 "description_tokens": len(encoding.encode(description)),
@@ -109,7 +131,8 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        expected = render(args.sources.expanduser().resolve())
+        source_root = require_external_source_root(args.sources)
+        expected = render(source_root)
     except (OSError, RuntimeError) as error:
         print(error, file=sys.stderr)
         return 1

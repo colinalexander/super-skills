@@ -70,6 +70,13 @@ def fail(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
+def benchmark_installed_name(rank: int, original_name: str) -> str:
+    """Return the deterministic collision-free name used by benchmark Arm 3."""
+    slug = re.sub(r"[^a-z0-9]+", "-", original_name.lower()).strip("-")
+    slug = slug[:48].rstrip("-") or "skill"
+    return f"gs-r{rank:04d}-{slug}"
+
+
 def parse_frontmatter(path: Path, errors: list[str]) -> dict[str, str]:
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
@@ -313,6 +320,8 @@ def validate_token_counts(errors: list[str]) -> None:
         "rank",
         "file_sha",
         "super_skill",
+        "original_name",
+        "installed_name",
         "tokenizer",
         "tokenizer_package_version",
         "description_tokens",
@@ -335,6 +344,9 @@ def validate_token_counts(errors: list[str]) -> None:
     observed_source_hashes = {row["file_sha"] for row in source_rows}
     if len(source_rows) != 119 or observed_source_hashes != set(active_ledger_rows):
         fail(errors, "source token counts do not match the 119 active ledger hashes")
+    installed_names = {row["installed_name"] for row in source_rows}
+    if len(installed_names) != 119:
+        fail(errors, "source token counts contain colliding benchmark names")
 
     source_total = 0
     for number, row in enumerate(source_rows, start=2):
@@ -344,6 +356,9 @@ def validate_token_counts(errors: list[str]) -> None:
         if (
             row["rank"] != ledger_row["rank"]
             or row["super_skill"] != ledger_row["super_skill"]
+            or not row["original_name"]
+            or row["installed_name"]
+            != benchmark_installed_name(int(row["rank"]), row["original_name"])
             or row["tokenizer"] != "cl100k_base"
             or row["tokenizer_package_version"] != "0.11.0"
         ):
@@ -421,6 +436,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "correct activated-skill events",
             "arm-neutral evidence packet",
             "machine-checkable linkage",
+            "gs-rRRRR-<slug>",
+            "protocol-imposed compatibility transform",
             "Falsification criteria",
             "0.5 points",
             "more than 10%",
