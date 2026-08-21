@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -30,6 +32,37 @@ def files_under(root: Path) -> list[Path]:
     return sorted(path for path in root.rglob("*") if path.is_file() and not path.name.startswith("."))
 
 
+def git_blob_id(path: Path) -> str:
+    """Return the Git blob identifier for a file's exact bytes."""
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def expected_gitskills_frame() -> set[str]:
+    """Return the 999 eligible hashes recorded across the ledger and queue."""
+    with (ROOT / "research" / "source-ledger.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        baseline = {
+            row["file_sha"]
+            for row in csv.DictReader(handle)
+            if int(row["rank"]) <= 100
+        }
+    with (ROOT / "research" / "expansion-queue.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        expansion = {
+            row["file_sha"]
+            for row in csv.DictReader(handle)
+            if row["review_status"] != "excluded-non-skill-placeholder"
+        }
+    expected = baseline | expansion
+    if len(baseline) != 99 or len(expansion) != 900 or len(expected) != 999:
+        raise RuntimeError("recorded GitSkills frame does not contain 999 unique hashes")
+    return expected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Fail when an external source and a public skill share too many normalized word shingles."
@@ -37,6 +70,11 @@ def main() -> int:
     parser.add_argument("--sources", type=Path, required=True, help="External raw-source directory")
     parser.add_argument("--threshold", type=float, default=0.20, help="Containment threshold (default: 0.20)")
     parser.add_argument("--ngram", type=int, default=8, help="Words per shingle (default: 8)")
+    parser.add_argument(
+        "--verify-gitskills-frame",
+        action="store_true",
+        help="Require external files to match the 999 recorded Git blob hashes",
+    )
     args = parser.parse_args()
 
     source_root = args.sources.expanduser().resolve()
@@ -51,6 +89,31 @@ def main() -> int:
 
     public_files = files_under(ROOT / "skills")
     source_files = files_under(source_root)
+    if args.verify_gitskills_frame:
+        try:
+            expected_hashes = expected_gitskills_frame()
+        except RuntimeError as error:
+            parser.error(str(error))
+        observed_hashes = {git_blob_id(path) for path in source_files}
+        if len(source_files) != len(observed_hashes):
+            print(
+                "Source corpus contains duplicate Git blobs; expected one file per hash.",
+                file=sys.stderr,
+            )
+            return 1
+        missing = sorted(expected_hashes - observed_hashes)
+        unexpected = sorted(observed_hashes - expected_hashes)
+        if missing or unexpected:
+            print(
+                "Source corpus does not match the recorded GitSkills frame: "
+                f"{len(missing)} missing and {len(unexpected)} unexpected blobs.",
+                file=sys.stderr,
+            )
+            return 1
+        print(
+            f"Source corpus verified: {len(observed_hashes)} files match the "
+            "recorded Git blob set."
+        )
     public_sets = {path: shingles(path, args.ngram) for path in public_files}
     source_sets = {path: shingles(path, args.ngram) for path in source_files}
 

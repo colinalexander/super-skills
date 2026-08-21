@@ -365,11 +365,18 @@ def validate_evaluations(errors: list[str]) -> None:
             "global true-negative",
             "matched-budget sensitivity analysis",
             "two independent human",
+            "three times per case",
+            "10,000 stratified nonparametric bootstrap samples",
+            "Generator(PCG64)",
+            "Bonferroni-adjusted 99.5%",
+            "Wilson score intervals",
+            "continuity correction",
             "Falsification criteria",
             "5,613 tokens",
             "0.5 points",
             "more than 10%",
-            "against all 999 eligible baseline-plus-expansion sources",
+            "all 999 eligible",
+            "baseline-plus-expansion sources",
             "Before any benchmark execution",
         ):
             if marker not in benchmark:
@@ -453,6 +460,8 @@ def validate_similarity_gate(errors: list[str]) -> None:
         f"Source-population checksum: `{source_checksum}`",
         f"Public surface: all {len(public_files)} files",
         f"Public-surface checksum: `{public_checksum}`",
+        "--verify-gitskills-frame",
+        "Source corpus verified: 999 files match the recorded Git blob set.",
         (
             "Similarity check passed: "
             f"{len(public_files)} public files compared with 999 external files "

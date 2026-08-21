@@ -17,13 +17,17 @@ Date: 2026-08-20
 - Source-population checksum: `26f462bb8d84d98c38ac86f8e3db572a20ce075110782c56bd3f13bca2100eb0`.
 - Public surface: all 66 files under the 10 active skill directories.
 - Public-surface checksum: `de1b0eef5ee49404dccb7d3640e2ea652a663faa02bc07613707a40719cbeeb6`.
-- Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus`.
+- Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus --verify-gitskills-frame`.
 - Parameters: normalized eight-word shingles; 20% smaller-document containment threshold.
+- Corpus result: `Source corpus verified: 999 files match the recorded Git blob set.`
 - Result: `Similarity check passed: 66 public files compared with 999 external files at 20% containment.`
 
 The source-population checksum is SHA-256 over the sorted, newline-terminated
-list of 999 content hashes. Because Git blob identifiers address exact source
-bytes, it fixes the external comparison population without storing its prose.
+list of 999 content hashes. The checker independently computes the Git blob ID
+of every external file and rejects missing, unexpected, or duplicate blobs
+before comparing prose. Because Git blob identifiers address exact source bytes,
+this binds the recorded population to the files actually scanned without
+storing their prose.
 The public-surface checksum is SHA-256 over each sorted repository-relative path
 and its file SHA-256 digest. Repository validation recomputes both checksums; any
 active skill edit invalidates this gate until the 999-source comparison is rerun

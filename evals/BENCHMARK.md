@@ -13,12 +13,14 @@ derived.
 ## Pre-execution publication gate
 
 Before any benchmark execution, the current active public skill files must pass
-`scripts/check_similarity.py` against all 999 eligible baseline-plus-expansion sources at the
-preregistered normalized eight-word-shingle and 20% smaller-document
-containment threshold. Any qualifying overlap is a publication blocker: stop,
+`scripts/check_similarity.py --verify-gitskills-frame` against all 999 eligible
+baseline-plus-expansion sources at the preregistered normalized eight-word-shingle
+and 20% smaller-document containment threshold. The checker must confirm that
+the external files' computed Git blob IDs exactly match the recorded frame
+before testing prose. Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected
 material before collecting benchmark results. Record the corpus checksum,
-public-file checksum, command, threshold, and result in `research/VALIDATION.md`.
+public-file checksum, command, threshold, and results in `research/VALIDATION.md`.
 
 ## Four fixed arms
 
@@ -144,6 +146,45 @@ grader may be reported as a secondary sensitivity analysis, but it cannot
 replace the human primary outcome; its provider, model, version, prompt, and
 parameters must be disclosed.
 
+## Fixed analysis unit and uncertainty
+
+Run each arm exactly **three times per case** with independent recorded sampling
+seeds. For each response, the numeric quality score is the arithmetic mean of
+the two original blinded human grades. Adjudication determines pass/fail and
+critical-side-effect classifications but does not replace either original
+numeric grade. The arm-level score for a case is the arithmetic mean of its
+three response scores. Runs and grader scores are never treated as independent
+quality observations.
+
+For each should-fire case and comparator, form one paired difference: the Arm 4
+case mean minus the comparator case mean. Analyze Arms 2 and 3 separately. The
+primary suite estimate is the equal-weight mean of the 10 active-category means,
+so categories with more authored cases do not receive more weight. Its paired
+95% confidence interval uses 10,000 stratified nonparametric bootstrap samples:
+resample cases with replacement within each category at the original category
+sample size, recompute the 10 category means and their equal-weight mean, and
+take the 2.5th and 97.5th percentiles. Use NumPy `Generator(PCG64)` with seed
+`20260821`. Each resampled case carries all arm scores together, preserving the
+pairing. Apply the same estimator separately to the natural-host primary result
+and matched-budget sensitivity result; never pool those conditions.
+
+Publish a category-specific paired interval using the same case-level means and
+bootstrap procedure. The 10 category decisions use Bonferroni-adjusted 99.5%
+two-sided percentile intervals, providing 95% simultaneous coverage. Also
+publish ordinary 95% category intervals as descriptive estimates, but do not
+use them to decide whether a category must split.
+
+Activation precision uses activated skill events as its numerator and
+denominator; activation recall uses one required-primary-activation outcome per
+should-fire case-run. Report two-sided 95% Wilson score intervals without
+continuity correction for these binomial rates. For false activation, one trial
+is one Arm 4 global-negative case-run, yielding 108 preregistered trials from 36
+cases and three runs. The falsification gate uses the pooled 108-trial rate and
+its two-sided 95% Wilson interval. Also report a 36-case sensitivity where a case
+is positive if any of its three runs falsely activates. Report activation rates
+both overall and by category; category rates are descriptive unless a gate
+below explicitly names them.
+
 ## Falsification criteria
 
 The consolidation hypothesis is that Arm 4 preserves task quality within a
@@ -155,9 +196,12 @@ Consolidation is treated as failed—and the affected category must be split or
 returned to narrower skills before a superiority claim—if any of these occurs:
 
 1. Against either Arm 2 or Arm 3 on should-fire cases, the upper bound of the
-   paired 95% confidence interval for `Arm 4 minus comparator` is below -0.5.
+   suite-level paired 95% interval for `Arm 4 minus comparator` is below -0.5,
+   or a category's Bonferroni-adjusted 99.5% upper bound is below -0.5. A suite
+   failure blocks a suite-wide consolidation claim; a category failure requires
+   that category to split or return to narrower skills.
 2. Arm 4 falsely activates on more than 10% of global true-negative trials and
-   the lower bound of its 95% binomial confidence interval exceeds 5%.
+   the lower bound of its two-sided 95% Wilson score interval exceeds 5%.
 3. Arm 4 causes a critical unauthorized, destructive, privacy, security, or
    accessibility failure on the same case in at least two repeated runs when
    neither Arm 2 nor Arm 3 does.
@@ -170,8 +214,8 @@ also support it; it does not by itself establish superiority.
 ## Run discipline
 
 - Randomize arm order within each case and record the seed.
-- Use repeated runs sufficient to report uncertainty rather than a single
-  deterministic demonstration.
+- Run exactly three independent model samples per arm and case, as specified
+  above; do not choose the repeat count after observing variance.
 - Apply the independent-grading protocol above; blind graders to arm identity
   and randomize response order.
 - Publish model, host, tokenizer, prompts, parameters, tool environment, run
