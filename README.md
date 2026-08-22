@@ -38,9 +38,9 @@ Historical-lineage analysis found 21 exact Anthropic Git blobs among the 99 base
 | [`application-engineering`](skills/application-engineering/) | Framework, API, runtime, database, and application architecture | 67 | 463 | 1,613 |
 | [`game-development`](skills/game-development/) | Game design and engineering across 2D, mobile, PC/console, audio, and XR | 58 | 456 | 1,699 |
 | [`reasoning-modes`](skills/reasoning-modes/) | Brainstorming, adversarial review, abstraction shifts, and compressed communication | 48 | 399 | 1,274 |
-| [`systems-and-security`](skills/systems-and-security/) | Bash/Linux, PowerShell/Windows, and scoped security assessment | 55 | 432 | 1,182 |
-| [`marketing-and-growth`](skills/marketing-and-growth/) | Market research, positioning, pricing, acquisition, conversion, and fundraising | 60 | 558 | 1,968 |
-| [`connected-service-automation`](skills/connected-service-automation/) | Safe operation of messaging, notes, media, files, sharing, and connected services | 57 | 463 | 1,164 |
+| [`systems-and-security`](skills/systems-and-security/) | Bash/Linux, PowerShell/Windows, and scoped security assessment | 55 | 503 | 1,298 |
+| [`marketing-and-growth`](skills/marketing-and-growth/) | Market research, positioning, pricing, acquisition, conversion, and fundraising | 60 | 661 | 2,071 |
+| [`connected-service-automation`](skills/connected-service-automation/) | Safe operation of messaging, notes, media, files, sharing, and connected services | 57 | 510 | 1,259 |
 | [`data-science-and-ml`](skills/data-science-and-ml/) | Data quality, experiments, modeling, training, evaluation, and model operations | 62 | 479 | 1,366 |
 
 Description counts measure the always-loaded front-matter discovery text. The 10 active super-skill descriptions total **580 tokens**; the same tokenizer applied to the 119 active GitSkills evidence descriptions yields **5,613 tokens**, a 9.7× normalized discovery-text difference before host framing. This quantifies the cost of making the skills discoverable on every request; it does **not** measure post-activation instruction cost or task quality. Core counts cover `SKILL.md`; full counts include every Markdown reference. All counts use `cl100k_base` with pinned `tiktoken==0.11.0` and exclude host framing, tool schemas, and conversation context. The generated [active-skill](research/token-counts.csv) and [retained-source](research/source-description-token-counts.csv) records are validation-enforced. Each skill loads specialized guidance from `references/` only when the task needs it.
@@ -54,7 +54,7 @@ Description counts measure the always-loaded front-matter discovery text. The 10
 - [`game-development`](skills/game-development/): Design, implement, tune, or critique games and immersive experiences across 2D, mobile, PC/console, audio, VR, and AR. Use when a player loop, feel, progression, real-time simulation, platform input, performance budget, game audio, or embodied interaction is central.
 - [`reasoning-modes`](skills/reasoning-modes/): Apply a deliberately requested interaction mode: exploratory brainstorming, adversarial questioning, abstraction and perspective shifts, or extremely compressed plain-language communication. Use when the user asks how the reasoning conversation should proceed, not merely because a task is difficult.
 - [`systems-and-security`](skills/systems-and-security/): Operate and troubleshoot Bash/Linux or PowerShell/Windows environments, and perform explicitly requested defensive security assessment. Use when shell semantics, processes, services, permissions, storage, networking, or vulnerability analysis are central; never infer authorization to scan or exploit from a routine systems task.
-- [`marketing-and-growth`](skills/marketing-and-growth/): Develop evidence-based marketing, growth, pricing, conversion, positioning, and fundraising work. Use for market research, product marketing, SEO, acquisition, lifecycle optimization, monetization, marketing copy, ads, or investor communications; do not use for visual design, general office-document production, or software implementation.
+- [`marketing-and-growth`](skills/marketing-and-growth/): Develop evidence-based marketing, pricing, growth, positioning, conversion, and fundraising. Use for market research, product marketing, pricing tiers/plans/packages, SEO, acquisition, lifecycle, monetization, copy, ads, or investor communications; exclude visual design, office-artifact mechanics, and software implementation.
 - [`connected-service-automation`](skills/connected-service-automation/): Operate user-authorized messaging, notes, media, cloud storage, sharing, and similar connected services through available tools or CLIs. Use when the task is to inspect or change state in an external personal or workplace service; use another skill to design a new integration or agent tool.
 - [`data-science-and-ml`](skills/data-science-and-ml/): Design, analyze, train, evaluate, and operationalize statistical or machine-learning systems. Use for data quality, experiments, causal inference, predictive modeling, deep learning, computer vision, fine-tuning, distributed training, or model monitoring; use application engineering for ordinary product architecture without an analytical or learned-model decision.
 
@@ -142,6 +142,8 @@ Use $software-delivery to diagnose this failing test and verify the repair.
 
 The skill determines which modes apply rather than imposing every source practice indiscriminately.
 
+Automatic skill selection depends on the host and model and is not guaranteed. When selecting the capability matters—especially for a consequential mutation or a boundary-sensitive task—invoke the skill by name. The first [dogfood smoke report](evals/DOGFOOD.md) records both automatic-routing and explicit-invocation behavior rather than treating installation as proof of use.
+
 ## Synthesis methodology
 
 The research uses a ranked top-1,000 GitSkills frame. Its initial substantive review covered 99 eligible hashes in the top 100; subsequent targeted review covered 95 expansion hashes. Together, those reviews retained 130 hashes and identified 11 capability categories. One category is withheld, leaving 119 evidence hashes across the 10-skill active suite. Categories are analyzed for:
@@ -200,7 +202,7 @@ Per-category synthesis matrices record retained rules, contextual decisions, con
 
 ## Evaluation status
 
-The repository currently contains 56 active-category cases, 12 global true negatives, a shared rubric, and a [comparative protocol](evals/BENCHMARK.md). These are 68 evaluation **specifications**, not benchmark results.
+The repository currently contains 56 active-category cases, 12 global true negatives, a shared rubric, and a [comparative protocol](evals/BENCHMARK.md). These are 68 evaluation **specifications**, not benchmark results. A separate [dogfood smoke report](evals/DOGFOOD.md) records an initial installed-host routing and guardrail check; it is not a comparative quality result.
 
 Before claiming that a super-skill outperforms its sources, the project will compare:
 

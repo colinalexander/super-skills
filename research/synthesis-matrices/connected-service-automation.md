@@ -5,7 +5,7 @@ Evidence: five retained top-1,000 hashes spanning messaging, notes, media playba
 | Decision area | Retained synthesis | Conflict resolution or added safeguard |
 | --- | --- | --- |
 | Capability discovery | Verify available tool, platform, version, auth state, and supported action | Recalled command syntax yields to live help or schema |
-| Identity | Resolve account, tenant, workspace, device, recipient, and resource explicitly | Tool availability does not imply authority over every reachable target |
+| Identity | Resolve service, account, tenant, workspace, device, recipient, channel, timing, and resource explicitly | Ambiguity is a hard stop before a write; tool availability neither implies authority over reachable targets nor justifies service or target substitution |
 | Side effects | Distinguish reads, drafts, sends, mutations, sharing, deletion, and device changes | Confirmation scales with ambiguity, external visibility, and recoverability |
 | Permissions | Apply the narrowest role to the exact collaborator and object | Successful requests are followed by an authoritative access check |
 | Records | Preserve content, hierarchy, identity, and recovery behavior | Search and listings are treated as partial unless completeness is established |

@@ -382,6 +382,63 @@ def validate_evaluations(errors: list[str]) -> None:
                 fail(errors, f"worked interface conflict is missing {marker!r}")
 
 
+def validate_dogfood_repairs(errors: list[str]) -> None:
+    """Keep dogfood-derived safeguards additive and aligned across truth surfaces."""
+    contracts = {
+        "skills/marketing-and-growth/SKILL.md": (
+            "pricing tiers/plans/packages",
+            "investor communications",
+            "office-artifact mechanics",
+            "Do not invent numeric prices",
+        ),
+        "research/synthesis-matrices/marketing-and-growth.md": (
+            "Stated willingness to pay is not purchase evidence",
+            "a bare tier request remains commercial strategy",
+            "package hypotheses rather than fabricated prices",
+        ),
+        "skills/connected-service-automation/SKILL.md": (
+            "do not call a write tool",
+            "Never substitute an available service",
+        ),
+        "skills/connected-service-automation/references/messaging-and-sharing.md": (
+            "hard stop before any send call",
+            "do not choose the first matching contact",
+        ),
+        "research/synthesis-matrices/connected-service-automation.md": (
+            "Ambiguity is a hard stop before a write",
+            "neither implies authority over reachable targets",
+            "nor justifies service or target substitution",
+        ),
+        "skills/systems-and-security/SKILL.md": (
+            "For Windows ACLs",
+            "For Unix/POSIX permissions",
+            "Do not treat a successful mutation call or partial match as verification",
+        ),
+        "skills/systems-and-security/references/powershell-and-windows.md": (
+            "exact principal, access type, rights, inheritance, and propagation flags",
+            "is not independent verification",
+        ),
+        "research/synthesis-matrices/systems-and-security.md": (
+            "native ownership, mode, and ACL semantics",
+            "principal, type, rights, inheritance, and propagation",
+            "partial ACL matches are excluded",
+        ),
+        "evals/DOGFOOD.md": (
+            "It is not a benchmark.",
+            "Automatic routing is promising but not established as reliable",
+        ),
+    }
+    for relative_path, markers in contracts.items():
+        path = ROOT / relative_path
+        if not path.is_file():
+            fail(errors, f"missing dogfood contract surface {relative_path}")
+            continue
+        text = path.read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in text:
+                fail(errors, f"{relative_path} is missing dogfood invariant {marker!r}")
+
+
 def validate_expansion_queue(errors: list[str]) -> None:
     ledger = ROOT / "research" / "source-ledger.csv"
     queue = ROOT / "research" / "expansion-queue.csv"
@@ -582,6 +639,7 @@ def main() -> int:
     validate_token_counts(errors)
     validate_source_token_counts(errors)
     validate_evaluations(errors)
+    validate_dogfood_repairs(errors)
     validate_licensing(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)

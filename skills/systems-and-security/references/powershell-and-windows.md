@@ -12,6 +12,8 @@ Use the service manager, event logs, scheduled tasks, registry, ACLs, network st
 
 Read the current value and export or record recovery information before registry, policy, ACL, service-startup, firewall, or boot changes. Scope remoting commands to verified hosts and avoid placing secrets in script text or transcript output.
 
+After changing a Windows ACL, re-read it on every target and verify the exact principal, access type, rights, inheritance, and propagation flags. A constructed rule or successful `Set-Acl` return is not independent verification.
+
 ## Write reliable automation
 
 Use advanced-function parameter validation where appropriate, structured output, terminating errors for unrecoverable failures, and `ShouldProcess` support for impactful changes. Test paths with spaces, empty pipeline input, partial failures, and reruns.
