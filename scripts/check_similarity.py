@@ -9,9 +9,10 @@ import csv
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import unicodedata
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,10 +37,20 @@ OCCURRENCE_RECORD_FIELDS = {"source_file_sha", "selection_method", "candidates"}
 CANDIDATE_FIELDS = {
     "repository", "entry_repository_path", "commit", "reachable", "entry_blob"
 }
-TEXT_SUFFIXES = {
-    ".css", ".html", ".js", ".json", ".jsx", ".md", ".py", ".sh",
-    ".svg", ".toml", ".ts", ".tsx", ".txt", ".yaml", ".yml",
-}
+
+
+def looks_like_binary(data: bytes) -> bool:
+    """Classify undecodable binary payloads without relying on a filename."""
+    if not data:
+        return False
+    even_nuls = data[::2].count(0) / max(1, len(data[::2]))
+    odd_nuls = data[1::2].count(0) / max(1, len(data[1::2]))
+    if max(even_nuls, odd_nuls) > 0.30 and min(even_nuls, odd_nuls) < 0.05:
+        return False
+    if b"\0" in data:
+        return True
+    controls = sum(byte < 7 or 14 <= byte < 32 or 127 <= byte < 160 for byte in data)
+    return controls / len(data) > 0.10
 
 
 def parameter_summary(closure_file_count: int) -> str:
@@ -66,10 +77,12 @@ def normalized_words(path: Path) -> tuple[str, ...]:
         else:
             decoded = data.decode("utf-8")
     except UnicodeDecodeError as error:
-        if path.suffix.casefold() in TEXT_SUFFIXES:
-            raise RuntimeError(f"text file has an unsupported encoding: {path}") from error
-        return ()
-    if "\0" in decoded and path.suffix.casefold() in TEXT_SUFFIXES:
+        if looks_like_binary(data):
+            return ()
+        raise RuntimeError(f"undecodable non-binary file: {path}") from error
+    if "\0" in decoded:
+        if looks_like_binary(data):
+            return ()
         raise RuntimeError(f"text file has an unsupported NUL-bearing encoding: {path}")
     text = unicodedata.normalize("NFKC", decoded).casefold()
     words: list[str] = []
@@ -173,8 +186,61 @@ def ledger_exact_occurrences() -> dict[str, tuple[str, str, str]]:
     return exact
 
 
+def load_gitskills_occurrences(
+    manifest_path: Path,
+) -> dict[str, list[tuple[str, str]]]:
+    """Load the independently exported GitSkills occurrence population."""
+    expected_sources = expected_active_source_hashes()
+    population: dict[str, list[tuple[str, str]]] = {}
+    seen: set[tuple[str, str, str]] = set()
+    for line_number, raw_line in enumerate(
+        manifest_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not raw_line.strip():
+            continue
+        try:
+            record = json.loads(raw_line)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                f"invalid GitSkills occurrence JSON on line {line_number}"
+            ) from error
+        if not isinstance(record, dict) or set(record) != {
+            "source_file_sha", "repository", "entry_repository_path"
+        }:
+            raise RuntimeError(
+                f"GitSkills occurrence line {line_number} has incorrect fields"
+            )
+        if not all(isinstance(value, str) and value for value in record.values()):
+            raise RuntimeError(
+                f"GitSkills occurrence line {line_number} has invalid values"
+            )
+        source_hash = record["source_file_sha"]
+        if not re.fullmatch(r"[0-9a-f]{40}", source_hash):
+            raise RuntimeError(
+                f"GitSkills occurrence line {line_number} has invalid source hash"
+            )
+        identity = (
+            source_hash, record["repository"], record["entry_repository_path"]
+        )
+        if identity in seen:
+            raise RuntimeError(f"duplicate GitSkills occurrence: {identity}")
+        seen.add(identity)
+        population.setdefault(source_hash, []).append(identity[1:])
+    if set(population) != expected_sources:
+        raise RuntimeError(
+            "GitSkills occurrence export does not cover exactly 119 active sources"
+        )
+    for source_hash, identities in population.items():
+        if identities != sorted(identities):
+            raise RuntimeError(
+                f"GitSkills occurrences are not case-sensitively sorted: {source_hash}"
+            )
+    return population
+
+
 def load_occurrence_manifest(
     manifest_path: Path,
+    gitskills_population: dict[str, list[tuple[str, str]]],
 ) -> dict[str, tuple[str, str, str, str, str, int]]:
     """Validate source-level occurrence selection and return pinned tuples."""
     expected_sources = expected_active_source_hashes()
@@ -269,6 +335,12 @@ def load_occurrence_manifest(
             raise RuntimeError(
                 f"unverified source must use deterministic fallback selection: {source_hash}"
             )
+        if method == "sorted-first-reachable-exact" and candidate_keys != gitskills_population[
+            source_hash
+        ]:
+            raise RuntimeError(
+                f"candidate identities differ from GitSkills occurrences: {source_hash}"
+            )
         candidate_serialized = json.dumps(
             candidates, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
@@ -287,6 +359,7 @@ def load_closure_manifest(
     manifest_path: Path,
     closure_root: Path,
     occurrence_selections: dict[str, tuple[str, str, str, str, str, int]],
+    snapshot_root: Path,
 ) -> tuple[list[Path], str]:
     """Validate staged files and hash canonical pinned-closure records."""
     records: list[str] = []
@@ -296,6 +369,7 @@ def load_closure_manifest(
     manifest_source_hashes: set[str] = set()
     entry_source_hashes: set[str] = set()
     pinned_occurrences: dict[str, tuple[str, str, str, str, str, int]] = {}
+    records_by_source: dict[str, list[tuple[dict[str, object], Path]]] = {}
     for line_number, raw_line in enumerate(
         manifest_path.read_text(encoding="utf-8").splitlines(), start=1
     ):
@@ -419,6 +493,9 @@ def load_closure_manifest(
         ):
             entry_source_hashes.add(record["source_file_sha"])
         staged_files.append(staged_file)
+        records_by_source.setdefault(record["source_file_sha"], []).append(
+            (record, staged_file)
+        )
         canonical = {key: record[key] for key in sorted(record) if key != "staged_path"}
         records.append(
             json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -442,6 +519,7 @@ def load_closure_manifest(
             "closure manifest lacks a validated entry blob for "
             f"{len(missing_entries)} active retained source hashes"
         )
+    verify_git_snapshots(records_by_source, snapshot_root)
     serialized = "\n".join(sorted(records)) + ("\n" if records else "")
     return sorted(staged_files), hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -451,6 +529,89 @@ def git_blob_id(path: Path) -> str:
     data = path.read_bytes()
     header = f"blob {len(data)}\0".encode("ascii")
     return hashlib.sha1(header + data).hexdigest()
+
+
+def git_output(snapshot: Path, *arguments: str) -> str:
+    """Run a read-only Git query against a pinned repository snapshot."""
+    completed = subprocess.run(
+        ["git", "-C", str(snapshot), *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode:
+        raise RuntimeError(
+            f"Git snapshot query failed in {snapshot}: {' '.join(arguments)}"
+        )
+    return completed.stdout.strip()
+
+
+def verify_git_snapshots(
+    records_by_source: dict[str, list[tuple[dict[str, object], Path]]],
+    snapshot_root: Path,
+) -> None:
+    """Authenticate every staged closure file and complete skill directory."""
+    checked_remotes: set[tuple[Path, str]] = set()
+    for source_hash, source_records in records_by_source.items():
+        first = source_records[0][0]
+        repository = str(first["repository"])
+        commit = str(first["commit"])
+        entry_path = str(first["entry_repository_path"])
+        snapshot = snapshot_root / hashlib.sha256(repository.encode("utf-8")).hexdigest()
+        if not snapshot.is_dir():
+            raise RuntimeError(f"missing Git snapshot for repository: {repository}")
+        remote_key = (snapshot, repository)
+        if remote_key not in checked_remotes:
+            remote = git_output(snapshot, "remote", "get-url", "origin").lower()
+            repository_lower = repository.lower()
+            allowed = {
+                f"https://github.com/{repository_lower}",
+                f"https://github.com/{repository_lower}.git",
+                f"git@github.com:{repository_lower}.git",
+                f"ssh://git@github.com/{repository_lower}.git",
+            }
+            if remote not in allowed:
+                raise RuntimeError(f"Git snapshot origin differs: {repository}")
+            checked_remotes.add(remote_key)
+        git_output(snapshot, "cat-file", "-e", f"{commit}^{{commit}}")
+        if git_output(snapshot, "rev-parse", f"{commit}:{entry_path}") != source_hash:
+            raise RuntimeError(f"pinned entry blob differs in Git snapshot: {source_hash}")
+        closure_paths: set[str] = set()
+        for record, staged_file in source_records:
+            repository_path = str(record["repository_path"])
+            tree_blob = git_output(snapshot, "rev-parse", f"{commit}:{repository_path}")
+            if tree_blob != git_blob_id(staged_file):
+                raise RuntimeError(
+                    f"staged closure file differs from pinned Git tree: {repository_path}"
+                )
+            tree_entry = git_output(
+                snapshot, "ls-tree", commit, "--", repository_path
+            ).split("\t", 1)[0]
+            mode = tree_entry.split(" ", 1)[0]
+            if bool(mode == "100755") != bool(record["executable"]):
+                raise RuntimeError(
+                    f"closure executable mode differs from pinned Git tree: {repository_path}"
+                )
+            closure_paths.add(repository_path)
+        skill_dir = PurePosixPath(entry_path).parent
+        pathspec = [] if str(skill_dir) == "." else [str(skill_dir)]
+        expected_directory = set(
+            filter(
+                None,
+                git_output(
+                    snapshot, "ls-tree", "-r", "--name-only", commit, "--", *pathspec
+                ).splitlines(),
+            )
+        )
+        observed_directory = {
+            path for path in closure_paths
+            if str(skill_dir) == "." or PurePosixPath(path) == skill_dir
+            or skill_dir in PurePosixPath(path).parents
+        }
+        if observed_directory != expected_directory:
+            raise RuntimeError(
+                f"closure does not equal the pinned skill directory: {source_hash}"
+            )
 
 
 def expected_gitskills_frame() -> set[str]:
@@ -498,6 +659,16 @@ def main() -> int:
         help="External JSONL manifest proving deterministic source-occurrence selection",
     )
     parser.add_argument(
+        "--gitskills-occurrences",
+        type=Path,
+        help="External GitSkills-derived complete occurrence population JSONL",
+    )
+    parser.add_argument(
+        "--git-snapshots",
+        type=Path,
+        help="External pinned Git repositories named by SHA-256 of repository name",
+    )
+    parser.add_argument(
         "--threshold",
         type=float,
         default=DEFAULT_THRESHOLD,
@@ -521,23 +692,30 @@ def main() -> int:
     except RuntimeError as error:
         parser.error(str(error))
     closure_arguments = (
-        args.closure_sources, args.closure_manifest, args.closure_occurrences
+        args.closure_sources, args.closure_manifest, args.closure_occurrences,
+        args.gitskills_occurrences, args.git_snapshots,
     )
     if any(value is not None for value in closure_arguments) and not all(
         value is not None for value in closure_arguments
     ):
         parser.error(
             "--closure-sources, --closure-manifest, and --closure-occurrences "
-            "must be used together"
+            "must be used with --gitskills-occurrences and --git-snapshots"
         )
     closure_root = None
     closure_manifest = None
     closure_occurrences = None
+    gitskills_occurrences = None
+    git_snapshots = None
     if args.closure_sources is not None:
         try:
             closure_root = require_external_source_root(args.closure_sources)
             closure_manifest = require_external_source_file(args.closure_manifest)
             closure_occurrences = require_external_source_file(args.closure_occurrences)
+            gitskills_occurrences = require_external_source_file(
+                args.gitskills_occurrences
+            )
+            git_snapshots = require_external_source_root(args.git_snapshots)
         except RuntimeError as error:
             parser.error(str(error))
         if (
@@ -556,6 +734,20 @@ def main() -> int:
             parser.error("closure files and occurrence manifest must not overlap")
         if closure_occurrences == closure_manifest:
             parser.error("closure and occurrence manifests must be separate files")
+        if gitskills_occurrences in {closure_manifest, closure_occurrences}:
+            parser.error("GitSkills and closure manifests must be separate files")
+        for external_file in (
+            closure_manifest, closure_occurrences, gitskills_occurrences
+        ):
+            if external_file == git_snapshots or git_snapshots in external_file.parents:
+                parser.error("Git snapshots and manifests must not overlap")
+        for external_root in (source_root, closure_root):
+            if (
+                git_snapshots == external_root
+                or git_snapshots in external_root.parents
+                or external_root in git_snapshots.parents
+            ):
+                parser.error("Git snapshots and source corpora must not overlap")
     verification_required = args.verify_gitskills_frame or closure_root is not None
     if args.ngram < 5:
         parser.error("ngram must be at least 5 words")
@@ -572,11 +764,16 @@ def main() -> int:
     entry_source_files = files_under(source_root)
     closure_source_files: list[Path] = []
     closure_checksum = ""
-    if closure_root and closure_manifest and closure_occurrences:
+    if all((closure_root, closure_manifest, closure_occurrences, gitskills_occurrences, git_snapshots)):
         try:
-            occurrence_selections = load_occurrence_manifest(closure_occurrences)
+            occurrence_population = load_gitskills_occurrences(
+                gitskills_occurrences
+            )
+            occurrence_selections = load_occurrence_manifest(
+                closure_occurrences, occurrence_population
+            )
             closure_source_files, closure_checksum = load_closure_manifest(
-                closure_manifest, closure_root, occurrence_selections
+                closure_manifest, closure_root, occurrence_selections, git_snapshots
             )
         except RuntimeError as error:
             parser.error(str(error))

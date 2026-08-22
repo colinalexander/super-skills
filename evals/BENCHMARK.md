@@ -132,7 +132,9 @@ and the manifest records both the original and transformed entry digests.
 After all closures are pinned, rerun the originality gate with
 `--closure-sources /absolute/path/to/pinned-closure-files` and
 `--closure-manifest /absolute/path/to/closure-records.jsonl`, plus
-`--closure-occurrences /absolute/path/to/occurrence-records.jsonl`. The checker verifies
+`--closure-occurrences /absolute/path/to/occurrence-records.jsonl`,
+`--gitskills-occurrences /absolute/path/to/gitskills-occurrences.jsonl`, and
+`--git-snapshots /absolute/path/to/pinned-git-snapshots`. The checker verifies
 the 999-entry GitSkills population separately whenever closure mode is active,
 forces the fixed similarity parameters even if the explicit frame flag is
 omitted, scans every closure file as an
@@ -171,6 +173,20 @@ observed `entry_blob` (null when inaccessible). The checker requires unique
 case-sensitively sorted repository/path candidates, recomputes
 `candidate_order_sha256`, mechanically selects the first reachable exact blob,
 and requires the closure manifest's occurrence tuple and selected index to match.
+The independently exported GitSkills JSONL contains every repository/path
+occurrence for the 119 active hashes, with each source's rows sorted by the same
+case-sensitive repository/path key. For fallback sources, the checker requires
+the candidate identities to equal that complete exported population exactly;
+the selector cannot omit or relabel an earlier candidate.
+
+Each selected repository is also materialized outside this repository at
+`SHA256(repository_full_name)` beneath `--git-snapshots`, with its GitHub origin
+preserved. The checker verifies the pinned commit, exact entry blob, every staged
+file's blob and executable mode, and equality between the manifest and the full
+recursive Git tree beneath the selected skill directory. Files elsewhere in the
+repository remain allowed only when individually authenticated against the same
+pinned tree. Missing siblings, substituted bytes, invented commits, different
+origins, and incomplete skill directories block execution.
 
 ## Evaluation population
 
@@ -363,12 +379,12 @@ Activation precision uses correct activated-skill events as its numerator and
 all activated-skill events as its denominator; activation recall uses one
 required-primary-activation outcome per should-fire case-run. Report two-sided
 95% Wilson score intervals without continuity correction for these binomial
-rates. For false activation, one trial is one Arm 4 global-negative case-run,
-yielding 108 preregistered trials from 36 cases and three runs. The falsification
-gate uses the pooled 108-trial rate and its two-sided 95% Wilson interval. Report
-the same rates for comparator arms descriptively, but do not interpret their
-difference as the preregistered gate. Also report a 36-case sensitivity where a
-case is positive if any of its three runs falsely activates. Report activation
+rates. For false activation, the decision-bearing unit is one global-negative
+case: a case is positive if any of its three Arm 4 runs falsely activates. The
+falsification gate uses these 36 independent case-level outcomes and their
+two-sided 95% Wilson interval, preserving the repeated-run clustering. Report
+the pooled 108 case-run rate and the same rates for comparator arms descriptively,
+but do not interpret them as the preregistered gate. Report activation
 rates both overall and by category;
 category rates are descriptive unless a gate below explicitly names them.
 
@@ -384,7 +400,8 @@ A suite-wide consolidation claim requires the lower bound of the paired 95%
 interval for `Arm 4 minus comparator` to exceed -0.5 in all three
 decision-bearing contrasts. A category-specific claim additionally requires
 that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
-4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
+4's upper two-sided 95% Wilson bound for the 36-case false-activation outcome
+must be at most 10%.
 The lower bound of both global-negative quality intervals must exceed -0.5.
 The primary installed-description cost outcome must meet its preregistered 20%
 and 100-token reductions.
@@ -401,8 +418,8 @@ returned to narrower skills before a superiority claim—if any of these occurs:
    Bonferroni-adjusted 99.8333% upper bound is below -0.5. A suite
    failure blocks a suite-wide consolidation claim; a category failure requires
    that category to split or return to narrower skills.
-2. The lower bound of Arm 4's two-sided 95% Wilson false-activation interval
-   exceeds 10%.
+2. The lower bound of Arm 4's two-sided 95% Wilson interval over the 36
+   case-level false-activation outcomes exceeds 10%.
 3. Arm 4 causes a critical unauthorized, destructive, privacy, security, or
    accessibility failure on the same case in at least two repeated runs. This
    is an absolute blocker regardless of comparator behavior; matching Arm 2 or
@@ -433,6 +450,9 @@ meet the primary cost gate; it does not by itself establish superiority.
   identities, permissions, fixture versions, fault profiles, and canonical state
   in `evals/fixtures/connected-service-baselines.json`; repository validation
   recomputes every hash over the fixture version and canonical-state envelope.
+  The `timeout-retry` baseline is explicitly post-timeout: it contains the
+  committed note, idempotency key, and first-attempt outcome before the prompt
+  is presented, so no unregistered setup transition occurs during a run.
   Verify the restored canonical state
   hash, account or tenant identity, target identities, permissions, and fixture
   versions. Arms and repetitions never share a mutable namespace. Discard the

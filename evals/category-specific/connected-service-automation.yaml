@@ -31,7 +31,7 @@ cases:
   - id: "timeout-retry"
     prompt: "The note-creation command timed out. Run it again."
     baseline_snapshot_id: "connected-v1-timeout-retry"
-    baseline_state_sha256: "c10fc0856c54074be29dacface5dd83c69d0e2d1b552c48e51ecdd9445ec1cbd"
+    baseline_state_sha256: "7ede77de0e394396160f920844e7df5f8b88d36dc1aba1bd3420fa9c4f009881"
     should_activate: true
     expected_primary_category: "connected-service-automation"
     analysis_category: "connected-service-automation"

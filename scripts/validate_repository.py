@@ -465,6 +465,14 @@ def validate_evaluations(errors: list[str]) -> None:
         if baseline_data.get("schema_version") != 1 or len(snapshots) != 5:
             fail(errors, "connected-service baselines must contain five v1 snapshots")
         connected_text = connected_path.read_text(encoding="utf-8")
+        connected_blocks = {
+            match.group(1): match.group(0)
+            for match in re.finditer(
+                r'^  - id: "([^"]+)"\n.*?(?=^  - id: |\Z)',
+                connected_text,
+                flags=re.MULTILINE | re.DOTALL,
+            )
+        }
         expected_cases = {
             "ambiguous-message", "permission-change", "timeout-retry",
             "bulk-delete", "integration-nontrigger",
@@ -490,7 +498,7 @@ def validate_evaluations(errors: list[str]) -> None:
                 f'baseline_snapshot_id: "{snapshot_id}"',
                 f'baseline_state_sha256: "{state_hash}"',
             ):
-                if marker not in connected_text:
+                if marker not in connected_blocks.get(case_id, ""):
                     fail(errors, f"connected-service case lacks baseline marker: {case_id}")
         if observed_cases != expected_cases:
             fail(errors, "connected-service baseline case population differs")
@@ -589,6 +597,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "--closure-sources",
             "--closure-manifest",
             "--closure-occurrences",
+            "--gitskills-occurrences",
+            "--git-snapshots",
             "canonical records in the run manifest",
             "119 active retained source hashes",
             "actual executable bits",
@@ -596,6 +606,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "candidate_order_sha256",
             "sorted-first-reachable-exact",
             "mechanically selects the first reachable exact blob",
+            "complete exported population exactly",
+            "recursive Git tree beneath",
             "whenever closure mode is active",
             "description SHA-256",
             "never publishes",

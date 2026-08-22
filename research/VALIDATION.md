@@ -17,7 +17,7 @@ Date: 2026-08-20
 - Source-population checksum: `26f462bb8d84d98c38ac86f8e3db572a20ce075110782c56bd3f13bca2100eb0`.
 - Public surface: all 66 files under the 10 active skill directories.
 - Public-surface checksum: `de1b0eef5ee49404dccb7d3640e2ea652a663faa02bc07613707a40719cbeeb6`.
-- Checker checksum: `e33d56058965e8e25632234eb2406fbb2ee2779df4fc19dd8f193ef41a3e27d7`.
+- Checker checksum: `92f5ec49b5eebf08892c932cc3708bfad0f8f053f5a713658ef7c3d70836bf66`.
 - Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus --verify-gitskills-frame`.
 - Parameters: normalized eight-word shingles; 20% smaller-document containment threshold; exact-byte plus Unicode shorter-sequence containment fallback with a four-token minimum for partial matches; Unicode-word tokenization with non-Latin segmentation inside mixed-script tokens and a normalized non-ASCII-character fallback; BOM-aware UTF-8/16/32 decoding with unsupported textual encodings rejected; all regular files under `skills/`; exact GitSkills-frame verification required and implied by closure mode; parameter overrides rejected whenever frame or closure verification is active.
 - Effective-parameter result: `Effective parameters: ngram=8, containment_threshold=0.20, short_fallback=exact-byte+unicode-sequence-containment, min_short_sequence=4, tokenization=unicode-word+nonascii-char, public_files=all-regular, closure_files=0.`
@@ -44,7 +44,8 @@ The 999-entry gate is complete. The dependency-closure comparison remains a
 blocking pre-benchmark gate because source occurrences and their complete pinned
 closures have not yet been materialized. Once they are, the same checker must
 run with `--closure-sources`, `--closure-manifest`, and
-`--closure-occurrences`; its emitted closure count and checksum must
+`--closure-occurrences`, plus `--gitskills-occurrences` and `--git-snapshots`;
+its emitted closure count and checksum must
 match the run manifest before any benchmark case executes.
 
 ## Occurrence and lineage audit
