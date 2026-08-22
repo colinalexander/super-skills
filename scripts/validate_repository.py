@@ -15,7 +15,6 @@ SKILLS = (
     "software-delivery",
     "agent-tooling-and-orchestration",
     "application-engineering",
-    "document-productivity",
     "game-development",
     "reasoning-modes",
     "systems-and-security",
@@ -23,6 +22,7 @@ SKILLS = (
     "connected-service-automation",
     "data-science-and-ml",
 )
+WITHHELD_SKILL = "document-productivity"
 DISALLOWED_MARKERS = ("[TODO", "TODO:", "Add the task-specific guidance")
 
 
@@ -106,8 +106,15 @@ def validate_ledger(errors: list[str]) -> None:
     if len(rows) != 130:
         fail(errors, f"source ledger contains {len(rows)} rows, expected 130")
     observed = {row["super_skill"] for row in rows}
-    if observed != set(SKILLS):
+    if observed != set(SKILLS) | {WITHHELD_SKILL}:
         fail(errors, f"source ledger skill set differs: {sorted(observed)}")
+    active_rows = [row for row in rows if row["super_skill"] != WITHHELD_SKILL]
+    withheld_rows = [row for row in rows if row["super_skill"] == WITHHELD_SKILL]
+    if len(active_rows) != 119 or len(withheld_rows) != 11:
+        fail(
+            errors,
+            "source ledger must contain 119 active and 11 withheld evidence rows",
+        )
     hashes = [row["file_sha"] for row in rows]
     if len(hashes) != len(set(hashes)):
         fail(errors, "source ledger contains duplicate content hashes")
@@ -116,6 +123,23 @@ def validate_ledger(errors: list[str]) -> None:
             fail(errors, f"source ledger row {number}: missing HTTPS reference URL")
         if row["reuse_policy"] != "ideas-only synthesis; no source prose, code, or assets copied":
             fail(errors, f"source ledger row {number}: unexpected reuse policy")
+        if "license_metadata" not in row:
+            fail(errors, "source ledger must use the license_metadata field")
+
+    exact_withheld = [
+        row for row in withheld_rows if "exact Git blob" in row["provenance_status"]
+    ]
+    source_available = [
+        row
+        for row in withheld_rows
+        if row["license_metadata"] == "Anthropic file-level terms (source-available)"
+    ]
+    if len(exact_withheld) != 10 or len(source_available) != 8:
+        fail(
+            errors,
+            "withheld evidence must preserve 10 exact lineages and "
+            "8 source-available records",
+        )
 
 
 def validate_review_decisions(errors: list[str]) -> None:
@@ -202,6 +226,7 @@ def validate_token_counts(errors: list[str]) -> None:
         "skill",
         "tokenizer",
         "tokenizer_package_version",
+        "description_tokens",
         "core_tokens",
         "full_tokens",
         "reference_files",
@@ -221,17 +246,84 @@ def validate_token_counts(errors: list[str]) -> None:
         fail(errors, f"token counts contain {len(rows)} rows, expected {len(SKILLS)}")
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    description_total = 0
     for number, row in enumerate(rows, start=2):
+        description = int(row["description_tokens"])
         core = int(row["core_tokens"])
         full = int(row["full_tokens"])
         references = int(row["reference_files"])
         if row["tokenizer"] != "cl100k_base" or row["tokenizer_package_version"] != "0.11.0":
             fail(errors, f"token count row {number}: tokenizer pin differs")
-        if core < 1 or full < core or references < 1:
+        if description < 1 or core < 1 or full < core or references < 1:
             fail(errors, f"token count row {number}: invalid counts")
+        description_total += description
         marker = f"| [`{row['skill']}`](skills/{row['skill']}/) |"
-        if marker not in readme or f"| {core:,} | {full:,} |" not in readme:
+        counts = f"| {description:,} | {core:,} | {full:,} |"
+        if marker not in readme or counts not in readme:
             fail(errors, f"README token counts are stale for {row['skill']}")
+    if description_total != 580 or "**580 tokens**" not in readme:
+        fail(errors, "active description-token total must be 580 and appear in README")
+
+
+def validate_source_token_counts(errors: list[str]) -> None:
+    path = ROOT / "research" / "source-description-token-counts.csv"
+    expected_fields = [
+        "rank",
+        "file_sha",
+        "super_skill",
+        "tokenizer",
+        "tokenizer_package_version",
+        "description_tokens",
+    ]
+    if not path.is_file():
+        fail(errors, "missing research/source-description-token-counts.csv")
+        return
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        fields = reader.fieldnames or []
+        rows = list(reader)
+    if fields != expected_fields:
+        fail(errors, f"source token count fields differ: {fields}")
+
+    with (ROOT / "research" / "source-ledger.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        active_ledger = {
+            row["file_sha"]: row
+            for row in csv.DictReader(handle)
+            if row["super_skill"] != WITHHELD_SKILL
+        }
+    observed = {row["file_sha"]: row for row in rows}
+    if len(rows) != 119 or set(observed) != set(active_ledger):
+        fail(errors, "source token counts must cover all 119 active evidence hashes")
+
+    total = 0
+    for number, row in enumerate(rows, start=2):
+        ledger_row = active_ledger.get(row["file_sha"])
+        if not ledger_row:
+            continue
+        if (
+            row["rank"] != ledger_row["rank"]
+            or row["super_skill"] != ledger_row["super_skill"]
+        ):
+            fail(errors, f"source token row {number}: ledger identity differs")
+        if (
+            row["tokenizer"] != "cl100k_base"
+            or row["tokenizer_package_version"] != "0.11.0"
+        ):
+            fail(errors, f"source token row {number}: tokenizer pin differs")
+        count = int(row["description_tokens"])
+        if count < 1:
+            fail(errors, f"source token row {number}: invalid description count")
+        total += count
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    if total != 5613 or "**5,613 tokens**" not in readme:
+        fail(
+            errors,
+            "retained-source description-token total must be 5,613 and "
+            "appear in README",
+        )
 
 
 def validate_evaluations(errors: list[str]) -> None:
@@ -240,8 +332,8 @@ def validate_evaluations(errors: list[str]) -> None:
         path.read_text(encoding="utf-8").count('  - id: "')
         for path in category_dir.glob("*.yaml")
     )
-    if category_cases != 60:
-        fail(errors, f"category evaluations contain {category_cases} cases, expected 60")
+    if category_cases != 56:
+        fail(errors, f"category evaluations contain {category_cases} cases, expected 56")
 
     negatives_path = ROOT / "evals" / "shared" / "true-negatives.yaml"
     if not negatives_path.is_file():
@@ -262,10 +354,10 @@ def validate_evaluations(errors: list[str]) -> None:
         benchmark = benchmark_path.read_text(encoding="utf-8")
         for marker in (
             "**Unskilled:**",
-            "**Best individual source:**",
-            "**Source suite:**",
+            "**Highest-ranked source:**",
+            "**Source-suite ceiling:**",
             "**Super suite:**",
-            "all 130 retained exact-hash sources",
+            "all 119 active-category retained exact-hash sources",
             "global true-negative",
             "matched-budget sensitivity analysis",
         ):
@@ -426,7 +518,8 @@ def validate_licensing(errors: list[str]) -> None:
         (
             "adds super-skill mappings, representative source URLs, "
             "upstream-verification status, repository-license metadata, and "
-            "reuse-policy fields"
+            "reuse-policy fields; renames `repository_license_metadata` to "
+            "`license_metadata`"
         ),
         (
             "derives category counts, synthesis matrices, conflict decisions, "
@@ -455,6 +548,25 @@ def validate_suite(errors: list[str]) -> None:
         if not evaluation.is_file():
             fail(errors, f"missing {evaluation.relative_to(ROOT)}")
 
+    withheld_directory = ROOT / "skills" / WITHHELD_SKILL
+    withheld_evaluation = (
+        ROOT / "evals" / "category-specific" / f"{WITHHELD_SKILL}.yaml"
+    )
+    withheld_matrix = (
+        ROOT / "research" / "synthesis-matrices" / f"{WITHHELD_SKILL}.md"
+    )
+    if withheld_directory.exists() or withheld_evaluation.exists():
+        fail(
+            errors,
+            "document-productivity must remain withheld from skills and active evals",
+        )
+    if (
+        not withheld_matrix.is_file()
+        or "Withheld from the active suite"
+        not in withheld_matrix.read_text(encoding="utf-8")
+    ):
+        fail(errors, "document-productivity research record must remain explicit")
+
     all_skill_files = list(ROOT.rglob("SKILL.md"))
     allowed = {(ROOT / "skills" / skill / "SKILL.md").resolve() for skill in SKILLS}
     unexpected = [path for path in all_skill_files if path.resolve() not in allowed]
@@ -468,6 +580,7 @@ def main() -> int:
     validate_expansion_queue(errors)
     validate_review_decisions(errors)
     validate_token_counts(errors)
+    validate_source_token_counts(errors)
     validate_evaluations(errors)
     validate_licensing(errors)
     if errors:
@@ -476,8 +589,9 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
     print(
-        "Repository validation passed: 11 skills, 130 evidence rows, "
-        "194 review decisions, 901 expansion records, and 72 eval cases."
+        "Repository validation passed: 10 active skills, 130 evidence rows "
+        "(119 active and 11 withheld), 194 review decisions, 901 expansion "
+        "records, and 68 eval cases."
     )
     return 0
 

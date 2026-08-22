@@ -8,9 +8,9 @@ Visual hierarchy, interaction behavior, accessibility in the rendered experience
 
 Architecture answers “what should this system be?” Delivery answers “how do we safely change and prove it?” Framework expertise must not weaken the delivery skill's evidence requirements; process ceremony must not replace an engineering decision.
 
-## Documents versus interface design
+## Withheld documents boundary versus interface design
 
-The document skill owns file-format fidelity, editable structure, calculations, pagination, and rendering. The interface skill contributes visual direction when appearance is material. A slide deck is not treated as a web page, and a PDF is not validated only by inspecting its source representation.
+Document work remains a recognized but deliberately withheld category. `interface-design` may contribute visual direction when appearance is material, but it must not claim ownership of file-format fidelity, editable office structure, calculations, pagination, or document rendering. A slide deck is not treated as a web page, and the absence of an active document skill must remain visible rather than being hidden through boundary expansion.
 
 ## Agent orchestration versus ordinary parallel work
 
@@ -26,7 +26,7 @@ Routine shell and operating-system work does not imply permission to scan, explo
 
 ## Marketing strategy versus interface and artifact production
 
-`marketing-and-growth` owns the audience, offer, channel, pricing, conversion hypothesis, and commercial measurement. `interface-design` owns visual and interaction direction; `document-productivity` owns office-artifact fidelity. They may compose, but a persuasive objective does not give marketing rules authority over accessibility, factual integrity, or file-format correctness.
+`marketing-and-growth` owns the audience, offer, channel, pricing, conversion hypothesis, and commercial measurement. `interface-design` owns visual and interaction direction. Office-artifact fidelity is a deliberately unfilled boundary in the active suite. A persuasive objective does not give marketing rules authority over accessibility, factual integrity, or file-format correctness.
 
 ## Connected-service operation versus integration design
 

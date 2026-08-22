@@ -14,9 +14,25 @@ every substantive outcome, including decisions not to retain a source, the
 specific synthesis rule that already covers it, and direct near-duplicate links
 where available. “Observed copy” must not be read as an authorship claim.
 
+The [occurrence, lineage, and concentration audit](CORPUS_AUDIT.md) found that
+34.04% of baseline repository–hash coverage belongs to repeated multi-skill
+collection signatures and 41.88% occurs in repositories containing at least 10
+baseline hashes. Occurrence rank therefore measures bundle inclusion as well as
+individual adoption. Historical-blob analysis also found 21 exact and two near
+Anthropic matches; 11 exact matches were frozen older upstream versions at the
+collection cutoff. These findings affect interpretation and reranking, not the
+byte-level occurrence counts themselves.
+
 ## Evidence expansion
 
 Popularity is useful for discovering common conventions but produces visibility, age, ecosystem, and copying biases. Expansion therefore uses the following sequence:
+
+1. Pull the top 1,000 distinct content hashes by repository count.
+2. Classify them into an existing category or an explicit taxonomy-review queue.
+3. Collapse exact copies and flag near-duplicates before substantive review.
+4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
+5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
+6. Treat 20 consecutive eligible, lineage-independent candidates with no new information as a review checkpoint, not a population-saturation claim.
 
 The top-1,000 ranking, metadata-only queue, provisional category triage, and
 near-duplicate flags are complete. Metadata classification is only a routing
@@ -28,7 +44,12 @@ Thirty-one expansion hashes have passed substantive review and been promoted to
 the source ledger. Sixty-four additional sources were reviewed without adding a
 material proposition. The review established `marketing-and-growth`,
 `connected-service-automation`, and `data-science-and-ml` as distinct decision
-systems, bringing the suite to 11 categories. Application engineering and
+systems, bringing the observed taxonomy to 11 categories. The
+`document-productivity` category was subsequently withheld because 10 of its 11
+evidence hashes exactly match historical Anthropic blobs, including eight from
+the source-available document set. The active suite therefore contains 10
+skills supported by 119 retained hashes; all 130 research decisions remain in
+the provenance records. Application engineering and
 software delivery have each reached a recorded 20-source no-new-information
 checkpoint under the targeted ordering. Those checkpoints describe review
 history; they are not estimates of population saturation.
@@ -50,13 +71,6 @@ are a 32.6% **review retention rate**. Neither estimates the residual informatio
 rate of the 805 unreviewed hashes. Under targeted selection, a rising, flat, or
 falling retention trajectory is confounded with changing targeting accuracy;
 no trajectory from this design can establish saturation.
-
-1. Pull the top 1,000 distinct content hashes by repository count.
-2. Classify them into an existing category or an explicit taxonomy-review queue.
-3. Collapse exact copies and flag near-duplicates before substantive review.
-4. Within each category, prioritize distinct authors, ecosystems, task types, and minority approaches.
-5. Review lower-ranked specialist sources when the high-ranked set leaves an identified coverage gap.
-6. Treat 20 consecutive eligible, lineage-independent candidates with no new information as a review checkpoint, not a population-saturation claim.
 
 Record exclusions and the reason for them. Population-level claims and future
 ordered review are governed by the preregistered definitions, random probe, and
@@ -95,16 +109,24 @@ For each category:
    - observable task context;
    - supported specialist guidance;
    - conservative defaults.
-6. Add missing safeguards and boundary rules; frequency alone does not determine correctness.
-7. Write new instructions without consulting source wording line by line.
-8. Test routing, behavior, and non-goals with category and cross-category evals.
+6. Recheck recency and register before synthesis: verify prohibitions, worked examples, model-generation assumptions, and product-specific instructions against current primary sources; omit obsolete tactics or convert them into explicitly contextual modes.
+7. Add missing safeguards and boundary rules; frequency alone does not determine correctness.
+8. Write new instructions without consulting source wording line by line.
+9. Test routing, behavior, and non-goals with category and cross-category evals.
+
+A stale or vendor-specific copy may remain valid provenance, but it is not
+current authority. The synthesis record must distinguish a durable principle
+from an obsolete example, model-era prompting tactic, or superseded product
+constraint.
 
 Comparative evaluation follows `evals/BENCHMARK.md`. Arm composition is fixed
-mechanically before execution: no skills, one rank-selected source, all 130
-retained sources, and all 11 super-skills. Global true negatives supply the
-negative denominator for activation precision. Natural-host results and a
-matched-token-budget sensitivity analysis are both required so lower context
-cost cannot substitute for task quality.
+mechanically before execution: no skills, one rank-selected source, all 119
+retained sources supporting active categories, and all 10 active super-skills.
+The exhaustive source arm is an upper bound on overhead and conflict exposure,
+not a typical deployment estimate. Twelve global true negatives provide the
+current negative denominator for activation precision. The protocol remains a
+research specification; no comparative results or performance claim are
+published yet.
 
 ## Inclusion test
 
@@ -115,8 +137,21 @@ A rule belongs in a super-skill only if it changes a material decision, action, 
 - Do not store raw third-party skill text in this repository.
 - Do not reuse source scripts, examples, templates, names, or assets merely because they are popular.
 - Keep source URLs, hashes, and license metadata in the ledger.
-- Use the optional similarity checker against a separately held raw corpus before publication.
+- Resolve licensing at file lineage: repository-level license metadata on a
+  redistributed file does not override verified upstream file-level terms and
+  is not evidence of relicensing.
+- Run exact and thresholded near-lineage checks before synthesis and release.
+  The baseline control found 23 of 99 hashes with exact or qualifying near
+  Anthropic lineage, including restrictively licensed document sources and
+  stale historical versions.
+- Treat the similarity checker as a mandatory release gate against every
+  distributable skill file and the full separately held raw corpus. Rerun it
+  whenever either population changes; the current gate covers 66 public files
+  against all 999 eligible baseline-plus-expansion sources.
 - Treat unknown or missing source-license metadata as a reason for stronger separation, not as permission.
+- Withhold an implementation when its evidence is overwhelmingly derived from
+  one restrictively licensed vendor lineage and independent corpus support is
+  insufficient.
 
 Independently authored implementation materials are covered by the repository's Apache-2.0 license. Research materials in this directory are licensed under CC BY 4.0 and retain the GitSkills attribution and modification notice in `ATTRIBUTION.md`. Neither license applies to third-party source text, which is not distributed here.
 

@@ -20,7 +20,7 @@ Super Skills makes the following changes to the GitSkills metadata and aggregati
 - adds provisional category routing, a 194-row substantive-review decision register, and content-similarity lineage flags without redistributing descriptions or source text;
 - groups the remaining 99 content hashes into eight initial synthesized capability categories;
 - promotes 31 expansion hashes to the provenance ledger after substantive review and establishes three additional capability categories;
-- adds super-skill mappings, representative source URLs, upstream-verification status, repository-license metadata, and reuse-policy fields;
+- adds super-skill mappings, representative source URLs, upstream-verification status, repository-license metadata, and reuse-policy fields; renames `repository_license_metadata` to `license_metadata`; and replaces repository-level license values with researched upstream file-level terms where lineage is verified;
 - derives category counts, synthesis matrices, conflict decisions, evaluation specifications, and instruction token counts; and
 - reformats selected metadata into repository-specific CSV and Markdown artifacts.
 

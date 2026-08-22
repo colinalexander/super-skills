@@ -47,8 +47,9 @@ decision systems: `marketing-and-growth`, `connected-service-automation`, and
 `data-science-and-ml`. Twenty-four representative hashes were retained for
 those categories; 23 variants added no distinct proposition. One
 `codebase-onboarding` record was corrected to application engineering rather
-than being treated as marketing. The public suite therefore contains 11
-categories.
+than being treated as marketing. The review therefore identified 11 categories.
+The later lineage and licensing audit withheld `document-productivity`, leaving
+10 categories in the active public suite while preserving all research records.
 
 Content-similarity triage also flagged 225 expansion records across 121 possible
 near-duplicate lineages after comparison with the eligible baseline content.
@@ -124,7 +125,10 @@ definitions, and reporting rules are preregistered in `SAMPLING_PLAN.md`; the
 sample will be drawn only after that plan is merged.
 
 The subsequent family-level rerank will aggregate probable variants before
-ranking and report both unique-repository and unique-owner coverage. This will
+ranking and report both unique-repository and unique-owner coverage. Lineage
+family is the ranking unit; correlated collection signatures will be reported
+as a concentration sensitivity view rather than applied as a second discount.
+This will
 change frame membership, not merely ordering: families assembled from hashes
 outside the current frame may enter, while some current hashes may belong to
 low-coverage families. All 130 retained evidence hashes will be reclassified

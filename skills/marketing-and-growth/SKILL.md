@@ -1,6 +1,6 @@
 ---
 name: marketing-and-growth
-description: Develop evidence-based marketing, growth, pricing, conversion, positioning, and fundraising work. Use for market research, product marketing, SEO, acquisition, lifecycle optimization, monetization, marketing copy, ads, or investor communications; use another skill when visual design, document mechanics, or software implementation is primary.
+description: Develop evidence-based marketing, growth, pricing, conversion, positioning, and fundraising work. Use for market research, product marketing, SEO, acquisition, lifecycle optimization, monetization, marketing copy, ads, or investor communications; do not use for visual design, general office document production, or software implementation.
 ---
 
 # Marketing and Growth
@@ -32,7 +32,7 @@ Load only the reference needed for the task:
 
 Use customer language and concrete proof. Match message, offer, channel, and stage of awareness. Keep one primary action per asset or flow unless the task genuinely requires a choice. When creating variants, vary a named hypothesis rather than producing cosmetic rewrites.
 
-Distinguish strategy from execution: `interface-design` owns visual and interaction direction, `document-productivity` owns artifact fidelity, and `application-engineering` owns implementation architecture. This skill owns the commercial reasoning connecting audience, offer, channel, and outcome.
+Distinguish strategy from execution: `interface-design` owns visual and interaction direction, and `application-engineering` owns implementation architecture. Office-artifact mechanics are outside the active suite rather than silently absorbed here. This skill owns the commercial reasoning connecting audience, offer, channel, and outcome.
 
 ## Verify
 

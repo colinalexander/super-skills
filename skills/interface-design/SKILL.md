@@ -1,6 +1,6 @@
 ---
 name: interface-design
-description: Create, redesign, implement, or critique web and mobile interfaces, visual artifacts, design systems, and brand expression. Use for UI/UX, frontend presentation, image-to-code, logos, brand boards, banners, animated graphics, algorithmic art, or other work where visual hierarchy, interaction, or art direction materially shapes the result.
+description: Create, redesign, implement, or critique web and mobile interfaces, graphics, design systems, and brand expression. Use for UI/UX, frontend presentation, image-to-code, logos, brand boards, banners, animation, algorithmic art, or work where visual hierarchy, interaction, or art direction shapes the result; exclude office documents.
 ---
 
 # Interface Design

@@ -16,13 +16,12 @@ Every case is run under these conditions with the same host, model, tool access,
 task input, and sampling parameters:
 
 1. **Unskilled:** no source or super-skill is installed.
-2. **Best individual source:** one source skill is chosen before execution by
+2. **Highest-ranked source:** one source skill is chosen before execution by
    the mechanical rule below.
-3. **Source suite:** all 130 hashes marked `retained` in
-   `research/review-decisions.csv` are installed as separate skills from an
-   external reconstructed corpus. Exact hashes, not researcher-selected
-   conflict sets, determine membership.
-4. **Super suite:** all 11 independently authored super-skills are installed.
+3. **Source-suite ceiling:** all 119 retained hashes routed to an active category
+   are installed as separate skills from an external reconstructed corpus.
+   Exact hashes, not researcher-selected conflict sets, determine membership.
+4. **Super suite:** all 10 active independently authored super-skills are installed.
 
 Third-party source text remains outside this repository and is not redistributed
 with prompts, traces, or results.
@@ -36,22 +35,22 @@ Arm membership is frozen before any model run.
   specification before execution. A global true-negative case has no Arm 2
   skill; this arm then equals the unskilled condition and is excluded from the
   Arm 2 activation estimate.
-- Arm 3 always installs all 130 retained exact-hash sources. It is never reduced
+- Arm 3 always installs all 119 active-category retained exact-hash sources. It is never reduced
   after inspecting a task or observed conflict.
-- Arm 4 always installs all 11 super-skills. It is never reduced after inspecting
+- Arm 4 always installs all 10 active super-skills. It is never reduced after inspecting
   a task.
 - The installed names, descriptions, content hashes, byte counts, and token
   counts are recorded in the run manifest. Any source that cannot be reconstructed
   is reported before execution; it is not silently replaced.
 
 These rules deliberately avoid the post hoc judgment implicit in “all relevant
-skills.” They test the deployment states described by the project: a large
-overlapping source installation versus the consolidated suite.
+skills.” Arm 3 is an upper bound on narrow-skill overhead and conflict exposure,
+not a typical deployment estimate; Arm 4 represents the consolidated suite.
 
 ## Evaluation population
 
 Category cases include positive tasks and close boundary cases. The shared
-`true-negatives.yaml` set contains tasks for which none of the 11 super-skills
+`true-negatives.yaml` set contains tasks for which none of the 10 active super-skills
 should activate. True negatives run with the complete Arm 3 and Arm 4
 installations so activation precision has a real negative denominator.
 
