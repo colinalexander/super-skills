@@ -4,6 +4,7 @@ cases:
     prompt: "Design an operations dashboard for dispatchers who monitor late deliveries. The current brand is sober and information-dense."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -17,6 +18,7 @@ cases:
     prompt: "Make this mature banking settings screen feel modern, but do not disrupt existing customer workflows."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -29,6 +31,7 @@ cases:
     prompt: "Implement this 1440px screenshot as a responsive mobile-first page. Only the screenshot is available."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -41,6 +44,7 @@ cases:
     prompt: "Create a lightweight looping GIF for our team chat that animates the supplied brand mark celebrating a successful launch."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -53,6 +57,7 @@ cases:
     prompt: "Add a transactionally safe endpoint that reserves inventory. No user interface changes are involved."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

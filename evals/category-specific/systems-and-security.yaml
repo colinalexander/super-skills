@@ -4,6 +4,7 @@ cases:
     prompt: "A Linux service stopped accepting connections after a deploy. Diagnose it without disrupting unrelated services."
     should_activate: true
     expected_primary_category: "systems-and-security"
+    analysis_category: "systems-and-security"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "Write a PowerShell script to grant a service account read access to one directory across three named servers."
     should_activate: true
     expected_primary_category: "systems-and-security"
+    analysis_category: "systems-and-security"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -28,6 +30,7 @@ cases:
     prompt: "We own example.internal. Assess the named staging API for common vulnerabilities during tonight's approved window; do not test production."
     should_activate: true
     expected_primary_category: "systems-and-security"
+    analysis_category: "systems-and-security"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -40,6 +43,7 @@ cases:
     prompt: "Review the authorized build pipeline for dependency and artifact-integrity risks without changing production."
     should_activate: true
     expected_primary_category: "systems-and-security"
+    analysis_category: "systems-and-security"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -52,6 +56,7 @@ cases:
     prompt: "Install the approved package update on this server and confirm the service returns healthy."
     should_activate: true
     expected_primary_category: "systems-and-security"
+    analysis_category: "systems-and-security"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

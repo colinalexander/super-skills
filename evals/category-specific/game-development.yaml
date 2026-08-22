@@ -4,6 +4,7 @@ cases:
     prompt: "We have art and lore for a mobile tactics game but the prototype is not engaging. What should we build next?"
     should_activate: true
     expected_primary_category: "game-development"
+    analysis_category: "game-development"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "Our action game holds 60 fps in the editor but drops frames and gets hot on mid-tier phones."
     should_activate: true
     expected_primary_category: "game-development"
+    analysis_category: "game-development"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -27,6 +29,7 @@ cases:
     prompt: "Design fast traversal for a VR exploration game without excluding motion-sensitive players."
     should_activate: true
     expected_primary_category: "game-development"
+    analysis_category: "game-development"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -39,6 +42,7 @@ cases:
     prompt: "Add rewarded ads and purchases to a mobile puzzle game without undermining player trust."
     should_activate: true
     expected_primary_category: "game-development"
+    analysis_category: "game-development"
     allowed_secondary_categories: ["application-engineering"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -51,6 +55,7 @@ cases:
     prompt: "Design the simulation and networking model for a four-player action game where movement must feel immediate but hits must remain fair."
     should_activate: true
     expected_primary_category: "game-development"
+    analysis_category: "game-development"
     allowed_secondary_categories: ["application-engineering"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -63,6 +68,7 @@ cases:
     prompt: "Build a loyalty-points dashboard with animated charts."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

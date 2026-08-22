@@ -6,30 +6,57 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORD = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
+WORD = re.compile(r"[^\W_]+(?:['’][^\W_]+)?", re.UNICODE)
 DEFAULT_NGRAM = 8
 DEFAULT_THRESHOLD = 0.20
+MIN_SHORT_SEQUENCE = 4
+CLOSURE_RECORD_FIELDS = {
+    "source_file_sha",
+    "repository",
+    "commit",
+    "repository_path",
+    "sha256",
+    "executable",
+    "staged_path",
+}
 
 
 def parameter_summary(closure_file_count: int) -> str:
     """Return the effective matching parameters for the audit record."""
     return (
         "ngram=8, containment_threshold=0.20, "
-        "short_fallback=exact-byte+normalized-sequence-containment, "
+        "short_fallback=exact-byte+unicode-sequence-containment, "
+        "min_short_sequence=4, "
+        "tokenization=unicode-word+nonascii-char, "
         f"public_files=all-regular, closure_files={closure_file_count}"
     )
 
 
 def normalized_words(path: Path) -> tuple[str, ...]:
-    """Return case- and formatting-insensitive words for textual comparison."""
+    """Return Unicode-aware tokens with a non-word character fallback."""
+    text = unicodedata.normalize(
+        "NFKC", path.read_text(encoding="utf-8", errors="ignore")
+    ).casefold()
+    words: list[str] = []
+    for token in WORD.findall(text):
+        if token and all(ord(character) > 127 for character in token):
+            words.extend(character for character in token if WORD.fullmatch(character))
+        else:
+            words.append(token)
+    if words:
+        return tuple(words)
     return tuple(
-        WORD.findall(path.read_text(encoding="utf-8", errors="ignore").lower())
+        f"char:{character}"
+        for character in text
+        if not character.isspace() and ord(character) > 127
     )
 
 
@@ -61,6 +88,104 @@ def require_external_source_root(path: Path) -> Path:
     if ROOT == source_root or ROOT in source_root.parents or source_root in ROOT.parents:
         raise RuntimeError("raw sources must be outside the repository")
     return source_root
+
+
+def require_external_source_file(path: Path) -> Path:
+    """Return a resolved external file that cannot overlap the repository."""
+    source_file = path.expanduser().resolve()
+    if not source_file.is_file():
+        raise RuntimeError(f"source file does not exist: {source_file}")
+    if ROOT == source_file or ROOT in source_file.parents:
+        raise RuntimeError("raw source manifests must be outside the repository")
+    return source_file
+
+
+def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list[Path], str]:
+    """Validate staged files and hash canonical pinned-closure records."""
+    records: list[str] = []
+    staged_files: list[Path] = []
+    staged_names: set[str] = set()
+    source_paths: set[tuple[str, str]] = set()
+    for line_number, raw_line in enumerate(
+        manifest_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not raw_line.strip():
+            continue
+        try:
+            record = json.loads(raw_line)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                f"invalid closure manifest JSON on line {line_number}"
+            ) from error
+        if not isinstance(record, dict) or set(record) != CLOSURE_RECORD_FIELDS:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has incorrect fields"
+            )
+        for field in (
+            "source_file_sha",
+            "repository",
+            "commit",
+            "repository_path",
+            "sha256",
+            "staged_path",
+        ):
+            if not isinstance(record[field], str) or not record[field]:
+                raise RuntimeError(
+                    f"closure manifest line {line_number} has invalid {field}"
+                )
+        if not isinstance(record["executable"], bool):
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid executable"
+            )
+        if not re.fullmatch(r"[0-9a-f]{40}", record["source_file_sha"]):
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid source_file_sha"
+            )
+        if not re.fullmatch(r"[0-9a-f]{40}", record["commit"]):
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid commit"
+            )
+        if not re.fullmatch(r"[0-9a-f]{64}", record["sha256"]):
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid sha256"
+            )
+        staged_relative = Path(record["staged_path"])
+        if staged_relative.is_absolute() or ".." in staged_relative.parts:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has unsafe staged_path"
+            )
+        staged_name = staged_relative.as_posix()
+        if staged_name in staged_names:
+            raise RuntimeError(f"duplicate staged_path in closure manifest: {staged_name}")
+        staged_names.add(staged_name)
+        source_identity = (record["source_file_sha"], record["repository_path"])
+        if source_identity in source_paths:
+            raise RuntimeError(
+                "duplicate source/path identity in closure manifest: "
+                f"{source_identity[0]} {source_identity[1]}"
+            )
+        source_paths.add(source_identity)
+        staged_file = (closure_root / staged_relative).resolve()
+        if closure_root not in staged_file.parents or not staged_file.is_file():
+            raise RuntimeError(
+                f"closure manifest line {line_number} maps to a missing file"
+            )
+        if hashlib.sha256(staged_file.read_bytes()).hexdigest() != record["sha256"]:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has a digest mismatch"
+            )
+        staged_files.append(staged_file)
+        canonical = {key: record[key] for key in sorted(record) if key != "staged_path"}
+        records.append(
+            json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        )
+    observed_files = set(files_under(closure_root))
+    if observed_files != set(staged_files):
+        raise RuntimeError(
+            "closure manifest does not map every staged file exactly once"
+        )
+    serialized = "\n".join(sorted(records)) + ("\n" if records else "")
+    return sorted(staged_files), hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def git_blob_id(path: Path) -> str:
@@ -105,6 +230,11 @@ def main() -> int:
         help="External pinned dependency-closure files to scan in addition to entries",
     )
     parser.add_argument(
+        "--closure-manifest",
+        type=Path,
+        help="External JSONL manifest mapping staged closure files to canonical records",
+    )
+    parser.add_argument(
         "--threshold",
         type=float,
         default=DEFAULT_THRESHOLD,
@@ -127,10 +257,14 @@ def main() -> int:
         source_root = require_external_source_root(args.sources)
     except RuntimeError as error:
         parser.error(str(error))
+    if (args.closure_sources is None) != (args.closure_manifest is None):
+        parser.error("--closure-sources and --closure-manifest must be used together")
     closure_root = None
+    closure_manifest = None
     if args.closure_sources is not None:
         try:
             closure_root = require_external_source_root(args.closure_sources)
+            closure_manifest = require_external_source_file(args.closure_manifest)
         except RuntimeError as error:
             parser.error(str(error))
         if (
@@ -139,6 +273,10 @@ def main() -> int:
             or closure_root in source_root.parents
         ):
             parser.error("entry and closure source directories must not overlap")
+        if closure_manifest == source_root or source_root in closure_manifest.parents:
+            parser.error("entry sources and closure manifest must not overlap")
+        if closure_manifest == closure_root or closure_root in closure_manifest.parents:
+            parser.error("closure files and closure manifest must not overlap")
     if args.ngram < 5:
         parser.error("ngram must be at least 5 words")
     if not 0 < args.threshold <= 1:
@@ -152,7 +290,15 @@ def main() -> int:
 
     public_files = files_under(ROOT / "skills")
     entry_source_files = files_under(source_root)
-    closure_source_files = files_under(closure_root) if closure_root else []
+    closure_source_files: list[Path] = []
+    closure_checksum = ""
+    if closure_root and closure_manifest:
+        try:
+            closure_source_files, closure_checksum = load_closure_manifest(
+                closure_manifest, closure_root
+            )
+        except RuntimeError as error:
+            parser.error(str(error))
     if args.verify_gitskills_frame:
         try:
             expected_hashes = expected_gitskills_frame()
@@ -179,15 +325,9 @@ def main() -> int:
             "recorded Git blob set."
         )
     if closure_root:
-        closure_digest = hashlib.sha256()
-        for path in closure_source_files:
-            closure_digest.update(str(path.relative_to(closure_root)).encode("utf-8"))
-            closure_digest.update(b"\0")
-            closure_digest.update(hashlib.sha256(path.read_bytes()).digest())
-            closure_digest.update(b"\n")
         print(
             f"Closure corpus: {len(closure_source_files)} files, "
-            f"checksum={closure_digest.hexdigest()}."
+            f"canonical_record_checksum={closure_checksum}."
         )
     print(f"Effective parameters: {parameter_summary(len(closure_source_files))}.")
     source_files = entry_source_files + closure_source_files
@@ -227,7 +367,7 @@ def main() -> int:
                     len(public_words[public_path]),
                     len(source_words[source_path]),
                 )
-                if effective_size:
+                if effective_size >= MIN_SHORT_SEQUENCE:
                     public_shingles = shingles(
                         public_words[public_path], effective_size
                     )

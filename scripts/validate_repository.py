@@ -400,6 +400,11 @@ def validate_evaluations(errors: list[str]) -> None:
             text,
             flags=re.MULTILINE,
         )
+        analysis_categories = re.findall(
+            r'^    analysis_category: "([^"]+)"$',
+            text,
+            flags=re.MULTILINE,
+        )
         secondary_values = re.findall(
             r"^    allowed_secondary_categories: \[(.*)\]$",
             text,
@@ -412,6 +417,8 @@ def validate_evaluations(errors: list[str]) -> None:
         for primary in primaries:
             if primary not in SKILLS:
                 fail(errors, f"invalid primary category {primary!r} in {path.name}")
+        if analysis_categories != primaries:
+            fail(errors, f"analysis categories differ from primaries in {path.name}")
         for index, raw_secondaries in enumerate(secondary_values):
             secondaries = re.findall(r'"([^"]+)"', raw_secondaries)
             expected_rendering = ", ".join(f'"{item}"' for item in secondaries)
@@ -427,10 +434,13 @@ def validate_evaluations(errors: list[str]) -> None:
         field_counts = {
             "should_activate": text.count("    should_activate: true"),
             "expected_primary_category": len(primaries),
+            "analysis_category": len(analysis_categories),
             "allowed_secondary_categories": len(secondary_values),
             "forbidden_activations": text.count(
                 '    forbidden_activations: "all-except-declared"'
             ),
+            "expected_behaviors": text.count("    expected_behaviors:"),
+            "failure_signals": text.count("    failure_signals:"),
         }
         for field, count in field_counts.items():
             if count != expected_count:
@@ -451,6 +461,10 @@ def validate_evaluations(errors: list[str]) -> None:
             fail(errors, "every global true negative must disable activation")
         if negatives.count('    forbidden_activations: "all"') != 36:
             fail(errors, "every global true negative must forbid all skills")
+        if negatives.count("    expected_behaviors:") != 36:
+            fail(errors, "every global true negative must declare expected behaviors")
+        if negatives.count("    failure_signals:") != 36:
+            fail(errors, "every global true negative must declare failure signals")
         for withheld_boundary in (
             'id: "pdf-document-boundary"',
             'id: "spreadsheet-document-boundary"',
@@ -483,6 +497,15 @@ def validate_evaluations(errors: list[str]) -> None:
         ):
             if active_near_miss not in negatives:
                 fail(errors, f"global true negatives are missing {active_near_miss!r}")
+        for grading_marker in (
+            "Reports the exact title 'Quarterly Operations Brief'",
+            "Preserves the total formula, the $2,878.25 result",
+        ):
+            if grading_marker not in negatives:
+                fail(
+                    errors,
+                    f"document boundary grading contract is missing {grading_marker!r}",
+                )
 
     benchmark_path = ROOT / "evals" / "BENCHMARK.md"
     if not benchmark_path.is_file():
@@ -519,6 +542,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "arm3-name-span-json-v1",
             "checksum over the sorted closure records",
             "--closure-sources",
+            "--closure-manifest",
+            "canonical records in the run manifest",
             "description SHA-256",
             "never publishes",
             "same file classes as the generated Arm 4",
@@ -527,6 +552,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "shorter-sequence containment",
             "out-of-permitted-set Arm 4",
             "isolated installation containing only",
+            "transformed installed `SKILL.md` bytes",
+            "locked `analysis_category`",
             "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
             "absolute blocker regardless of comparator behavior",
@@ -622,10 +649,12 @@ def validate_similarity_gate(errors: list[str]) -> None:
         f"Public-surface checksum: `{public_checksum}`",
         f"Checker checksum: `{checker_checksum}`",
         "--verify-gitskills-frame",
-        "exact-byte plus normalized shorter-sequence containment fallback",
+        "exact-byte plus Unicode shorter-sequence containment fallback",
         (
             "Effective parameters: ngram=8, containment_threshold=0.20, "
-            "short_fallback=exact-byte+normalized-sequence-containment, "
+            "short_fallback=exact-byte+unicode-sequence-containment, "
+            "min_short_sequence=4, "
+            "tokenization=unicode-word+nonascii-char, "
             "public_files=all-regular, closure_files=0."
         ),
         "Source corpus verified: 999 files match the recorded Git blob set.",

@@ -5,145 +5,291 @@ cases:
     fixture_sha256: "bdb202f9fa27a76c4c2182ce1ab1f8a5738520da9ec59df8c61754f89dddcbca"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Reports the exact title 'Quarterly Operations Brief' and a page count of one without activating any super-skill."
+      - "Leaves the PDF unchanged and does not add design, writing, or marketing work."
+    failure_signals:
+      - "Reports an incorrect title or page count, alters the fixture, or activates any super-skill."
   - id: "plain-translation"
     prompt: "Translate 'thank you for your patience' into Spanish."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "spreadsheet-document-boundary"
     prompt: "Sort the attached budget spreadsheet by transaction date without analyzing the business, changing formulas, or presenting the results."
     fixture_path: "evals/fixtures/budget-transactions.xlsx"
     fixture_sha256: "c0ac6c583568ce139ad0f2734aa15c8340e0c19868e5251c16fef167de8e71be"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Sorts transaction rows in ascending order 2026-08-03, 2026-08-07, 2026-08-12, and 2026-08-18 without activating any super-skill."
+      - "Preserves the total formula, the $2,878.25 result, all row values, and workbook formatting."
+    failure_signals:
+      - "Changes a formula, value, style, or sheet structure beyond the requested sort, or activates any super-skill."
   - id: "paragraph-summary"
     prompt: "Summarize this paragraph in one sentence: Bees communicate the location of food through movement patterns that encode direction and distance."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "ordinary-rewrite"
     prompt: "Rewrite this sentence politely: Send the figures today."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "debugging-joke"
     prompt: "Tell me a short joke about debugging."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "database-definition"
     prompt: "In one paragraph, explain what a database index is."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "conversion-vocabulary"
     prompt: "What does the word 'conversion' mean in the sentence 'the barn conversion took a year'?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "chess-history"
     prompt: "Who became world chess champion in 1972?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "birthday-draft"
     prompt: "Draft a friendly two-sentence birthday message for Sam. Do not send it."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "shell-definition"
     prompt: "What is the difference between a shell and a terminal?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "brainstorm-definition"
     prompt: "Define the word 'brainstorm' without brainstorming anything."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "responsive-biology"
     prompt: "In biology, what does it mean for an organism to be responsive to stimuli?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "bauhaus-history"
     prompt: "In what year was the Bauhaus school founded?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "botanical-branch"
     prompt: "What is the difference between a branch and a twig in botany?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "computer-bug-etymology"
     prompt: "Where did the computing term 'bug' come from?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "human-skill-definition"
     prompt: "What does 'skill acquisition' mean in learning psychology?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "orchestration-music"
     prompt: "What does orchestration mean in classical music?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "api-definition"
     prompt: "Expand the acronym API and define it in one sentence."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "react-chemistry"
     prompt: "Why do sodium and water react? Give a short, nonprocedural explanation."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "financial-security-definition"
     prompt: "In financial markets, what is a security?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "athletic-training-definition"
     prompt: "What does interval training mean in athletics?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "board-game-recommendation"
     prompt: "Name one classic board game suitable for four adults."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "virtual-reality-history"
     prompt: "Who coined the term 'virtual reality'?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "zoom-photography"
     prompt: "What is optical zoom in photography?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "grilling-definition"
     prompt: "What does grilling mean as a cooking method?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "powershell-definition"
     prompt: "What is PowerShell? Answer in one sentence without giving commands."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "linux-mascot"
     prompt: "What is the name of the Linux mascot?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "livestock-brand"
     prompt: "Historically, why were cattle branded?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "growth-vocabulary"
     prompt: "What does growth mean in the phrase 'tree growth'?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "weather-cloud"
     prompt: "What type of cloud usually produces thunderstorms?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "message-etiquette"
     prompt: "Is it generally polite to reply to an invitation within a week?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "fashion-model"
     prompt: "What does the word 'model' mean in the fashion industry?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "median-definition"
     prompt: "Define the median of a list of numbers in one sentence."
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "console-furniture"
     prompt: "What is a console table in furniture design?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."
   - id: "fundraising-charity-definition"
     prompt: "What does fundraising mean for a local charity?"
     should_activate: false
     forbidden_activations: "all"
+    expected_behaviors:
+      - "Provides a correct, bounded response to the literal prompt without activating any super-skill."
+    failure_signals:
+      - "Activates a super-skill, changes unrequested external state, or expands into a covered workflow."

@@ -4,6 +4,7 @@ cases:
     prompt: "Build a churn model from this customer event table and report accuracy."
     should_activate: true
     expected_primary_category: "data-science-and-ml"
+    analysis_category: "data-science-and-ml"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -15,6 +16,7 @@ cases:
     prompt: "Our experiment's p-value is 0.04. Ship the treatment."
     should_activate: true
     expected_primary_category: "data-science-and-ml"
+    analysis_category: "data-science-and-ml"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -26,6 +28,7 @@ cases:
     prompt: "Our model no longer fits on one GPU. Convert it directly to sharded distributed training."
     should_activate: true
     expected_primary_category: "data-science-and-ml"
+    analysis_category: "data-science-and-ml"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -37,6 +40,7 @@ cases:
     prompt: "Fine-tune a 13B model on our support tickets using the cheapest method."
     should_activate: true
     expected_primary_category: "data-science-and-ml"
+    analysis_category: "data-science-and-ml"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -48,6 +52,7 @@ cases:
     prompt: "Add a conventional CRUD endpoint for user notification preferences."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

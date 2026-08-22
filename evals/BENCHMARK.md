@@ -20,8 +20,11 @@ and 20% smaller-document containment threshold. The checker must confirm that
 the external files' computed Git blob IDs exactly match the recorded frame
 before testing prose. It also checks exact bytes and falls back to normalized
 shorter-sequence containment whenever either file cannot form an eight-word
-shingle, so copied short material cannot pass because of superficial formatting
-changes or empty comparisons. In frame-verification mode, the checker rejects
+shingle. Partial short matches require at least four normalized tokens; files
+with fewer tokens still receive exact-byte and normalized-exact checks. Unicode
+word tokenization, non-Latin character segmentation, and a normalized non-ASCII
+character fallback prevent non-ASCII text from becoming an empty comparison.
+In frame-verification mode, the checker rejects
 any shingle-size or threshold override and emits its effective parameters.
 Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected
@@ -121,11 +124,18 @@ only the entry file's front-matter `name`; all dependency bytes remain unchanged
 and the manifest records both the original and transformed entry digests.
 
 After all closures are pinned, rerun the originality gate with
-`--closure-sources /absolute/path/to/pinned-closure-files`. The checker verifies
+`--closure-sources /absolute/path/to/pinned-closure-files` and
+`--closure-manifest /absolute/path/to/closure-records.jsonl`. The checker verifies
 the 999-entry GitSkills population separately, scans every closure file as an
-additional comparison corpus, and emits the closure file count and path-and-byte
-checksum. That count and checksum must equal the sorted closure records in the
-run manifest. Missing, extra, or mismatched closure files block benchmark
+additional comparison corpus, and emits the closure file count and canonical
+record checksum. Each JSONL record contains exactly `source_file_sha`,
+`repository`, `commit`, `repository_path`, `sha256`, `executable`, and
+`staged_path`. `staged_path` maps the external file but is excluded from the
+checksum; the other fields are serialized as UTF-8 JSON with sorted keys and
+compact separators, sorted lexicographically by complete record, joined with a
+trailing newline, and hashed with SHA-256. That count and checksum must equal
+the same canonical records in the run manifest. Missing, extra, duplicate, or
+mismatched closure files block benchmark
 execution. Closure prose remains external and is never committed or published.
 
 ## Evaluation population
@@ -187,8 +197,11 @@ is not a reason to raise the budget, rerun, or exclude the case. For Arm 3,
 eligible source bundles are those routed
 to a permitted category, ordered by GitSkills rank;
 each bundle's budget cost uses the same file classes as the generated Arm 4
-`full_tokens` value: the entry `SKILL.md` plus every Markdown file directly in
-its `references/` directory. Other closure content remains installed and is
+`full_tokens` value: the transformed installed `SKILL.md` bytes plus every
+unchanged Markdown file directly in its `references/` directory, counted with
+`cl100k_base` under pinned `tiktoken==0.11.0` after the name transform is
+validated. The original entry token count remains descriptive and never selects
+the prefix. Other closure content remains installed and is
 reported, but scripts, assets, nested references, and non-Markdown dependencies
 are excluded from both arms' fixed instruction-budget calculation. Whole
 bundles are included in order until the next would exceed the budget. Files are
@@ -275,7 +288,10 @@ behavior, and Arm 4 versus the fixed-budget Arm 3 subset. Never pool those
 conditions.
 
 Publish a category-specific paired interval using the same case-level means and
-bootstrap procedure. The decision family contains 30 category contrasts: 10
+bootstrap procedure. Every category case carries a locked `analysis_category`
+equal to its `expected_primary_category`; file location does not determine its
+stratum. Resampling, category means, and split decisions use that field. The
+decision family contains 30 category contrasts: 10
 categories across the three contrasts above. Every category decision therefore
 uses a Bonferroni-adjusted 99.8333% two-sided percentile interval
 (`1 - 0.05 / 30`), providing at least 95% simultaneous coverage across the full

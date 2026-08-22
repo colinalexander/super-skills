@@ -4,6 +4,7 @@ cases:
     prompt: "Create a reusable skill for performing accessibility audits on web checkout flows."
     should_activate: true
     expected_primary_category: "agent-tooling-and-orchestration"
+    analysis_category: "agent-tooling-and-orchestration"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "Design tools that let an agent inspect and update support tickets."
     should_activate: true
     expected_primary_category: "agent-tooling-and-orchestration"
+    analysis_category: "agent-tooling-and-orchestration"
     allowed_secondary_categories: ["application-engineering"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -28,6 +30,7 @@ cases:
     prompt: "Have several agents compare independent vendor contracts, then produce one recommendation."
     should_activate: true
     expected_primary_category: "agent-tooling-and-orchestration"
+    analysis_category: "agent-tooling-and-orchestration"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -39,6 +42,7 @@ cases:
     prompt: "Implement a local date formatter in this existing module."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -49,6 +53,7 @@ cases:
     prompt: "Design the operating controls for a support agent that runs continuously and can update customer tickets."
     should_activate: true
     expected_primary_category: "agent-tooling-and-orchestration"
+    analysis_category: "agent-tooling-and-orchestration"
     allowed_secondary_categories: ["systems-and-security"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -61,6 +66,7 @@ cases:
     prompt: "Our coding agent keeps following an obsolete architecture note after the implementation changed. Improve its context strategy."
     should_activate: true
     expected_primary_category: "agent-tooling-and-orchestration"
+    analysis_category: "agent-tooling-and-orchestration"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

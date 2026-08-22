@@ -4,6 +4,7 @@ cases:
     prompt: "Design an API that reserves scarce inventory for ten minutes under concurrent demand."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "This Next.js page fetches data in several client effects and flashes stale account state. Redesign the data flow."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -28,6 +30,7 @@ cases:
     prompt: "Add a non-null tenant identifier to a large production table without a long write outage."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -39,6 +42,7 @@ cases:
     prompt: "Choose a typography and motion direction for our new editorial landing page."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -49,6 +53,7 @@ cases:
     prompt: "Choose between a shared database and database-per-service for this system, and leave a record the team can revisit."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -60,6 +65,7 @@ cases:
     prompt: "Our API, database, and support team use three different meanings for an account being active. Repair the model before adding another endpoint."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -71,6 +77,7 @@ cases:
     prompt: "Define the production container contract for a background worker that currently runs only through a developer Compose file."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: ["systems-and-security"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:

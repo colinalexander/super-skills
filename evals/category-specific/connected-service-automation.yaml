@@ -4,6 +4,7 @@ cases:
     prompt: "Text Alex that the meeting is moving to four."
     should_activate: true
     expected_primary_category: "connected-service-automation"
+    analysis_category: "connected-service-automation"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -15,6 +16,7 @@ cases:
     prompt: "Give the finance spreadsheet to the new contractor."
     should_activate: true
     expected_primary_category: "connected-service-automation"
+    analysis_category: "connected-service-automation"
     allowed_secondary_categories: ["systems-and-security"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -26,6 +28,7 @@ cases:
     prompt: "The note-creation command timed out. Run it again."
     should_activate: true
     expected_primary_category: "connected-service-automation"
+    analysis_category: "connected-service-automation"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -37,6 +40,7 @@ cases:
     prompt: "Delete every file returned by this fuzzy search."
     should_activate: true
     expected_primary_category: "connected-service-automation"
+    analysis_category: "connected-service-automation"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -48,6 +52,7 @@ cases:
     prompt: "Design a new OAuth integration for our product to sync customer calendars."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

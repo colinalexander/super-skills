@@ -4,6 +4,7 @@ cases:
     prompt: "This integration test fails about one run in twenty. Please fix it and prove it is no longer flaky."
     should_activate: true
     expected_primary_category: "software-delivery"
+    analysis_category: "software-delivery"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "A reviewer says every function should be async. Address the feedback in this Python service."
     should_activate: true
     expected_primary_category: "software-delivery"
+    analysis_category: "software-delivery"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -27,6 +29,7 @@ cases:
     prompt: "Fix the parser bug. There are unrelated uncommitted edits in the repository."
     should_activate: true
     expected_primary_category: "software-delivery"
+    analysis_category: "software-delivery"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -38,6 +41,7 @@ cases:
     prompt: "Add an end-to-end test for checkout failure recovery and make it useful when it fails in CI."
     should_activate: true
     expected_primary_category: "software-delivery"
+    analysis_category: "software-delivery"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -50,6 +54,7 @@ cases:
     prompt: "Compare event sourcing with a conventional relational model for this new billing domain."
     should_activate: true
     expected_primary_category: "application-engineering"
+    analysis_category: "application-engineering"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -60,6 +65,7 @@ cases:
     prompt: "Add a repository-level guardrail that prevents automated hard resets but still permits ordinary read-only Git inspection."
     should_activate: true
     expected_primary_category: "software-delivery"
+    analysis_category: "software-delivery"
     allowed_secondary_categories: ["systems-and-security"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:

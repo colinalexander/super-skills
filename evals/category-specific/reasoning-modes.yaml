@@ -4,6 +4,7 @@ cases:
     prompt: "Brainstorm several genuinely different ways a neighborhood library could increase weekday use, then rank them."
     should_activate: true
     expected_primary_category: "reasoning-modes"
+    analysis_category: "reasoning-modes"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -16,6 +17,7 @@ cases:
     prompt: "Grill me one question at a time on my claim that we should expand internationally next quarter."
     should_activate: true
     expected_primary_category: "reasoning-modes"
+    analysis_category: "reasoning-modes"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -28,6 +30,7 @@ cases:
     prompt: "Brainstorm this feature with me one question at a time, compare approaches, and do not implement until I approve a design."
     should_activate: true
     expected_primary_category: "reasoning-modes"
+    analysis_category: "reasoning-modes"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -40,6 +43,7 @@ cases:
     prompt: "Explain this medication dosing instruction in the shortest plain language possible."
     should_activate: true
     expected_primary_category: "reasoning-modes"
+    analysis_category: "reasoning-modes"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -51,6 +55,7 @@ cases:
     prompt: "Analyze this complex pricing model and recommend a plan."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:

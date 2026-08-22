@@ -4,6 +4,7 @@ cases:
     prompt: "Estimate whether we should enter the US market for a compliance product and recommend a target segment."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -15,6 +16,7 @@ cases:
     prompt: "Replace our flat SaaS price with three tiers."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -26,6 +28,7 @@ cases:
     prompt: "Generate 20,000 city pages so we can rank for every local keyword."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -37,6 +40,7 @@ cases:
     prompt: "Our signup completion fell. Remove every field and add an aggressive countdown popup."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: ["interface-design"]
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -48,6 +52,7 @@ cases:
     prompt: "Update our pitch deck and outreach email using these new revenue and runway figures."
     should_activate: true
     expected_primary_category: "marketing-and-growth"
+    analysis_category: "marketing-and-growth"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
@@ -59,6 +64,7 @@ cases:
     prompt: "Choose a type system and visual motif for this campaign landing page."
     should_activate: true
     expected_primary_category: "interface-design"
+    analysis_category: "interface-design"
     allowed_secondary_categories: []
     forbidden_activations: "all-except-declared"
     expected_behaviors:
