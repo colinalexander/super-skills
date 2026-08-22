@@ -60,13 +60,57 @@ Description counts measure the always-loaded front-matter discovery text. The 10
 
 ## Installation
 
-Copy the directory for the skill you want into the skills directory scanned by your agent host. For example:
+Install interactively with [skills.sh](https://skills.sh/):
+
+```bash
+npx skills add colinalexander/super-skills
+```
+
+The installer discovers all 10 skills and lets you choose any subset. Use the up and down arrows to move, **Space** to select or clear an item, and **Enter** to confirm. To install the complete suite globally for Codex without prompts:
+
+```bash
+npx skills add colinalexander/super-skills \
+  --skill '*' \
+  --agent codex \
+  --global \
+  --yes
+```
+
+Replace `'*'` with a skill name such as `software-delivery` to install only that skill. You can also install manually by copying a skill directory into the skills directory scanned by your agent host:
 
 ```bash
 cp -R skills/software-delivery /path/to/your-agent/skills/
 ```
 
-You can install any subset of the suite. Consult your host's documentation for its skills-directory location and discovery rules.
+Consult your host's documentation for its skills-directory location and discovery rules.
+
+### Uninstall
+
+To choose globally installed skills to remove, run:
+
+```bash
+npx skills remove --global
+```
+
+The selector uses the same controls: arrows to move, **Space** to select, and **Enter** to confirm. To remove all 10 Super Skills globally without affecting unrelated installed skills:
+
+```bash
+npx skills remove \
+  agent-tooling-and-orchestration \
+  application-engineering \
+  connected-service-automation \
+  data-science-and-ml \
+  game-development \
+  interface-design \
+  marketing-and-growth \
+  reasoning-modes \
+  software-delivery \
+  systems-and-security \
+  --global \
+  --yes
+```
+
+For a manual installation, remove only the skill directory you previously copied.
 
 ## Why Super Skills?
 
