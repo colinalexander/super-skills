@@ -402,9 +402,16 @@ def validate_evaluations(errors: list[str]) -> None:
             fail(errors, "every global true negative must disable activation")
         if negatives.count('    forbidden_activations: "all"') != 36:
             fail(errors, "every global true negative must forbid all skills")
-        for withheld_id in ('id: "pdf-acronym"', 'id: "spreadsheet-definition"'):
-            if withheld_id in negatives:
-                fail(errors, f"global true negatives retain withheld-category case {withheld_id!r}")
+        for withheld_boundary in (
+            'id: "pdf-document-boundary"',
+            'id: "spreadsheet-document-boundary"',
+        ):
+            if withheld_boundary not in negatives:
+                fail(
+                    errors,
+                    "global true negatives are missing withheld document "
+                    f"boundary {withheld_boundary!r}",
+                )
         for active_near_miss in (
             'id: "financial-security-definition"',
             'id: "athletic-training-definition"',
@@ -419,7 +426,7 @@ def validate_evaluations(errors: list[str]) -> None:
         benchmark = benchmark_path.read_text(encoding="utf-8")
         for marker in (
             "**Unskilled:**",
-            "**Highest-occurrence source:**",
+            "**Highest-ranked source:**",
             "**Source-suite ceiling:**",
             "**Super suite:**",
             "all 119 active-category retained exact-hash sources",
@@ -428,6 +435,8 @@ def validate_evaluations(errors: list[str]) -> None:
             "fixed-budget sensitivity analysis",
             "two independent human",
             "three times per case",
+            "Retry it at most once",
+            "numeric quality score of 0/10",
             "10,000 stratified nonparametric bootstrap samples",
             "Generator(PCG64)",
             "Bonferroni-adjusted 99.8333%",
@@ -439,11 +448,15 @@ def validate_evaluations(errors: list[str]) -> None:
             "gs-rRRRR-<slug>",
             "protocol-imposed compatibility transform",
             "complete, pinned file-dependency closure",
+            "sort by case-sensitive `(repository_full_name, path)`",
+            "PyYAML==6.0.2",
+            "json.dumps(installed_name",
+            "arm3-name-span-json-v1",
             "checksum over the sorted closure records",
             "same file classes as the generated Arm 4",
             "permitted Arm 4 set",
             "automatically fails the fixed-budget consolidation decision",
-            "normalized word-sequence",
+            "shorter-sequence containment",
             "out-of-permitted-set Arm 4",
             "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
@@ -540,7 +553,12 @@ def validate_similarity_gate(errors: list[str]) -> None:
         f"Public-surface checksum: `{public_checksum}`",
         f"Checker checksum: `{checker_checksum}`",
         "--verify-gitskills-frame",
-        "exact-byte then normalized-word-sequence equality fallbacks",
+        "exact-byte plus normalized shorter-sequence containment fallback",
+        (
+            "Effective parameters: ngram=8, containment_threshold=0.20, "
+            "short_fallback=exact-byte+normalized-sequence-containment, "
+            "public_files=all-regular."
+        ),
         "Source corpus verified: 999 files match the recorded Git blob set.",
         (
             "Similarity check passed: "

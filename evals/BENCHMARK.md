@@ -18,10 +18,11 @@ Before any benchmark execution, the current active public skill files must pass
 baseline-plus-expansion sources at the preregistered normalized eight-word-shingle
 and 20% smaller-document containment threshold. The checker must confirm that
 the external files' computed Git blob IDs exactly match the recorded frame
-before testing prose. It also checks exact bytes and normalized word-sequence
-equality before shingling so copied files too short to form an eight-word
-shingle cannot pass because of superficial formatting changes or empty
-comparisons.
+before testing prose. It also checks exact bytes and falls back to normalized
+shorter-sequence containment whenever either file cannot form an eight-word
+shingle, so copied short material cannot pass because of superficial formatting
+changes or empty comparisons. In frame-verification mode, the checker rejects
+any shingle-size or threshold override and emits its effective parameters.
 Any qualifying overlap is a publication blocker: stop,
 inspect the lineage, and independently rewrite or withdraw the affected
 material before collecting benchmark results. Record the corpus checksum,
@@ -33,7 +34,7 @@ Every case is run under these conditions with the same host, model, tool access,
 task input, and sampling parameters:
 
 1. **Unskilled:** no source or super-skill is installed.
-2. **Highest-occurrence source:** one source skill is chosen before execution by
+2. **Highest-ranked source:** one source skill is chosen before execution by
    the mechanical rule below.
 3. **Source-suite ceiling:** all 119 hashes marked `retained` in
    `research/review-decisions.csv` and routed to an active category are installed
@@ -63,8 +64,17 @@ Arm membership is frozen before any model run.
   and use `skill` if empty. The installed directory and front-matter name are
   `gs-rRRRR-<slug>`, where `RRRR` is the source's unique zero-padded GitSkills
   rank. The rank prefix makes all 119 identifiers collision-free while retaining
-  a recognizable source-name suffix. Only the `name` scalar changes; the
-  description and instruction body remain byte-for-byte source-derived.
+  a recognizable source-name suffix. Transform bytes deterministically with
+  `PyYAML==6.0.2`: decode the entry as UTF-8, compose its front matter, locate
+  the top-level `name` value node's exact character span, and replace only that
+  span with `json.dumps(installed_name, ensure_ascii=False, separators=(",", ":"))`.
+  Re-encode as UTF-8 without changing any other character. A missing, duplicate,
+  non-scalar, or unlocatable `name` blocks execution. The transform validator
+  recomputes the result and digest independently before any run; the manifest
+  records the pinned PyYAML version and algorithm identifier
+  `arm3-name-span-json-v1`. The description,
+  instruction body, comments, quoting outside the value span, and all other
+  bytes remain source-derived.
 - Arm 4 always installs all 10 active super-skills. It is never reduced after inspecting
   a task.
 - The committed source token record fixes each original and installed Arm 3
@@ -87,10 +97,16 @@ describe Arm 3 as an unmodified source-suite deployment.
 ## Source dependency-closure gate
 
 Arms 2 and 3 may not run until every one of the 119 active retained entry hashes
-has a complete, pinned file-dependency closure. Starting from the exact
-`SKILL.md` occurrence, resolve a repository commit, include every file beneath
-that skill directory, and recursively include each relative file or directory
-referenced outside it. Record declared runtime packages and tools separately;
+has a complete, pinned file-dependency closure from one deterministic
+occurrence. Use the ledger's repository, path, and commit when it records a
+verified exact Git blob. Otherwise, enumerate the GitSkills occurrences for
+that hash, sort by case-sensitive `(repository_full_name, path)`, and choose the
+first reachable occurrence whose resolved default-branch commit contains the
+exact entry blob; pin that repository, path, and commit in the pre-execution
+manifest. If no candidate qualifies, execution is blocked. Never switch to a
+different occurrence after inspecting its sibling files. From the selected
+entry, include every file beneath that skill directory and recursively include
+each relative file or directory referenced outside it. Record declared runtime packages and tools separately;
 they are environment dependencies, not substitutes for missing files. An
 unresolved commit, missing path, submodule, generated asset, or inaccessible
 dependency blocks benchmark execution rather than silently shrinking an arm.
@@ -131,7 +147,7 @@ Report arm-level and case-level results for:
   output tokens, latency, and cost; and
 - conflict symptoms, tool calls, side effects, and verification failures.
 
-The unskilled and highest-occurrence-source arms establish behavioral baselines. The
+The unskilled and highest-ranked-source arms establish behavioral baselines. The
 source-suite and super-suite arms answer the product question.
 
 Installed description tokens are the sum of the front-matter description value
@@ -215,6 +231,17 @@ critical-side-effect classifications but does not replace either original
 numeric grade. The arm-level score for a case is the arithmetic mean of its
 three response scores. Runs and grader scores are never treated as independent
 quality observations.
+
+A scheduled run is one analysis observation. Retry it at most once, and only
+for a transport, host, model-service, or tool-runtime failure that occurs before
+a gradable response exists; use the same recorded seed and identical inputs.
+A tool error represented in a response is task behavior and is not retried. If
+the one permitted retry also produces no gradable response, retain the scheduled
+observation with a numeric quality score of 0/10, failed pass/fail status, no
+successful activation credit, and its observed tokens, latency, cost, and error
+metadata. Never exclude, replace, or add runs after seeing an outcome. A
+benchmark-wide environment-integrity failure discovered before arm execution
+blocks the benchmark rather than creating arm observations.
 
 For each should-fire case and comparator, form one paired difference: the Arm 4
 case mean minus the comparator case mean. Analyze Arms 2 and 3 separately. The

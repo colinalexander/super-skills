@@ -1,14 +1,14 @@
 cases:
-  - id: "capital-question"
-    prompt: "What is the capital of Portugal?"
+  - id: "pdf-document-boundary"
+    prompt: "Extract the title and page count from the attached PDF without redesigning, rewriting, or marketing its contents."
     should_activate: false
     forbidden_activations: "all"
   - id: "plain-translation"
     prompt: "Translate 'thank you for your patience' into Spanish."
     should_activate: false
     forbidden_activations: "all"
-  - id: "simple-arithmetic"
-    prompt: "What is 17 multiplied by 24?"
+  - id: "spreadsheet-document-boundary"
+    prompt: "Sort the attached budget spreadsheet by transaction date without analyzing the business, changing formulas, or presenting the results."
     should_activate: false
     forbidden_activations: "all"
   - id: "paragraph-summary"

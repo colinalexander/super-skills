@@ -13,6 +13,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORD = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
+DEFAULT_NGRAM = 8
+DEFAULT_THRESHOLD = 0.20
+PARAMETER_SUMMARY = (
+    "ngram=8, containment_threshold=0.20, "
+    "short_fallback=exact-byte+normalized-sequence-containment, "
+    "public_files=all-regular"
+)
 
 
 def normalized_words(path: Path) -> tuple[str, ...]:
@@ -88,8 +95,18 @@ def main() -> int:
         description="Fail when an external source and a public skill share too many normalized word shingles."
     )
     parser.add_argument("--sources", type=Path, required=True, help="External raw-source directory")
-    parser.add_argument("--threshold", type=float, default=0.20, help="Containment threshold (default: 0.20)")
-    parser.add_argument("--ngram", type=int, default=8, help="Words per shingle (default: 8)")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=DEFAULT_THRESHOLD,
+        help="Containment threshold (default: 0.20)",
+    )
+    parser.add_argument(
+        "--ngram",
+        type=int,
+        default=DEFAULT_NGRAM,
+        help="Words per shingle (default: 8)",
+    )
     parser.add_argument(
         "--verify-gitskills-frame",
         action="store_true",
@@ -105,6 +122,12 @@ def main() -> int:
         parser.error("ngram must be at least 5 words")
     if not 0 < args.threshold <= 1:
         parser.error("threshold must be in (0, 1]")
+    if args.verify_gitskills_frame and (
+        args.ngram != DEFAULT_NGRAM or args.threshold != DEFAULT_THRESHOLD
+    ):
+        parser.error(
+            "--verify-gitskills-frame requires ngram=8 and threshold=0.20"
+        )
 
     public_files = files_under(ROOT / "skills")
     source_files = files_under(source_root)
@@ -133,6 +156,7 @@ def main() -> int:
             f"Source corpus verified: {len(observed_hashes)} files match the "
             "recorded Git blob set."
         )
+    print(f"Effective parameters: {PARAMETER_SUMMARY}.")
     public_words = {path: normalized_words(path) for path in public_files}
     source_words = {path: normalized_words(path) for path in source_files}
     public_sets = {
@@ -162,10 +186,31 @@ def main() -> int:
                     (1.0, 0, public_path, source_path, "normalized exact match")
                 )
                 continue
+            short_measure = ""
+            if not public_shingles or not source_shingles:
+                effective_size = min(
+                    args.ngram,
+                    len(public_words[public_path]),
+                    len(source_words[source_path]),
+                )
+                if effective_size:
+                    public_shingles = shingles(
+                        public_words[public_path], effective_size
+                    )
+                    source_shingles = shingles(
+                        source_words[source_path], effective_size
+                    )
+                    short_measure = f"normalized {effective_size}-word"
             containment, overlap = score(public_shingles, source_shingles)
             if overlap and containment >= args.threshold:
+                measure = (
+                    f"{containment:.1%} {short_measure} containment, "
+                    f"{overlap} shingles"
+                    if short_measure
+                    else ""
+                )
                 matches.append(
-                    (containment, overlap, public_path, source_path, "")
+                    (containment, overlap, public_path, source_path, measure)
                 )
 
     if matches:

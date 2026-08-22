@@ -17,9 +17,10 @@ Date: 2026-08-20
 - Source-population checksum: `26f462bb8d84d98c38ac86f8e3db572a20ce075110782c56bd3f13bca2100eb0`.
 - Public surface: all 66 files under the 10 active skill directories.
 - Public-surface checksum: `de1b0eef5ee49404dccb7d3640e2ea652a663faa02bc07613707a40719cbeeb6`.
-- Checker checksum: `c8ffa7fe2571277a3e15c1fa8340088d18f7d4737d69e78670d6d88b3b13c355`.
+- Checker checksum: `44a7eece2f9dc715ea392159bc08516b71719cab3c567a2ed7b4cf1051788686`.
 - Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus --verify-gitskills-frame`.
-- Parameters: normalized eight-word shingles; 20% smaller-document containment threshold; exact-byte then normalized-word-sequence equality fallbacks; all regular files under `skills/`; exact GitSkills-frame verification required.
+- Parameters: normalized eight-word shingles; 20% smaller-document containment threshold; exact-byte plus normalized shorter-sequence containment fallback; all regular files under `skills/`; exact GitSkills-frame verification required; parameter overrides rejected in verification mode.
+- Effective-parameter result: `Effective parameters: ngram=8, containment_threshold=0.20, short_fallback=exact-byte+normalized-sequence-containment, public_files=all-regular.`
 - Corpus result: `Source corpus verified: 999 files match the recorded Git blob set.`
 - Result: `Similarity check passed: 66 public files compared with 999 external files at 20% containment.`
 
@@ -71,10 +72,10 @@ falsification gates. These are authored evaluation specifications; they have
 not yet been run as a comparative model benchmark.
 
 The 36 global negatives were re-audited after withholding document productivity.
-Two residual document-only cases (`pdf-acronym` and `spreadsheet-definition`)
-were replaced with near misses for the active systems/security and data/ML
-boundaries. Repository validation prevents those withheld-category case IDs
-from returning.
+The set retains explicit PDF and spreadsheet task boundaries with every active
+skill forbidden, so the suite is penalized if interface, marketing, data, or
+another active category absorbs the deliberately withheld capability. Active
+systems/security and data/ML near misses remain represented as well.
 
 ## Expansion status
 

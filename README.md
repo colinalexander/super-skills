@@ -159,7 +159,7 @@ The repository currently contains 56 active-category cases, 36 global true negat
 Before claiming that a super-skill outperforms its sources, the project will compare:
 
 1. an unskilled-agent baseline;
-2. the mechanically selected highest-occurrence source skill;
+2. the mechanically selected highest-ranked source skill;
 3. all 119 retained sources supporting active categories installed concurrently as an upper bound on narrow-skill overhead and conflict exposure, not as a typical deployment; and
 4. all 10 active super-skills installed concurrently.
 
