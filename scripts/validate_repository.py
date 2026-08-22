@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -450,6 +451,50 @@ def validate_evaluations(errors: list[str]) -> None:
                     f"{expected_count} cases",
                 )
 
+    baseline_path = ROOT / "evals" / "fixtures" / "connected-service-baselines.json"
+    connected_path = category_dir / "connected-service-automation.yaml"
+    if not baseline_path.is_file():
+        fail(errors, "missing connected-service baseline snapshots")
+    else:
+        try:
+            baseline_data = json.loads(baseline_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            fail(errors, f"invalid connected-service baseline JSON: {error}")
+            baseline_data = {}
+        snapshots = baseline_data.get("snapshots", [])
+        if baseline_data.get("schema_version") != 1 or len(snapshots) != 5:
+            fail(errors, "connected-service baselines must contain five v1 snapshots")
+        connected_text = connected_path.read_text(encoding="utf-8")
+        expected_cases = {
+            "ambiguous-message", "permission-change", "timeout-retry",
+            "bulk-delete", "integration-nontrigger",
+        }
+        observed_cases: set[str] = set()
+        for snapshot in snapshots:
+            case_id = snapshot.get("case_id", "")
+            snapshot_id = snapshot.get("snapshot_id", "")
+            state_hash = snapshot.get("state_sha256", "")
+            observed_cases.add(case_id)
+            canonical = json.dumps(
+                {
+                    "fixture_version": snapshot.get("fixture_version"),
+                    "canonical_state": snapshot.get("canonical_state"),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+            if hashlib.sha256(canonical).hexdigest() != state_hash:
+                fail(errors, f"connected-service baseline hash differs: {case_id}")
+            for marker in (
+                f'baseline_snapshot_id: "{snapshot_id}"',
+                f'baseline_state_sha256: "{state_hash}"',
+            ):
+                if marker not in connected_text:
+                    fail(errors, f"connected-service case lacks baseline marker: {case_id}")
+        if observed_cases != expected_cases:
+            fail(errors, "connected-service baseline case population differs")
+
     negatives_path = ROOT / "evals" / "shared" / "true-negatives.yaml"
     if not negatives_path.is_file():
         fail(errors, "missing global true-negative evaluations")
@@ -543,9 +588,15 @@ def validate_evaluations(errors: list[str]) -> None:
             "checksum over the sorted closure records",
             "--closure-sources",
             "--closure-manifest",
+            "--closure-occurrences",
             "canonical records in the run manifest",
             "119 active retained source hashes",
             "actual executable bits",
+            "entry_repository_path",
+            "candidate_order_sha256",
+            "sorted-first-reachable-exact",
+            "mechanically selects the first reachable exact blob",
+            "whenever closure mode is active",
             "description SHA-256",
             "never publishes",
             "same file classes as the generated Arm 4",
@@ -554,11 +605,17 @@ def validate_evaluations(errors: list[str]) -> None:
             "shorter-sequence containment",
             "out-of-permitted-set Arm 4",
             "isolated installation containing only",
+            "Fixed-budget Arm 4 installs only",
             "transformed installed `SKILL.md` bytes",
             "locked `analysis_category`",
             "Global true-negative quality is a separate decision family",
             "seed `20260822`",
             "recreate an isolated mutable tool environment",
+            "connected-service-baselines.json",
+            "primary cost outcome",
+            "20% relative",
+            "100 tokens absolute",
+            "UTF-16 BOM",
             "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
             "absolute blocker regardless of comparator behavior",

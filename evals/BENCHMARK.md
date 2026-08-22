@@ -25,6 +25,9 @@ with fewer tokens still receive exact-byte and normalized-exact checks. Unicode
 word tokenization, non-Latin character segmentation within mixed-script tokens,
 and a normalized non-ASCII
 character fallback prevent non-ASCII text from becoming an empty comparison.
+UTF-8, UTF-8 BOM, UTF-16 BOM, and UTF-32 BOM text are decoded before
+normalization; a textual file in any other undecodable encoding blocks the gate
+rather than being compared after dropping bytes.
 In frame-verification mode, the checker rejects
 any shingle-size or threshold override and emits its effective parameters.
 Any qualifying overlap is a publication blocker: stop,
@@ -79,8 +82,10 @@ Arm membership is frozen before any model run.
   `arm3-name-span-json-v1`. The description,
   instruction body, comments, quoting outside the value span, and all other
   bytes remain source-derived.
-- Arm 4 always installs all 10 active super-skills. It is never reduced after inspecting
-  a task.
+- Natural-host Arm 4 always installs all 10 active super-skills. The fixed-budget
+  sensitivity condition instead uses an isolated installation containing exactly
+  the case's preregistered primary and allowed-secondary set. Neither installation
+  changes after inspecting a task or result.
 - The committed source token record fixes each original and installed Arm 3
   name. The run manifest records both names, the original Git blob hash, the
   transformed file hash, description SHA-256, semantic description byte and
@@ -126,12 +131,17 @@ and the manifest records both the original and transformed entry digests.
 
 After all closures are pinned, rerun the originality gate with
 `--closure-sources /absolute/path/to/pinned-closure-files` and
-`--closure-manifest /absolute/path/to/closure-records.jsonl`. The checker verifies
-the 999-entry GitSkills population separately, scans every closure file as an
+`--closure-manifest /absolute/path/to/closure-records.jsonl`, plus
+`--closure-occurrences /absolute/path/to/occurrence-records.jsonl`. The checker verifies
+the 999-entry GitSkills population separately whenever closure mode is active,
+forces the fixed similarity parameters even if the explicit frame flag is
+omitted, scans every closure file as an
 additional comparison corpus, and emits the closure file count and canonical
 record checksum. Each JSONL record contains exactly `source_file_sha`,
-`repository`, `commit`, `repository_path`, `sha256`, `executable`, and
-`staged_path`. `staged_path` maps the external file but is excluded from the
+`repository`, `commit`, `entry_repository_path`, `selection_method`,
+`candidate_order_sha256`, `selected_candidate_index`, `repository_path`,
+`sha256`, `executable`, and `staged_path`. `staged_path` maps the external file
+but is excluded from the
 checksum; the other fields are serialized as UTF-8 JSON with sorted keys and
 compact separators, sorted lexicographically by complete record, joined with a
 trailing newline, and hashed with SHA-256. That count and checksum must equal
@@ -142,6 +152,25 @@ one pinned repository and commit, and each staged file's actual executable bits
 must equal its record. Missing, extra, duplicate, mode-mismatched, or otherwise
 mismatched closure files block benchmark
 execution. Closure prose remains external and is never committed or published.
+
+For the eight active sources whose ledger row records a verified exact upstream
+blob, `selection_method` is `ledger-exact`; repository, commit, and entry path
+must equal that ledger row, the occurrence record contains that single reachable
+exact candidate, and `selected_candidate_index` is zero. Every other source uses
+`sorted-first-reachable-exact`; the manifest records the SHA-256 of the complete
+case-sensitive sorted candidate list and the zero-based index of the first
+reachable occurrence containing the exact entry blob. The checker binds every
+closure record to that source-level selection tuple and requires the validated
+entry file at `entry_repository_path`, preventing a self-consistent manifest
+from silently choosing a different occurrence.
+
+The occurrence JSONL contains exactly one record per active source with
+`source_file_sha`, `selection_method`, and `candidates`. Every candidate records
+`repository`, `entry_repository_path`, resolved `commit`, `reachable`, and the
+observed `entry_blob` (null when inaccessible). The checker requires unique
+case-sensitively sorted repository/path candidates, recomputes
+`candidate_order_sha256`, mechanically selects the first reachable exact blob,
+and requires the closure manifest's occurrence tuple and selected index to match.
 
 ## Evaluation population
 
@@ -184,6 +213,18 @@ is 580 tokens for Arm 4 and 5,613 tokens for the externally reconstructed Arm 3
 under `cl100k_base` and `tiktoken==0.11.0`; a run must recompute these figures
 and explain any difference before execution.
 
+The **primary cost outcome** is natural-host installed description tokens under
+that pinned tokenizer, comparing the complete 10-skill Arm 4 installation with
+the complete 119-source Arm 3 installation. It is a deterministic manifest-level
+quantity, not a repeated model observation. Cost supports consolidation only if
+Arm 4 reduces this outcome by both at least 20% relative to Arm 3 and at least
+100 tokens absolute. Any mismatch between the recomputed manifest values and the
+committed baseline blocks execution until reconciled; no favorable alternative
+among loaded instructions, total input, latency, monetary cost, or the
+fixed-budget conditions may replace this primary decision after results exist.
+Those other cost measures remain descriptive secondary outcomes, and any claim
+about loaded-context, latency, or monetary efficiency must be labeled exploratory.
+
 ## Natural and fixed-budget comparisons
 
 The primary comparison uses each arm's natural host behavior and reports its
@@ -194,7 +235,11 @@ A fixed-budget sensitivity analysis compares Arms 3 and 4 on should-fire cases.
 Before any run, each case's permitted Arm 4 set is its locked primary category
 plus every locked allowed secondary category. Its budget is the sum of those
 skills' generated `full_tokens` counts in `research/token-counts.csv`; it is not
-selected from observed activations. The same permitted set, budget, and Arm 3
+selected from observed activations. Fixed-budget Arm 4 installs only that
+permitted set, so descriptions from the other active skills are neither loaded
+nor activatable. The run manifest verifies the exact isolated installation and
+charges every installed description and instruction file to its observed cost.
+The same permitted set, budget, and Arm 3
 subset apply to all three repetitions and do not depend on observed Arm 4
 activation, tokens, latency, or quality. Any Arm 4 activation outside the
 permitted set automatically fails the fixed-budget consolidation decision; it
@@ -217,8 +262,9 @@ The fixed-budget Arm 3 condition is an isolated installation containing only
 the selected whole-bundle prefix; the other retained source skills are neither
 installed nor activatable in that condition. The exhaustive 119-source Arm 3
 installation applies only to the natural-host comparison. The run manifest
-records both installations and verifies that fixed-budget activations belong to
-the selected prefix.
+records both Arm 3 installations and the natural and isolated Arm 4
+installations, and verifies that fixed-budget activations belong to the
+respective installed sets.
 
 Report quality against cost jointly:
 
@@ -340,6 +386,8 @@ decision-bearing contrasts. A category-specific claim additionally requires
 that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
 4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
 The lower bound of both global-negative quality intervals must exceed -0.5.
+The primary installed-description cost outcome must meet its preregistered 20%
+and 100-token reductions.
 Arm 4 must also have no critical-failure event meeting gate 3 below. These are
 success conditions, not merely the absence of a failure signal. The
 fixed-budget claim additionally requires no out-of-permitted-set Arm 4
@@ -365,19 +413,27 @@ returned to narrower skills before a superiority claim—if any of these occurs:
 5. The upper bound of either global-negative quality interval is below -0.5.
    This fails the suite-wide consolidation decision even when Arm 4 correctly
    avoids skill activation.
+6. Arm 4 fails either the 20% relative or 100-token absolute primary cost
+   reduction. This blocks a consolidation claim even if a secondary cost metric
+   appears favorable.
 
 If a quality lower bound is at or below -0.5 without its upper bound falling
 below -0.5, including either global-negative quality interval, or the
 false-activation interval crosses 10%, the affected result is
 **inconclusive**, not evidence for consolidation. Meeting the success conditions
 permits a consolidation claim only when the joint quality-and-cost results also
-support it; it does not by itself establish superiority.
+meet the primary cost gate; it does not by itself establish superiority.
 
 ## Run discipline
 
 - Randomize arm order within each case and record the seed.
 - Before every scheduled arm-run, recreate an isolated mutable tool environment
-  from the case's preregistered baseline snapshot and verify its canonical state
+  from the case's preregistered baseline snapshot. The five connected-service
+  cases bind `baseline_snapshot_id` and `baseline_state_sha256` to the complete
+  identities, permissions, fixture versions, fault profiles, and canonical state
+  in `evals/fixtures/connected-service-baselines.json`; repository validation
+  recomputes every hash over the fixture version and canonical-state envelope.
+  Verify the restored canonical state
   hash, account or tenant identity, target identities, permissions, and fixture
   versions. Arms and repetitions never share a mutable namespace. Discard the
   environment after the observation; a permitted infrastructure retry receives

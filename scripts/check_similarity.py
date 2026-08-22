@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import codecs
 import csv
 import hashlib
 import json
@@ -22,10 +23,22 @@ CLOSURE_RECORD_FIELDS = {
     "source_file_sha",
     "repository",
     "commit",
+    "entry_repository_path",
+    "selection_method",
+    "candidate_order_sha256",
+    "selected_candidate_index",
     "repository_path",
     "sha256",
     "executable",
     "staged_path",
+}
+OCCURRENCE_RECORD_FIELDS = {"source_file_sha", "selection_method", "candidates"}
+CANDIDATE_FIELDS = {
+    "repository", "entry_repository_path", "commit", "reachable", "entry_blob"
+}
+TEXT_SUFFIXES = {
+    ".css", ".html", ".js", ".json", ".jsx", ".md", ".py", ".sh",
+    ".svg", ".toml", ".ts", ".tsx", ".txt", ".yaml", ".yml",
 }
 
 
@@ -42,9 +55,23 @@ def parameter_summary(closure_file_count: int) -> str:
 
 def normalized_words(path: Path) -> tuple[str, ...]:
     """Return Unicode-aware tokens with a non-word character fallback."""
-    text = unicodedata.normalize(
-        "NFKC", path.read_text(encoding="utf-8", errors="ignore")
-    ).casefold()
+    data = path.read_bytes()
+    try:
+        if data.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+            decoded = data.decode("utf-32")
+        elif data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+            decoded = data.decode("utf-16")
+        elif data.startswith(codecs.BOM_UTF8):
+            decoded = data.decode("utf-8-sig")
+        else:
+            decoded = data.decode("utf-8")
+    except UnicodeDecodeError as error:
+        if path.suffix.casefold() in TEXT_SUFFIXES:
+            raise RuntimeError(f"text file has an unsupported encoding: {path}") from error
+        return ()
+    if "\0" in decoded and path.suffix.casefold() in TEXT_SUFFIXES:
+        raise RuntimeError(f"text file has an unsupported NUL-bearing encoding: {path}")
+    text = unicodedata.normalize("NFKC", decoded).casefold()
     words: list[str] = []
     for token in WORD.findall(text):
         if token.isascii():
@@ -127,7 +154,140 @@ def expected_active_source_hashes() -> set[str]:
     return expected
 
 
-def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list[Path], str]:
+def ledger_exact_occurrences() -> dict[str, tuple[str, str, str]]:
+    """Return ledger-backed exact occurrences for active retained sources."""
+    expected = expected_active_source_hashes()
+    with (ROOT / "research" / "source-ledger.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        rows = {row["file_sha"]: row for row in csv.DictReader(handle)}
+    exact: dict[str, tuple[str, str, str]] = {}
+    for source_hash in expected:
+        row = rows[source_hash]
+        if row["provenance_status"] == "upstream exact Git blob verified":
+            exact[source_hash] = (
+                row["reference_repository"],
+                row["reference_commit"],
+                row["reference_path"],
+            )
+    return exact
+
+
+def load_occurrence_manifest(
+    manifest_path: Path,
+) -> dict[str, tuple[str, str, str, str, str, int]]:
+    """Validate source-level occurrence selection and return pinned tuples."""
+    expected_sources = expected_active_source_hashes()
+    exact_occurrences = ledger_exact_occurrences()
+    selections: dict[str, tuple[str, str, str, str, str, int]] = {}
+    for line_number, raw_line in enumerate(
+        manifest_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not raw_line.strip():
+            continue
+        try:
+            record = json.loads(raw_line)
+        except json.JSONDecodeError as error:
+            raise RuntimeError(
+                f"invalid occurrence manifest JSON on line {line_number}"
+            ) from error
+        if not isinstance(record, dict) or set(record) != OCCURRENCE_RECORD_FIELDS:
+            raise RuntimeError(
+                f"occurrence manifest line {line_number} has incorrect fields"
+            )
+        source_hash = record["source_file_sha"]
+        method = record["selection_method"]
+        candidates = record["candidates"]
+        if not isinstance(source_hash, str) or not re.fullmatch(r"[0-9a-f]{40}", source_hash):
+            raise RuntimeError(
+                f"occurrence manifest line {line_number} has invalid source_file_sha"
+            )
+        if source_hash in selections:
+            raise RuntimeError(f"duplicate occurrence record for source: {source_hash}")
+        if not isinstance(method, str) or method not in {
+            "ledger-exact", "sorted-first-reachable-exact"
+        }:
+            raise RuntimeError(
+                f"occurrence manifest line {line_number} has invalid selection_method"
+            )
+        if not isinstance(candidates, list) or not candidates:
+            raise RuntimeError(
+                f"occurrence manifest line {line_number} has no candidates"
+            )
+        candidate_keys: list[tuple[str, str]] = []
+        for candidate in candidates:
+            if not isinstance(candidate, dict) or set(candidate) != CANDIDATE_FIELDS:
+                raise RuntimeError(
+                    f"occurrence manifest line {line_number} has invalid candidate fields"
+                )
+            if not all(
+                isinstance(candidate[field], str) and candidate[field]
+                for field in ("repository", "entry_repository_path", "commit")
+            ):
+                raise RuntimeError(
+                    f"occurrence manifest line {line_number} has invalid candidate identity"
+                )
+            if not re.fullmatch(r"[0-9a-f]{40}", candidate["commit"]):
+                raise RuntimeError(
+                    f"occurrence manifest line {line_number} has invalid candidate commit"
+                )
+            if not isinstance(candidate["reachable"], bool):
+                raise RuntimeError(
+                    f"occurrence manifest line {line_number} has invalid reachable flag"
+                )
+            entry_blob = candidate["entry_blob"]
+            if entry_blob is not None and (
+                not isinstance(entry_blob, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", entry_blob)
+            ):
+                raise RuntimeError(
+                    f"occurrence manifest line {line_number} has invalid entry_blob"
+                )
+            candidate_keys.append(
+                (candidate["repository"], candidate["entry_repository_path"])
+            )
+        if candidate_keys != sorted(candidate_keys) or len(candidate_keys) != len(set(candidate_keys)):
+            raise RuntimeError(
+                f"occurrence candidates are not unique and case-sensitively sorted: {source_hash}"
+            )
+        qualifying = [
+            index for index, candidate in enumerate(candidates)
+            if candidate["reachable"] and candidate["entry_blob"] == source_hash
+        ]
+        if not qualifying:
+            raise RuntimeError(f"no reachable exact occurrence for source: {source_hash}")
+        selected_index = qualifying[0]
+        selected = candidates[selected_index]
+        if source_hash in exact_occurrences:
+            if method != "ledger-exact" or selected_index != 0 or len(candidates) != 1:
+                raise RuntimeError(f"invalid ledger-exact selection record: {source_hash}")
+            if (
+                selected["repository"], selected["commit"], selected["entry_repository_path"]
+            ) != exact_occurrences[source_hash]:
+                raise RuntimeError(f"ledger-exact occurrence differs from ledger: {source_hash}")
+        elif method != "sorted-first-reachable-exact":
+            raise RuntimeError(
+                f"unverified source must use deterministic fallback selection: {source_hash}"
+            )
+        candidate_serialized = json.dumps(
+            candidates, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
+        candidate_checksum = hashlib.sha256(candidate_serialized).hexdigest()
+        selections[source_hash] = (
+            selected["repository"], selected["commit"],
+            selected["entry_repository_path"], method, candidate_checksum,
+            selected_index,
+        )
+    if set(selections) != expected_sources:
+        raise RuntimeError("occurrence manifest does not cover exactly 119 active sources")
+    return selections
+
+
+def load_closure_manifest(
+    manifest_path: Path,
+    closure_root: Path,
+    occurrence_selections: dict[str, tuple[str, str, str, str, str, int]],
+) -> tuple[list[Path], str]:
     """Validate staged files and hash canonical pinned-closure records."""
     records: list[str] = []
     staged_files: list[Path] = []
@@ -135,7 +295,7 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
     source_paths: set[tuple[str, str]] = set()
     manifest_source_hashes: set[str] = set()
     entry_source_hashes: set[str] = set()
-    pinned_occurrences: dict[str, tuple[str, str]] = {}
+    pinned_occurrences: dict[str, tuple[str, str, str, str, str, int]] = {}
     for line_number, raw_line in enumerate(
         manifest_path.read_text(encoding="utf-8").splitlines(), start=1
     ):
@@ -155,6 +315,7 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
             "source_file_sha",
             "repository",
             "commit",
+            "entry_repository_path",
             "repository_path",
             "sha256",
             "staged_path",
@@ -166,6 +327,27 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
         if not isinstance(record["executable"], bool):
             raise RuntimeError(
                 f"closure manifest line {line_number} has invalid executable"
+            )
+        if not isinstance(record["selection_method"], str) or record[
+            "selection_method"
+        ] not in {
+            "ledger-exact", "sorted-first-reachable-exact"
+        }:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid selection_method"
+            )
+        if type(record["selected_candidate_index"]) is not int or record[
+            "selected_candidate_index"
+        ] < 0:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid selected_candidate_index"
+            )
+        candidate_checksum = record["candidate_order_sha256"]
+        if not isinstance(candidate_checksum, str) or not re.fullmatch(
+            r"[0-9a-f]{64}", candidate_checksum
+        ):
+            raise RuntimeError(
+                f"closure manifest line {line_number} has invalid candidate_order_sha256"
             )
         if not re.fullmatch(r"[0-9a-f]{40}", record["source_file_sha"]):
             raise RuntimeError(
@@ -196,13 +378,25 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
             )
         source_paths.add(source_identity)
         manifest_source_hashes.add(record["source_file_sha"])
-        occurrence = (record["repository"], record["commit"])
+        occurrence = (
+            record["repository"],
+            record["commit"],
+            record["entry_repository_path"],
+            record["selection_method"],
+            candidate_checksum,
+            record["selected_candidate_index"],
+        )
         previous_occurrence = pinned_occurrences.setdefault(
             record["source_file_sha"], occurrence
         )
         if occurrence != previous_occurrence:
             raise RuntimeError(
                 "closure manifest uses multiple pinned occurrences for source: "
+                f"{record['source_file_sha']}"
+            )
+        if occurrence_selections.get(record["source_file_sha"]) != occurrence:
+            raise RuntimeError(
+                "closure occurrence differs from the validated selection record: "
                 f"{record['source_file_sha']}"
             )
         staged_file = (closure_root / staged_relative).resolve()
@@ -219,7 +413,10 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
             raise RuntimeError(
                 f"closure manifest line {line_number} has an executable-bit mismatch"
             )
-        if git_blob_id(staged_file) == record["source_file_sha"]:
+        if (
+            record["repository_path"] == record["entry_repository_path"]
+            and git_blob_id(staged_file) == record["source_file_sha"]
+        ):
             entry_source_hashes.add(record["source_file_sha"])
         staged_files.append(staged_file)
         canonical = {key: record[key] for key in sorted(record) if key != "staged_path"}
@@ -296,6 +493,11 @@ def main() -> int:
         help="External JSONL manifest mapping staged closure files to canonical records",
     )
     parser.add_argument(
+        "--closure-occurrences",
+        type=Path,
+        help="External JSONL manifest proving deterministic source-occurrence selection",
+    )
+    parser.add_argument(
         "--threshold",
         type=float,
         default=DEFAULT_THRESHOLD,
@@ -318,14 +520,24 @@ def main() -> int:
         source_root = require_external_source_root(args.sources)
     except RuntimeError as error:
         parser.error(str(error))
-    if (args.closure_sources is None) != (args.closure_manifest is None):
-        parser.error("--closure-sources and --closure-manifest must be used together")
+    closure_arguments = (
+        args.closure_sources, args.closure_manifest, args.closure_occurrences
+    )
+    if any(value is not None for value in closure_arguments) and not all(
+        value is not None for value in closure_arguments
+    ):
+        parser.error(
+            "--closure-sources, --closure-manifest, and --closure-occurrences "
+            "must be used together"
+        )
     closure_root = None
     closure_manifest = None
+    closure_occurrences = None
     if args.closure_sources is not None:
         try:
             closure_root = require_external_source_root(args.closure_sources)
             closure_manifest = require_external_source_file(args.closure_manifest)
+            closure_occurrences = require_external_source_file(args.closure_occurrences)
         except RuntimeError as error:
             parser.error(str(error))
         if (
@@ -338,29 +550,37 @@ def main() -> int:
             parser.error("entry sources and closure manifest must not overlap")
         if closure_manifest == closure_root or closure_root in closure_manifest.parents:
             parser.error("closure files and closure manifest must not overlap")
+        if closure_occurrences == source_root or source_root in closure_occurrences.parents:
+            parser.error("entry sources and occurrence manifest must not overlap")
+        if closure_occurrences == closure_root or closure_root in closure_occurrences.parents:
+            parser.error("closure files and occurrence manifest must not overlap")
+        if closure_occurrences == closure_manifest:
+            parser.error("closure and occurrence manifests must be separate files")
+    verification_required = args.verify_gitskills_frame or closure_root is not None
     if args.ngram < 5:
         parser.error("ngram must be at least 5 words")
     if not 0 < args.threshold <= 1:
         parser.error("threshold must be in (0, 1]")
-    if args.verify_gitskills_frame and (
+    if verification_required and (
         args.ngram != DEFAULT_NGRAM or args.threshold != DEFAULT_THRESHOLD
     ):
         parser.error(
-            "--verify-gitskills-frame requires ngram=8 and threshold=0.20"
+            "frame verification and closure scans require ngram=8 and threshold=0.20"
         )
 
     public_files = files_under(ROOT / "skills")
     entry_source_files = files_under(source_root)
     closure_source_files: list[Path] = []
     closure_checksum = ""
-    if closure_root and closure_manifest:
+    if closure_root and closure_manifest and closure_occurrences:
         try:
+            occurrence_selections = load_occurrence_manifest(closure_occurrences)
             closure_source_files, closure_checksum = load_closure_manifest(
-                closure_manifest, closure_root
+                closure_manifest, closure_root, occurrence_selections
             )
         except RuntimeError as error:
             parser.error(str(error))
-    if args.verify_gitskills_frame:
+    if verification_required:
         try:
             expected_hashes = expected_gitskills_frame()
         except RuntimeError as error:
@@ -392,8 +612,11 @@ def main() -> int:
         )
     print(f"Effective parameters: {parameter_summary(len(closure_source_files))}.")
     source_files = entry_source_files + closure_source_files
-    public_words = {path: normalized_words(path) for path in public_files}
-    source_words = {path: normalized_words(path) for path in source_files}
+    try:
+        public_words = {path: normalized_words(path) for path in public_files}
+        source_words = {path: normalized_words(path) for path in source_files}
+    except RuntimeError as error:
+        parser.error(str(error))
     public_sets = {
         path: shingles(words, args.ngram) for path, words in public_words.items()
     }
