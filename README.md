@@ -38,7 +38,7 @@ Historical-lineage analysis found 21 exact Anthropic Git blobs among the 99 base
 | [`application-engineering`](skills/application-engineering/) | Framework, API, runtime, database, and application architecture | 67 | 463 | 1,613 |
 | [`game-development`](skills/game-development/) | Game design and engineering across 2D, mobile, PC/console, audio, and XR | 58 | 456 | 1,699 |
 | [`reasoning-modes`](skills/reasoning-modes/) | Brainstorming, adversarial review, abstraction shifts, and compressed communication | 48 | 399 | 1,274 |
-| [`systems-and-security`](skills/systems-and-security/) | Bash/Linux, PowerShell/Windows, and scoped security assessment | 55 | 503 | 1,294 |
+| [`systems-and-security`](skills/systems-and-security/) | Bash/Linux, PowerShell/Windows, and scoped security assessment | 55 | 503 | 1,298 |
 | [`marketing-and-growth`](skills/marketing-and-growth/) | Market research, positioning, pricing, acquisition, conversion, and fundraising | 60 | 661 | 2,071 |
 | [`connected-service-automation`](skills/connected-service-automation/) | Safe operation of messaging, notes, media, files, sharing, and connected services | 57 | 510 | 1,259 |
 | [`data-science-and-ml`](skills/data-science-and-ml/) | Data quality, experiments, modeling, training, evaluation, and model operations | 62 | 479 | 1,366 |
