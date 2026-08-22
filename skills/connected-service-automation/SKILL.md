@@ -11,6 +11,8 @@ Operate external services as stateful systems with real users, accounts, permiss
 
 Confirm the requested service, account or workspace, target object or recipient, desired end state, and available capability. Inspect current state before changing it when that state affects safety or correctness. Never expose credentials or infer permission from tool availability alone.
 
+If the service, account, recipient, timing, or distinction between drafting and sending is ambiguous, do not call a write tool. Ask one concise clarifying question. Never substitute an available service for the service the user named or implied.
+
 Load the relevant reference:
 
 - accounts, capability discovery, and target resolution: [accounts-and-capabilities.md](references/accounts-and-capabilities.md);

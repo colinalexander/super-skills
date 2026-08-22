@@ -1,6 +1,6 @@
 ---
 name: marketing-and-growth
-description: Develop evidence-based marketing, growth, pricing, conversion, positioning, and fundraising work. Use for market research, product marketing, SEO, acquisition, lifecycle optimization, monetization, marketing copy, ads, or investor communications; do not use for visual design, general office document production, or software implementation.
+description: Develop evidence-based marketing, pricing, growth, positioning, conversion, and fundraising. Use for market research, product marketing, pricing tiers, plans, or packages, SEO, acquisition, lifecycle, monetization, copy, ads, or investor communications; exclude visual design, office documents, and software implementation.
 ---
 
 # Marketing and Growth
@@ -18,6 +18,8 @@ Load only the reference needed for the task:
 - SEO, content, paid acquisition, and channel selection: [acquisition-and-seo.md](references/acquisition-and-seo.md);
 - pages, forms, signup, onboarding, paywalls, and retention: [conversion-and-lifecycle.md](references/conversion-and-lifecycle.md);
 - fundraising assets and investor outreach: [fundraising-and-investor-communications.md](references/fundraising-and-investor-communications.md).
+
+For any pricing-tier, plan, package, or monetization request, read `pricing-and-monetization.md` before recommending a structure or number. Treat a bare request to replace one price with tiers as a commercial-strategy request, not authorization to edit an arbitrary workspace file. Do not invent numeric prices from an underspecified request. First identify or request the target segments, value metric, economics, current commitments, and migration constraints; when evidence is missing, propose package hypotheses and a validation plan without fabricated numbers.
 
 ## Make the decision explicit
 

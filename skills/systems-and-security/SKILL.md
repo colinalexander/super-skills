@@ -25,6 +25,8 @@ A request to fix, deploy, or inspect a system does not itself authorize vulnerab
 6. Capture the command result and confirm the resulting state independently.
 7. Record recovery steps for changes that can interrupt access, networking, boot, or data availability.
 
+For permission changes, independently re-read every target and verify the principal, access type, required rights, inheritance flags, and propagation flags explicitly. Do not treat a successful mutation call, a principal-only match, or a bitmask match that ignores inheritance as verification.
+
 ## Apply hard safety gates
 
 - Never use unresolved variables, broad roots, or ambiguous globs as destructive targets.
