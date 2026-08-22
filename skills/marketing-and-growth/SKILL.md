@@ -1,6 +1,6 @@
 ---
 name: marketing-and-growth
-description: Develop evidence-based marketing, pricing, growth, positioning, conversion, and fundraising. Use for market research, product marketing, pricing tiers, plans, or packages, SEO, acquisition, lifecycle, monetization, copy, ads, or investor communications; exclude visual design, office documents, and software implementation.
+description: Develop evidence-based marketing, pricing, growth, positioning, conversion, and fundraising. Use for market research, product marketing, pricing tiers/plans/packages, SEO, acquisition, lifecycle, monetization, copy, ads, or investor communications; exclude visual design, office-artifact mechanics, and software implementation.
 ---
 
 # Marketing and Growth

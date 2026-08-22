@@ -7,7 +7,7 @@ Evidence: 14 retained top-1,000 hashes spanning market research, product context
 | Commercial context | Connect audience, problem, alternative, promise, proof, channel, and outcome | Shared context is factual and dated; assumptions remain visible |
 | Research | Begin from a decision and show sources, definitions, calculations, and uncertainty | Market-size precision does not substitute for evidence |
 | Positioning | Choose a segment and frame that constrain later choices | Customer language informs the position without becoming fabricated testimony |
-| Pricing | Align value metric, packages, economics, and migration | Stated willingness to pay is not purchase evidence |
+| Pricing | Align value metric, packages, economics, and migration | A bare tier request remains commercial strategy unless an artifact is identified; absent evidence yields package hypotheses, not fabricated prices |
 | Acquisition | Select channels from the buying path and economics | Clicks and rankings are leading indicators, not proof of incremental value |
 | Search | Match intent with original utility, technical accessibility, and honest markup | Scaled publishing requires differentiated page value and retirement controls |
 | Conversion | Diagnose offer, traffic, trust, usability, and measurement before redesign | Productive friction remains where consent, security, or qualification requires it |

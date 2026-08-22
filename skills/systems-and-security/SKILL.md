@@ -25,7 +25,7 @@ A request to fix, deploy, or inspect a system does not itself authorize vulnerab
 6. Capture the command result and confirm the resulting state independently.
 7. Record recovery steps for changes that can interrupt access, networking, boot, or data availability.
 
-For permission changes, independently re-read every target and verify the principal, access type, required rights, inheritance flags, and propagation flags explicitly. Do not treat a successful mutation call, a principal-only match, or a bitmask match that ignores inheritance as verification.
+After a permission change, independently re-read every target with the platform's native model. For Windows ACLs, verify the principal, access type, required rights, inheritance flags, and propagation flags. For Unix/POSIX permissions, verify ownership, mode bits, and any native ACL entries. Do not treat a successful mutation call or partial match as verification.
 
 ## Apply hard safety gates
 

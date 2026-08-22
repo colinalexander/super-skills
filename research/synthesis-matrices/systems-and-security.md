@@ -7,8 +7,8 @@ Evidence labels: `vulnerability-scanner`, `powershell-windows`, `bash-linux`.
 | Decision area | Retained synthesis | Conflict resolution or added safeguard |
 | --- | --- | --- |
 | Shell operation | Identify actual shell and use exact, quoted targets | Convenience does not justify ambiguous destructive scope |
-| Linux | Diagnose services and resources by layer | Restarting or reinstalling is not a default root-cause method |
-| PowerShell | Operate on objects and expose safe script semantics | Formatted text parsing and aliases are excluded from reusable automation |
+| Linux | Diagnose services and resources by layer; verify permission changes with native ownership, mode, and ACL semantics | Restarting or reinstalling is not a default root-cause method |
+| PowerShell | Operate on objects, expose safe script semantics, and re-read exact Windows ACL principal, type, rights, inheritance, and propagation after mutation | Formatted text parsing, aliases, and partial ACL matches are excluded from reusable automation |
 | Security | Confirm authorized assets, methods, time, and stop conditions | Routine administration never implicitly authorizes scanning or exploitation |
 | Attack surface | Include dependencies, delivery pipeline, cloud boundaries, and exceptional states | Generic web checklists are prompts for investigation, not proof of applicability |
 | Findings | Verify context, impact, likelihood, controls, and confidence | Scanner output is evidence to triage, not a final vulnerability claim |
