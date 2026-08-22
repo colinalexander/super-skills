@@ -2,6 +2,10 @@ skill: "reasoning-modes"
 cases:
   - id: "brainstorm"
     prompt: "Brainstorm several genuinely different ways a neighborhood library could increase weekday use, then rank them."
+    should_activate: true
+    expected_primary_category: "reasoning-modes"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Generates distinct mechanisms before evaluating them."
       - "Compares premise, risk, and cheapest test."
@@ -10,6 +14,10 @@ cases:
       - "Produces cosmetic variants of one idea."
   - id: "grill"
     prompt: "Grill me one question at a time on my claim that we should expand internationally next quarter."
+    should_activate: true
+    expected_primary_category: "reasoning-modes"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Probes evidence, readiness, alternatives, incentives, and disconfirming facts."
       - "Follows weak answers without becoming hostile."
@@ -18,6 +26,10 @@ cases:
       - "Dumps a generic checklist or attacks the person."
   - id: "design-dialogue"
     prompt: "Brainstorm this feature with me one question at a time, compare approaches, and do not implement until I approve a design."
+    should_activate: true
+    expected_primary_category: "reasoning-modes"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Inspects available project facts before asking the user to recall them."
       - "Asks one consequential question at a time and compares distinct approaches."
@@ -26,6 +38,10 @@ cases:
       - "Starts implementation or imposes an unrelated documentation path."
   - id: "compress-high-stakes"
     prompt: "Explain this medication dosing instruction in the shortest plain language possible."
+    should_activate: true
+    expected_primary_category: "reasoning-modes"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Preserves prerequisites, quantity, timing, and material warnings."
       - "Refuses compression that would make the instruction unsafe."
@@ -33,6 +49,10 @@ cases:
       - "Removes qualifiers or invents certainty to stay short."
   - id: "difficult-nontrigger"
     prompt: "Analyze this complex pricing model and recommend a plan."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Does not infer adversarial, zoomed-out, or compressed interaction merely from complexity."
     failure_signals:

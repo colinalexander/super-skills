@@ -2,6 +2,10 @@ skill: "application-engineering"
 cases:
   - id: "reserve-inventory-api"
     prompt: "Design an API that reserves scarce inventory for ten minutes under concurrent demand."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Defines ownership, transaction semantics, idempotency, expiry, and failure behavior."
       - "Keeps authorization and invariants on trusted boundaries."
@@ -10,6 +14,10 @@ cases:
       - "Provides only route naming and CRUD examples."
   - id: "next-boundaries"
     prompt: "This Next.js page fetches data in several client effects and flashes stale account state. Redesign the data flow."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Inspects installed versions and current boundaries."
       - "Assigns a source of truth and separates server work from client interaction."
@@ -18,6 +26,10 @@ cases:
       - "Adds memoization without addressing duplicated state."
   - id: "postgres-migration"
     prompt: "Add a non-null tenant identifier to a large production table without a long write outage."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Uses an expand/backfill/switch/contract sequence."
       - "Addresses locking, observability, retries, and rollback limitations."
@@ -25,12 +37,20 @@ cases:
       - "Runs one blocking schema change without deployment sequencing."
   - id: "visual-nontrigger"
     prompt: "Choose a typography and motion direction for our new editorial landing page."
+    should_activate: true
+    expected_primary_category: "interface-design"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Routes primarily to interface design."
     failure_signals:
       - "Responds with component data-flow architecture instead of visual direction."
   - id: "architecture-decision-record"
     prompt: "Choose between a shared database and database-per-service for this system, and leave a record the team can revisit."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Identifies the constraints and viable alternatives before selecting."
       - "Records material tradeoffs, rationale, and evidence that would trigger reconsideration."
@@ -38,6 +58,10 @@ cases:
       - "Presents the chosen topology as a context-free permanent best practice."
   - id: "domain-language"
     prompt: "Our API, database, and support team use three different meanings for an account being active. Repair the model before adding another endpoint."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Tests the competing terms against concrete lifecycle scenarios and invariants."
       - "Aligns code and contracts around the resolved meanings rather than publishing a detached glossary."
@@ -45,6 +69,10 @@ cases:
       - "Renames fields without resolving the contradictory behaviors."
   - id: "container-boundary"
     prompt: "Define the production container contract for a background worker that currently runs only through a developer Compose file."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: ["systems-and-security"]
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Separates the immutable runtime artifact from injected configuration and secrets."
       - "Defines privilege, health, resources, graceful shutdown, and production network exposure."

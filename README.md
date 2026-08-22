@@ -14,7 +14,7 @@
 
 **These are not bundles of copied prompts or concatenated skills.** The suite currently contains 10 independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-> **Status:** Active research project. Super Skills draws from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the 10-skill active suite; the remaining 805 hashes have received metadata and lineage triage only. The full-corpus similarity gate has passed. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
+> **Status:** Active research project. Super Skills draws from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the 10-skill active suite; the remaining 805 hashes have received metadata and lineage triage only. The 999-entry similarity gate has passed; the dependency-closure rerun is required after benchmark source materialization. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
@@ -169,7 +169,7 @@ The protocol freezes arm composition before execution, includes true negatives f
 
 The Super Skills files are newly authored. The repository does **not** contain third-party skill text, scripts, templates, or assets.
 
-Source material is used to identify underlying ideas, procedures, conflicts, and recurring patterns. Before release, the mandatory similarity gate checks every distributable skill file against the full externally held raw-source corpus for unintended textual overlap.
+Source material is used to identify underlying ideas, procedures, conflicts, and recurring patterns. Before release, the mandatory similarity gate checks every distributable skill file against the full externally held entry corpus for unintended textual overlap. Before benchmark execution, the gate reruns against every pinned source dependency-closure file as well.
 
 A provenance entry records research influence. It does not imply incorporation, relicensing, endorsement, or ownership of the referenced source.
 

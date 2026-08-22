@@ -1,6 +1,8 @@
 cases:
   - id: "pdf-document-boundary"
     prompt: "Extract the title and page count from the attached PDF without redesigning, rewriting, or marketing its contents."
+    fixture_path: "evals/fixtures/quarterly-operations-brief.pdf"
+    fixture_sha256: "bdb202f9fa27a76c4c2182ce1ab1f8a5738520da9ec59df8c61754f89dddcbca"
     should_activate: false
     forbidden_activations: "all"
   - id: "plain-translation"
@@ -9,6 +11,8 @@ cases:
     forbidden_activations: "all"
   - id: "spreadsheet-document-boundary"
     prompt: "Sort the attached budget spreadsheet by transaction date without analyzing the business, changing formulas, or presenting the results."
+    fixture_path: "evals/fixtures/budget-transactions.xlsx"
+    fixture_sha256: "c0ac6c583568ce139ad0f2734aa15c8340e0c19868e5251c16fef167de8e71be"
     should_activate: false
     forbidden_activations: "all"
   - id: "paragraph-summary"

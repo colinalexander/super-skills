@@ -391,6 +391,55 @@ def validate_evaluations(errors: list[str]) -> None:
     if category_cases != 56:
         fail(errors, f"category evaluations contain {category_cases} cases, expected 56")
 
+    seen_case_ids: set[str] = set()
+    for path in sorted(category_dir.glob("*.yaml")):
+        text = path.read_text(encoding="utf-8")
+        case_ids = re.findall(r'^  - id: "([^"]+)"$', text, flags=re.MULTILINE)
+        primaries = re.findall(
+            r'^    expected_primary_category: "([^"]+)"$',
+            text,
+            flags=re.MULTILINE,
+        )
+        secondary_values = re.findall(
+            r"^    allowed_secondary_categories: \[(.*)\]$",
+            text,
+            flags=re.MULTILINE,
+        )
+        for case_id in case_ids:
+            if case_id in seen_case_ids:
+                fail(errors, f"duplicate category evaluation id: {case_id}")
+            seen_case_ids.add(case_id)
+        for primary in primaries:
+            if primary not in SKILLS:
+                fail(errors, f"invalid primary category {primary!r} in {path.name}")
+        for index, raw_secondaries in enumerate(secondary_values):
+            secondaries = re.findall(r'"([^"]+)"', raw_secondaries)
+            expected_rendering = ", ".join(f'"{item}"' for item in secondaries)
+            if raw_secondaries != expected_rendering:
+                fail(errors, f"invalid secondary-category syntax in {path.name}")
+            if any(item not in SKILLS for item in secondaries):
+                fail(errors, f"invalid allowed secondary in {path.name}")
+            if len(secondaries) != len(set(secondaries)):
+                fail(errors, f"duplicate allowed secondary in {path.name}")
+            if index < len(primaries) and primaries[index] in secondaries:
+                fail(errors, f"primary repeated as secondary in {path.name}")
+        expected_count = len(case_ids)
+        field_counts = {
+            "should_activate": text.count("    should_activate: true"),
+            "expected_primary_category": len(primaries),
+            "allowed_secondary_categories": len(secondary_values),
+            "forbidden_activations": text.count(
+                '    forbidden_activations: "all-except-declared"'
+            ),
+        }
+        for field, count in field_counts.items():
+            if count != expected_count:
+                fail(
+                    errors,
+                    f"{path.name} has {count} structured {field} fields for "
+                    f"{expected_count} cases",
+                )
+
     negatives_path = ROOT / "evals" / "shared" / "true-negatives.yaml"
     if not negatives_path.is_file():
         fail(errors, "missing global true-negative evaluations")
@@ -412,6 +461,22 @@ def validate_evaluations(errors: list[str]) -> None:
                     "global true negatives are missing withheld document "
                     f"boundary {withheld_boundary!r}",
                 )
+        boundary_fixtures = {
+            "pdf-document-boundary": "evals/fixtures/quarterly-operations-brief.pdf",
+            "spreadsheet-document-boundary": "evals/fixtures/budget-transactions.xlsx",
+        }
+        for case_id, fixture_value in boundary_fixtures.items():
+            fixture_path = ROOT / fixture_value
+            if not fixture_path.is_file():
+                fail(errors, f"document boundary fixture is missing: {case_id}")
+                continue
+            fixture_sha = hashlib.sha256(fixture_path.read_bytes()).hexdigest()
+            for marker in (
+                f'fixture_path: "{fixture_value}"',
+                f'fixture_sha256: "{fixture_sha}"',
+            ):
+                if marker not in negatives:
+                    fail(errors, f"document boundary fixture metadata differs: {case_id}")
         for active_near_miss in (
             'id: "financial-security-definition"',
             'id: "athletic-training-definition"',
@@ -453,11 +518,15 @@ def validate_evaluations(errors: list[str]) -> None:
             "json.dumps(installed_name",
             "arm3-name-span-json-v1",
             "checksum over the sorted closure records",
+            "--closure-sources",
+            "description SHA-256",
+            "never publishes",
             "same file classes as the generated Arm 4",
             "permitted Arm 4 set",
             "automatically fails the fixed-budget consolidation decision",
             "shorter-sequence containment",
             "out-of-permitted-set Arm 4",
+            "isolated installation containing only",
             "success conditions, not merely",
             "absolute false-activation threshold is **10%**",
             "absolute blocker regardless of comparator behavior",
@@ -557,7 +626,7 @@ def validate_similarity_gate(errors: list[str]) -> None:
         (
             "Effective parameters: ngram=8, containment_threshold=0.20, "
             "short_fallback=exact-byte+normalized-sequence-containment, "
-            "public_files=all-regular."
+            "public_files=all-regular, closure_files=0."
         ),
         "Source corpus verified: 999 files match the recorded Git blob set.",
         (

@@ -10,17 +10,17 @@ Date: 2026-08-20
 - Source text reconstruction: 99/99 baseline hashes and all 900 eligible expansion hashes retrieved from GitSkills into temporary locations outside this repository.
 - Public source-text inclusion: none; only metadata, hashes, links, aggregate decisions, and newly written instructions are retained.
 
-### Full-corpus similarity gate
+### Entry-corpus similarity gate
 
 - Status: **passed before benchmark execution**.
 - Source population: all 999 eligible baseline-plus-expansion source files, reconstructed by exact Git blob hash from GitSkills; the rank-24 non-skill placeholder is excluded.
 - Source-population checksum: `26f462bb8d84d98c38ac86f8e3db572a20ce075110782c56bd3f13bca2100eb0`.
 - Public surface: all 66 files under the 10 active skill directories.
 - Public-surface checksum: `de1b0eef5ee49404dccb7d3640e2ea652a663faa02bc07613707a40719cbeeb6`.
-- Checker checksum: `44a7eece2f9dc715ea392159bc08516b71719cab3c567a2ed7b4cf1051788686`.
+- Checker checksum: `47c1b735b502899ec4d3fdc24dc1a90a10f043fb7676c89579184217935767d0`.
 - Command: `.venv/bin/python scripts/check_similarity.py --sources /absolute/path/to/reconstructed-999-source-corpus --verify-gitskills-frame`.
 - Parameters: normalized eight-word shingles; 20% smaller-document containment threshold; exact-byte plus normalized shorter-sequence containment fallback; all regular files under `skills/`; exact GitSkills-frame verification required; parameter overrides rejected in verification mode.
-- Effective-parameter result: `Effective parameters: ngram=8, containment_threshold=0.20, short_fallback=exact-byte+normalized-sequence-containment, public_files=all-regular.`
+- Effective-parameter result: `Effective parameters: ngram=8, containment_threshold=0.20, short_fallback=exact-byte+normalized-sequence-containment, public_files=all-regular, closure_files=0.`
 - Corpus result: `Source corpus verified: 999 files match the recorded Git blob set.`
 - Result: `Similarity check passed: 66 public files compared with 999 external files at 20% containment.`
 
@@ -39,6 +39,12 @@ active skill edit invalidates this gate until the 999-source comparison is rerun
 and the recorded public checksum is deliberately updated.
 
 This automated comparison detects suspicious phrase-level overlap; it does not make a legal determination or replace human review.
+
+The 999-entry gate is complete. The dependency-closure comparison remains a
+blocking pre-benchmark gate because source occurrences and their complete pinned
+closures have not yet been materialized. Once they are, the same checker must
+run with `--closure-sources`, and its emitted closure count and checksum must
+match the run manifest before any benchmark case executes.
 
 ## Occurrence and lineage audit
 

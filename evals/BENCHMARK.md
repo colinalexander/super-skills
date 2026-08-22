@@ -79,9 +79,11 @@ Arm membership is frozen before any model run.
   a task.
 - The committed source token record fixes each original and installed Arm 3
   name. The run manifest records both names, the original Git blob hash, the
-  transformed file hash, descriptions, byte counts, and token counts. Any source
-  that cannot be reconstructed or transformed exactly is reported before
-  execution; it is not silently replaced.
+  transformed file hash, description SHA-256, semantic description byte and
+  token counts, entry byte counts, and entry token counts. It never publishes
+  the third-party description text. Any source that cannot be reconstructed or
+  transformed exactly is reported before execution; it is not silently
+  replaced.
 
 These rules deliberately avoid the post hoc judgment implicit in “all relevant
 skills.” Arm 3 is an **upper bound on narrow-skill overhead and conflict
@@ -117,6 +119,14 @@ every dependency path, byte size, Git blob or SHA-256 digest, executable bit,
 and a checksum over the sorted closure records. The Arm 3 name transform changes
 only the entry file's front-matter `name`; all dependency bytes remain unchanged,
 and the manifest records both the original and transformed entry digests.
+
+After all closures are pinned, rerun the originality gate with
+`--closure-sources /absolute/path/to/pinned-closure-files`. The checker verifies
+the 999-entry GitSkills population separately, scans every closure file as an
+additional comparison corpus, and emits the closure file count and path-and-byte
+checksum. That count and checksum must equal the sorted closure records in the
+run manifest. Missing, extra, or mismatched closure files block benchmark
+execution. Closure prose remains external and is never committed or published.
 
 ## Evaluation population
 
@@ -184,6 +194,13 @@ are excluded from both arms' fixed instruction-budget calculation. Whole
 bundles are included in order until the next would exceed the budget. Files are
 never truncated, and unused budget is reported. Natural-host results separately
 report the actual loaded tokens for every run.
+
+The fixed-budget Arm 3 condition is an isolated installation containing only
+the selected whole-bundle prefix; the other retained source skills are neither
+installed nor activatable in that condition. The exhaustive 119-source Arm 3
+installation applies only to the natural-host comparison. The run manifest
+records both installations and verifies that fixed-budget activations belong to
+the selected prefix.
 
 Report quality against cost jointly:
 

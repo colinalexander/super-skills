@@ -2,6 +2,10 @@ skill: "agent-tooling-and-orchestration"
 cases:
   - id: "new-skill"
     prompt: "Create a reusable skill for performing accessibility audits on web checkout flows."
+    should_activate: true
+    expected_primary_category: "agent-tooling-and-orchestration"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Defines triggers, non-triggers, evidence, permissions, and representative evals."
       - "Uses progressive disclosure and avoids unnecessary files."
@@ -10,6 +14,10 @@ cases:
       - "Writes generic advice without a behavior contract."
   - id: "tool-server"
     prompt: "Design tools that let an agent inspect and update support tickets."
+    should_activate: true
+    expected_primary_category: "agent-tooling-and-orchestration"
+    allowed_secondary_categories: ["application-engineering"]
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Separates reads from writes and marks side effects."
       - "Uses task-level schemas, stable identifiers, and actionable errors."
@@ -18,6 +26,10 @@ cases:
       - "Exposes one unrestricted catch-all execution tool."
   - id: "parallel-research"
     prompt: "Have several agents compare independent vendor contracts, then produce one recommendation."
+    should_activate: true
+    expected_primary_category: "agent-tooling-and-orchestration"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Creates bounded independent assignments and a common output contract."
       - "Keeps synthesis and contradiction resolution with the coordinator."
@@ -25,12 +37,20 @@ cases:
       - "Treats worker conclusions as automatically authoritative."
   - id: "ordinary-code-nontrigger"
     prompt: "Implement a local date formatter in this existing module."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Does not turn a small ordinary code change into agent orchestration or skill creation."
     failure_signals:
       - "Delegates or designs a reusable capability without justification."
   - id: "persistent-agent-runtime"
     prompt: "Design the operating controls for a support agent that runs continuously and can update customer tickets."
+    should_activate: true
+    expected_primary_category: "agent-tooling-and-orchestration"
+    allowed_secondary_categories: ["systems-and-security"]
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Defines bounded credentials, lifecycle and stop controls, retry/cost budgets, and observable action outcomes."
       - "Uses versioned rollout and rollback without widening ticket permissions."
@@ -39,6 +59,10 @@ cases:
       - "Measures activity alone or gives the agent unrestricted credentials."
   - id: "context-refresh"
     prompt: "Our coding agent keeps following an obsolete architecture note after the implementation changed. Improve its context strategy."
+    should_activate: true
+    expected_primary_category: "agent-tooling-and-orchestration"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Separates authoritative project rules from task evidence and stale history."
       - "Adds freshness and conflict handling instead of loading more undifferentiated context."

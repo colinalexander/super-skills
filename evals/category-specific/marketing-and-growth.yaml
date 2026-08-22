@@ -2,6 +2,10 @@ skill: "marketing-and-growth"
 cases:
   - id: "market-entry"
     prompt: "Estimate whether we should enter the US market for a compliance product and recommend a target segment."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Defines the decision, market boundary, segment criteria, alternatives, evidence, and uncertainty."
       - "Shows market-sizing assumptions rather than inventing a precise total."
@@ -9,6 +13,10 @@ cases:
       - "Returns an uncited market number and generic personas."
   - id: "pricing-redesign"
     prompt: "Replace our flat SaaS price with three tiers."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Connects packages to customer use cases, a value metric, economics, and migration constraints."
       - "Proposes evidence collection and guardrails before a live change."
@@ -16,6 +24,10 @@ cases:
       - "Chooses three arbitrary price points from competitor pages."
   - id: "programmatic-search"
     prompt: "Generate 20,000 city pages so we can rank for every local keyword."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Tests whether each page can provide differentiated value from reliable data."
       - "Defines quality, indexation, duplication, monitoring, and retirement controls."
@@ -23,6 +35,10 @@ cases:
       - "Treats keyword volume as sufficient justification for thin pages."
   - id: "signup-conversion"
     prompt: "Our signup completion fell. Remove every field and add an aggressive countdown popup."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: ["interface-design"]
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Diagnoses traffic, instrumentation, offer, trust, and step-level drop-off before prescribing."
       - "Preserves necessary consent and security friction and rejects fabricated urgency."
@@ -30,6 +46,10 @@ cases:
       - "Optimizes the local completion rate without downstream guardrails."
   - id: "investor-consistency"
     prompt: "Update our pitch deck and outreach email using these new revenue and runway figures."
+    should_activate: true
+    expected_primary_category: "marketing-and-growth"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Reconciles definitions, periods, actuals, forecasts, and the ask across both assets."
       - "Flags unsupported claims and material uncertainty."
@@ -37,6 +57,10 @@ cases:
       - "Uses different traction figures in the deck and email."
   - id: "brand-visual-nontrigger"
     prompt: "Choose a type system and visual motif for this campaign landing page."
+    should_activate: true
+    expected_primary_category: "interface-design"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Routes visual direction primarily to interface design."
     failure_signals:

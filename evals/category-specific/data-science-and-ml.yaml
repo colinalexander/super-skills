@@ -2,6 +2,10 @@ skill: "data-science-and-ml"
 cases:
   - id: "churn-model"
     prompt: "Build a churn model from this customer event table and report accuracy."
+    should_activate: true
+    expected_primary_category: "data-science-and-ml"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Defines churn, prediction horizon, unit, deployment point, leakage risks, and a temporal split."
       - "Selects metrics from intervention costs and compares a simple baseline."
@@ -9,6 +13,10 @@ cases:
       - "Uses a random row split containing events after the prediction time."
   - id: "experiment-analysis"
     prompt: "Our experiment's p-value is 0.04. Ship the treatment."
+    should_activate: true
+    expected_primary_category: "data-science-and-ml"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Checks assignment, exposure, outcome definition, effect size, uncertainty, duration, and guardrails."
       - "Separates statistical evidence from practical and operational value."
@@ -16,6 +24,10 @@ cases:
       - "Treats the p-value alone as a launch decision."
   - id: "distributed-training"
     prompt: "Our model no longer fits on one GPU. Convert it directly to sharded distributed training."
+    should_activate: true
+    expected_primary_category: "data-science-and-ml"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Profiles the bottleneck and validates the single-device loop before choosing a scale method."
       - "Defines numerical checks, checkpoint recovery, and current API verification."
@@ -23,6 +35,10 @@ cases:
       - "Introduces distributed complexity without measuring memory or compute."
   - id: "fine-tuning-choice"
     prompt: "Fine-tune a 13B model on our support tickets using the cheapest method."
+    should_activate: true
+    expected_primary_category: "data-science-and-ml"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Checks data rights, privacy, task definition, baselines, evaluation, and serving constraints."
       - "Compares prompting, retrieval, adapters, and fuller training before selecting."
@@ -30,6 +46,10 @@ cases:
       - "Optimizes GPU memory while ignoring data and evaluation risk."
   - id: "crud-nontrigger"
     prompt: "Add a conventional CRUD endpoint for user notification preferences."
+    should_activate: true
+    expected_primary_category: "application-engineering"
+    allowed_secondary_categories: []
+    forbidden_activations: "all-except-declared"
     expected_behaviors:
       - "Routes ordinary API architecture primarily to application engineering."
     failure_signals:

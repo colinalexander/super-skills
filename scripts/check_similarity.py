@@ -15,11 +15,15 @@ ROOT = Path(__file__).resolve().parents[1]
 WORD = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)?")
 DEFAULT_NGRAM = 8
 DEFAULT_THRESHOLD = 0.20
-PARAMETER_SUMMARY = (
-    "ngram=8, containment_threshold=0.20, "
-    "short_fallback=exact-byte+normalized-sequence-containment, "
-    "public_files=all-regular"
-)
+
+
+def parameter_summary(closure_file_count: int) -> str:
+    """Return the effective matching parameters for the audit record."""
+    return (
+        "ngram=8, containment_threshold=0.20, "
+        "short_fallback=exact-byte+normalized-sequence-containment, "
+        f"public_files=all-regular, closure_files={closure_file_count}"
+    )
 
 
 def normalized_words(path: Path) -> tuple[str, ...]:
@@ -96,6 +100,11 @@ def main() -> int:
     )
     parser.add_argument("--sources", type=Path, required=True, help="External raw-source directory")
     parser.add_argument(
+        "--closure-sources",
+        type=Path,
+        help="External pinned dependency-closure files to scan in addition to entries",
+    )
+    parser.add_argument(
         "--threshold",
         type=float,
         default=DEFAULT_THRESHOLD,
@@ -118,6 +127,18 @@ def main() -> int:
         source_root = require_external_source_root(args.sources)
     except RuntimeError as error:
         parser.error(str(error))
+    closure_root = None
+    if args.closure_sources is not None:
+        try:
+            closure_root = require_external_source_root(args.closure_sources)
+        except RuntimeError as error:
+            parser.error(str(error))
+        if (
+            source_root == closure_root
+            or source_root in closure_root.parents
+            or closure_root in source_root.parents
+        ):
+            parser.error("entry and closure source directories must not overlap")
     if args.ngram < 5:
         parser.error("ngram must be at least 5 words")
     if not 0 < args.threshold <= 1:
@@ -130,14 +151,15 @@ def main() -> int:
         )
 
     public_files = files_under(ROOT / "skills")
-    source_files = files_under(source_root)
+    entry_source_files = files_under(source_root)
+    closure_source_files = files_under(closure_root) if closure_root else []
     if args.verify_gitskills_frame:
         try:
             expected_hashes = expected_gitskills_frame()
         except RuntimeError as error:
             parser.error(str(error))
-        observed_hashes = {git_blob_id(path) for path in source_files}
-        if len(source_files) != len(observed_hashes):
+        observed_hashes = {git_blob_id(path) for path in entry_source_files}
+        if len(entry_source_files) != len(observed_hashes):
             print(
                 "Source corpus contains duplicate Git blobs; expected one file per hash.",
                 file=sys.stderr,
@@ -156,7 +178,19 @@ def main() -> int:
             f"Source corpus verified: {len(observed_hashes)} files match the "
             "recorded Git blob set."
         )
-    print(f"Effective parameters: {PARAMETER_SUMMARY}.")
+    if closure_root:
+        closure_digest = hashlib.sha256()
+        for path in closure_source_files:
+            closure_digest.update(str(path.relative_to(closure_root)).encode("utf-8"))
+            closure_digest.update(b"\0")
+            closure_digest.update(hashlib.sha256(path.read_bytes()).digest())
+            closure_digest.update(b"\n")
+        print(
+            f"Closure corpus: {len(closure_source_files)} files, "
+            f"checksum={closure_digest.hexdigest()}."
+        )
+    print(f"Effective parameters: {parameter_summary(len(closure_source_files))}.")
+    source_files = entry_source_files + closure_source_files
     public_words = {path: normalized_words(path) for path in public_files}
     source_words = {path: normalized_words(path) for path in source_files}
     public_sets = {
