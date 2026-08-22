@@ -47,10 +47,21 @@ def normalized_words(path: Path) -> tuple[str, ...]:
     ).casefold()
     words: list[str] = []
     for token in WORD.findall(text):
-        if token and all(ord(character) > 127 for character in token):
-            words.extend(character for character in token if WORD.fullmatch(character))
-        else:
+        if token.isascii():
             words.append(token)
+            continue
+        ascii_run: list[str] = []
+        for character in token:
+            if character.isascii() and character.isalnum():
+                ascii_run.append(character)
+                continue
+            if ascii_run:
+                words.append("".join(ascii_run))
+                ascii_run.clear()
+            if ord(character) > 127 and WORD.fullmatch(character):
+                words.append(character)
+        if ascii_run:
+            words.append("".join(ascii_run))
     if words:
         return tuple(words)
     return tuple(
@@ -100,12 +111,31 @@ def require_external_source_file(path: Path) -> Path:
     return source_file
 
 
+def expected_active_source_hashes() -> set[str]:
+    """Return the exact active retained source population."""
+    with (ROOT / "research" / "review-decisions.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
+        expected = {
+            row["file_sha"]
+            for row in csv.DictReader(handle)
+            if row["decision"] == "retained"
+            and row["super_skill"] != "document-productivity"
+        }
+    if len(expected) != 119:
+        raise RuntimeError("recorded active retained population is not 119 unique hashes")
+    return expected
+
+
 def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list[Path], str]:
     """Validate staged files and hash canonical pinned-closure records."""
     records: list[str] = []
     staged_files: list[Path] = []
     staged_names: set[str] = set()
     source_paths: set[tuple[str, str]] = set()
+    manifest_source_hashes: set[str] = set()
+    entry_source_hashes: set[str] = set()
+    pinned_occurrences: dict[str, tuple[str, str]] = {}
     for line_number, raw_line in enumerate(
         manifest_path.read_text(encoding="utf-8").splitlines(), start=1
     ):
@@ -165,6 +195,16 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
                 f"{source_identity[0]} {source_identity[1]}"
             )
         source_paths.add(source_identity)
+        manifest_source_hashes.add(record["source_file_sha"])
+        occurrence = (record["repository"], record["commit"])
+        previous_occurrence = pinned_occurrences.setdefault(
+            record["source_file_sha"], occurrence
+        )
+        if occurrence != previous_occurrence:
+            raise RuntimeError(
+                "closure manifest uses multiple pinned occurrences for source: "
+                f"{record['source_file_sha']}"
+            )
         staged_file = (closure_root / staged_relative).resolve()
         if closure_root not in staged_file.parents or not staged_file.is_file():
             raise RuntimeError(
@@ -174,6 +214,13 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
             raise RuntimeError(
                 f"closure manifest line {line_number} has a digest mismatch"
             )
+        actual_executable = bool(staged_file.stat().st_mode & 0o111)
+        if actual_executable != record["executable"]:
+            raise RuntimeError(
+                f"closure manifest line {line_number} has an executable-bit mismatch"
+            )
+        if git_blob_id(staged_file) == record["source_file_sha"]:
+            entry_source_hashes.add(record["source_file_sha"])
         staged_files.append(staged_file)
         canonical = {key: record[key] for key in sorted(record) if key != "staged_path"}
         records.append(
@@ -183,6 +230,20 @@ def load_closure_manifest(manifest_path: Path, closure_root: Path) -> tuple[list
     if observed_files != set(staged_files):
         raise RuntimeError(
             "closure manifest does not map every staged file exactly once"
+        )
+    expected_sources = expected_active_source_hashes()
+    if manifest_source_hashes != expected_sources:
+        missing = expected_sources - manifest_source_hashes
+        extra = manifest_source_hashes - expected_sources
+        raise RuntimeError(
+            "closure manifest source coverage differs from the 119 active retained "
+            f"hashes (missing={len(missing)}, extra={len(extra)})"
+        )
+    if entry_source_hashes != expected_sources:
+        missing_entries = expected_sources - entry_source_hashes
+        raise RuntimeError(
+            "closure manifest lacks a validated entry blob for "
+            f"{len(missing_entries)} active retained source hashes"
         )
     serialized = "\n".join(sorted(records)) + ("\n" if records else "")
     return sorted(staged_files), hashlib.sha256(serialized.encode("utf-8")).hexdigest()

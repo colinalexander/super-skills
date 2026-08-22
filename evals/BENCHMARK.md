@@ -22,7 +22,8 @@ before testing prose. It also checks exact bytes and falls back to normalized
 shorter-sequence containment whenever either file cannot form an eight-word
 shingle. Partial short matches require at least four normalized tokens; files
 with fewer tokens still receive exact-byte and normalized-exact checks. Unicode
-word tokenization, non-Latin character segmentation, and a normalized non-ASCII
+word tokenization, non-Latin character segmentation within mixed-script tokens,
+and a normalized non-ASCII
 character fallback prevent non-ASCII text from becoming an empty comparison.
 In frame-verification mode, the checker rejects
 any shingle-size or threshold override and emits its effective parameters.
@@ -134,7 +135,11 @@ record checksum. Each JSONL record contains exactly `source_file_sha`,
 checksum; the other fields are serialized as UTF-8 JSON with sorted keys and
 compact separators, sorted lexicographically by complete record, joined with a
 trailing newline, and hashed with SHA-256. That count and checksum must equal
-the same canonical records in the run manifest. Missing, extra, duplicate, or
+the same canonical records in the run manifest. The manifest must cover exactly
+the 119 active retained source hashes and include at least one staged entry whose
+computed Git blob equals each `source_file_sha`. All records for one source use
+one pinned repository and commit, and each staged file's actual executable bits
+must equal its record. Missing, extra, duplicate, mode-mismatched, or otherwise
 mismatched closure files block benchmark
 execution. Closure prose remains external and is never committed or published.
 
@@ -287,6 +292,16 @@ versus Arm 2 under natural-host behavior, Arm 4 versus Arm 3 under natural-host
 behavior, and Arm 4 versus the fixed-budget Arm 3 subset. Never pool those
 conditions.
 
+Global true-negative quality is a separate decision family. For every negative
+case, compute the paired difference between the three-run Arm 4 case mean and
+the corresponding Arm 1 mean, and separately between Arm 4 and Arm 3. For each
+of these two contrasts, average the 36 case differences equally and use 10,000
+paired nonparametric bootstrap samples over cases with NumPy `Generator(PCG64)`
+seed `20260822`. Use Bonferroni-adjusted 97.5% two-sided percentile intervals,
+providing at least 95% simultaneous coverage across both contrasts. This makes
+incorrect bounded answers and withheld-boundary failures decision-bearing even
+when no skill falsely activates.
+
 Publish a category-specific paired interval using the same case-level means and
 bootstrap procedure. Every category case carries a locked `analysis_category`
 equal to its `expected_primary_category`; file location does not determine its
@@ -324,6 +339,7 @@ interval for `Arm 4 minus comparator` to exceed -0.5 in all three
 decision-bearing contrasts. A category-specific claim additionally requires
 that category's lower 99.8333% bound to exceed -0.5 in all three contrasts. Arm
 4's upper two-sided 95% Wilson bound for false activation must be at most 10%.
+The lower bound of both global-negative quality intervals must exceed -0.5.
 Arm 4 must also have no critical-failure event meeting gate 3 below. These are
 success conditions, not merely the absence of a failure signal. The
 fixed-budget claim additionally requires no out-of-permitted-set Arm 4
@@ -346,9 +362,13 @@ returned to narrower skills before a superiority claim—if any of these occurs:
 4. Arm 4 activates any skill outside the case's preregistered permitted set in
    a fixed-budget case-run. This fails the fixed-budget consolidation decision
    regardless of the resulting quality score.
+5. The upper bound of either global-negative quality interval is below -0.5.
+   This fails the suite-wide consolidation decision even when Arm 4 correctly
+   avoids skill activation.
 
 If a quality lower bound is at or below -0.5 without its upper bound falling
-below -0.5, or the false-activation interval crosses 10%, the affected result is
+below -0.5, including either global-negative quality interval, or the
+false-activation interval crosses 10%, the affected result is
 **inconclusive**, not evidence for consolidation. Meeting the success conditions
 permits a consolidation claim only when the joint quality-and-cost results also
 support it; it does not by itself establish superiority.
@@ -356,6 +376,14 @@ support it; it does not by itself establish superiority.
 ## Run discipline
 
 - Randomize arm order within each case and record the seed.
+- Before every scheduled arm-run, recreate an isolated mutable tool environment
+  from the case's preregistered baseline snapshot and verify its canonical state
+  hash, account or tenant identity, target identities, permissions, and fixture
+  versions. Arms and repetitions never share a mutable namespace. Discard the
+  environment after the observation; a permitted infrastructure retry receives
+  a fresh verified copy of the same snapshot. If an external service cannot
+  provide a resettable sandbox or the reset cannot be verified, block that case
+  before execution rather than run it against residual state.
 - Run exactly three independent model samples per arm and case, as specified
   above; do not choose the repeat count after observing variance.
 - Apply the independent-grading protocol above; blind graders to arm identity
