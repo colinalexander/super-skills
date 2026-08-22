@@ -1,6 +1,0 @@
-interface:
-  display_name: "Document Productivity"
-  short_description: "Create and verify professional documents"
-  default_prompt: "Use $document-productivity to create or revise this artifact with native structure, audience-ready content, and rendered validation."
-policy:
-  allow_implicit_invocation: true

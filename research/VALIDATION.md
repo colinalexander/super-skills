@@ -4,29 +4,41 @@ Date: 2026-08-20
 
 ## Corpus checks
 
-- Ledger rows: 130 distinct content hashes across 11 super-skills: 99 baseline hashes and 31 promoted expansion hashes.
+- Ledger rows: 130 distinct content hashes across 11 observed categories: 99 baseline hashes and 31 promoted expansion hashes. Eleven document-productivity hashes are preserved as withheld research evidence; 119 hashes support the 10-skill active suite.
 - Review-decision rows: 194 distinct substantively reviewed hashes: 130 retained and 64 not retained, with a nonempty hash-level reason and synthesis target for every row.
-- Token counts: generated for every skill with `cl100k_base` under pinned `tiktoken==0.11.0`; README core/full figures match the generated record.
+- Active-skill token counts: generated with `cl100k_base` under pinned `tiktoken==0.11.0`; README description/core/full figures match the generated record. Description counts total 580 tokens across the active suite.
+- Retained-source description counts: the generated 119-row record covers every active evidence hash and totals 5,613 tokens without retaining source descriptions.
 - Source text reconstruction: 99/99 baseline hashes and all 900 eligible expansion hashes retrieved from GitSkills into temporary locations outside this repository.
 - Public source-text inclusion: none; only metadata, hashes, links, aggregate decisions, and newly written instructions are retained.
-- Similarity check: the original 52 public files passed against all 99 baseline sources; the expanded set of 73 public skill, reference, and routing-metadata files passed against all 900 expansion sources. No pair reached the 20% smaller-document containment threshold using normalized eight-word shingles.
+- Similarity check: all 66 files under the 10 active skill directories passed against all 999 eligible baseline-plus-expansion sources. No pair reached the 20% smaller-document containment threshold using normalized eight-word shingles.
 
 This automated comparison detects suspicious phrase-level overlap; it does not make a legal determination or replace human review.
+
+## Occurrence and lineage audit
+
+- The baseline contains 31,405 distinct repository–hash pairs across 9,222 repositories; 42,684 is the path-level artifact count and is not used as the coverage denominator.
+- Repeated multi-hash collection signatures account for 10,690 pairs (34.04%), while repositories containing at least 10 baseline hashes account for 13,153 pairs (41.88%).
+- Owner deduplication retains 30,100 owner–hash pairs (95.84% of repository–hash coverage).
+- Twenty-one of 99 baseline hashes exactly match historical Anthropic blobs; two further hashes pass the near-match threshold. Together they account for 34.1% of repository–hash coverage.
+- Eleven exact matches were frozen older versions at the collection cutoff. Exact and thresholded near matching provide a floor on broader lineage.
+- Ten of 11 document-productivity evidence hashes are exact historical Anthropic blobs; eight belong to the source-available document set. The category is preserved as research but withheld from the installable suite.
 
 ## Structural checks
 
 - `scripts/validate_repository.py`: passed.
 - `scripts/update_token_counts.py --check`: passed under Python 3.12 with the pinned validation requirements.
-- Official skill-creator `quick_validate.py`: passed for all 11 skill directories.
+- The committed retained-source record was generated from the exact 999-source reconstruction. Repository validation checks its 119-hash coverage and 5,613-token total; `scripts/update_source_token_counts.py --sources /absolute/path/to/reconstructed-999-source-corpus --check` is the regeneration gate when that external corpus is available.
+- Official skill-creator `quick_validate.py`: passed for all 10 active skill directories.
 - Python compilation: passed for all repository scripts.
 - Git whitespace check: passed.
 
 ## Behavioral checks
 
-The repository includes 60 category cases, 12 global true negatives, a shared
+The repository includes 56 active-category cases, 12 global true negatives, a shared
 rubric, and a preregistered four-arm benchmark protocol. The source-suite arm
-installs all 130 retained sources and the super-suite arm installs all 11
-super-skills; arm membership is not selected after seeing a task. Natural and
+installs all 119 active-category retained sources as a ceiling on narrow-skill
+overhead, and the super-suite arm installs all 10 active super-skills; arm
+membership is not selected after seeing a task. Natural and
 matched-token-budget comparisons are both required. These are authored
 evaluation specifications; they have not yet been run as a comparative model
 benchmark.

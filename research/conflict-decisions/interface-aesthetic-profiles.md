@@ -11,6 +11,9 @@ Two retained exact-hash sources prescribe incompatible defaults:
   favors rigid square geometry, visible compartmentalization, aggressive type,
   and dense telemetry.
 
+`industrial-brutalist-ui` is the source's upstream front-matter name; the
+repository stores that skill at `skills/craft/brutalist-skill/SKILL.md`.
+
 The linked files reproduce GitSkills hashes
 `44ead27ef04ffe79ade0c6df7fd696dbcf7b246b` and
 `f5375b908340e1376ed391232a31c5d82d5babfb`, respectively.
