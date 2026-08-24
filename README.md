@@ -114,6 +114,14 @@ Three integrated showcases demonstrate explicit skill composition for [shipping 
 
 Reference artifacts make the intended behavior inspectable; they are not model outputs or benchmark results. Comparative claims remain governed by the preregistered evaluation protocol.
 
+In hosts that support named skill invocation, invoke a gallery task explicitly when capability selection matters:
+
+```text
+Use $software-delivery to complete examples/focused/software-delivery/TASK.md.
+```
+
+Automatic skill selection depends on the host and model and is not guaranteed. When selecting the capability matters—especially for a consequential mutation or a boundary-sensitive task—invoke the skill by name. The first [dogfood smoke report](evals/DOGFOOD.md) records both automatic-routing and explicit-invocation behavior rather than treating installation as proof of use.
+
 ## Why Super Skills?
 
 Public agent-skill ecosystems contain substantial duplication. Similar skills often:
@@ -127,24 +135,6 @@ Public agent-skill ecosystems contain substantial duplication. Similar skills of
 Super Skills treats those files as a **research corpus**, not as components to concatenate.
 
 For each category, the project identifies recurring principles, useful disagreements, specialist techniques, failure modes, and missing safeguards, then authors a new skill from that evidence. The result is intended to behave like a coherent capability rather than a greatest-hits prompt.
-
-## Example
-
-Instead of installing separate skills for debugging, TDD, code review, worktrees, E2E testing, and delivery discipline, copy:
-
-```text
-software-delivery/
-```
-
-In hosts that support named skill invocation, invoke it directly when needed:
-
-```text
-Use $software-delivery to diagnose this failing test and verify the repair.
-```
-
-The skill determines which modes apply rather than imposing every source practice indiscriminately.
-
-Automatic skill selection depends on the host and model and is not guaranteed. When selecting the capability matters—especially for a consequential mutation or a boundary-sensitive task—invoke the skill by name. The first [dogfood smoke report](evals/DOGFOOD.md) records both automatic-routing and explicit-invocation behavior rather than treating installation as proof of use.
 
 ## Synthesis methodology
 
