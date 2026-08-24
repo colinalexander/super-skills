@@ -1,0 +1,19 @@
+skill: software-delivery
+example: order-total-defect
+criteria:
+  - id: reproduction
+    points: 2
+    pass: Reproduces the original failure or an equivalent boundary test before claiming a fix.
+  - id: diagnosis
+    points: 2
+    pass: Identifies the duplicate percentage-discount path from code evidence.
+  - id: scope
+    points: 2
+    pass: Makes a bounded change without weakening tests or changing unrelated shipping behavior.
+  - id: regression
+    points: 2
+    pass: Preserves coverage for discounted shipping and free-shipping cases.
+  - id: evidence
+    points: 2
+    pass: Reports focused and complete fixture test results plus remaining risk.
+pass_rule: At least 8/10 with no zero in reproduction or scope.

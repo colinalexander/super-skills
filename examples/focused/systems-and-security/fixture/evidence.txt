@@ -1,0 +1,24 @@
+Host: web-staging-03
+OS: Ubuntu 24.04
+Service: parcel-api.service
+Change window: deploy completed 19:42 UTC
+
+$ systemctl --no-pager status parcel-api.service
+Active: active (running) since 19:42:18 UTC
+Main PID: 18421 (parcel-api)
+
+$ journalctl -u parcel-api.service --since '19:40' --no-pager
+19:42:18 parcel-api[18421]: configuration loaded from /etc/parcel-api/config.toml
+19:42:18 parcel-api[18421]: listening on 127.0.0.2:8080
+
+$ ss -ltnp 'sport = :8080'
+LISTEN 0 128 127.0.0.2:8080 0.0.0.0:* users:(("parcel-api",pid=18421,fd=7))
+
+$ curl --fail --max-time 2 http://127.0.0.1:8080/health
+curl: (7) Failed to connect to 127.0.0.1 port 8080
+
+$ git show --stat --oneline HEAD
+4c11e92 Read service bind address from deployment template
+ deploy/staging/config.toml | 2 +-
+
+Expected staging contract: service listens on 127.0.0.1:8080 behind the local reverse proxy.

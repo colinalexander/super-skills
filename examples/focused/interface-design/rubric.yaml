@@ -1,0 +1,19 @@
+skill: interface-design
+example: dispatcher-dashboard
+criteria:
+  - id: authority
+    points: 2
+    pass: Preserves the supplied sober, information-dense product identity.
+  - id: hierarchy
+    points: 2
+    pass: Makes operational status, cause, and action scannable without decorative competition.
+  - id: states
+    points: 2
+    pass: Covers responsive, loading, empty, error, and long-content behavior.
+  - id: accessibility
+    points: 2
+    pass: Verifies keyboard flow, focus, contrast, labels, and non-color status meaning.
+  - id: evidence
+    points: 2
+    pass: Reports rendered breakpoints and unresolved fidelity or accessibility risks.
+pass_rule: At least 8/10 with no zero in authority or accessibility.

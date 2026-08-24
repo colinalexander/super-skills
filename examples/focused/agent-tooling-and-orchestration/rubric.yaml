@@ -1,0 +1,19 @@
+skill: agent-tooling-and-orchestration
+example: support-ticket-tools
+criteria:
+  - id: surface
+    points: 2
+    pass: Uses task-level read and write tools rather than one catch-all executor.
+  - id: schemas
+    points: 2
+    pass: Defines stable identifiers, constrained inputs, and structured outputs.
+  - id: authority
+    points: 2
+    pass: Separates capability from permission and marks externally visible side effects.
+  - id: recovery
+    points: 2
+    pass: Defines stale-state, duplicate, partial-success, and retry behavior.
+  - id: evaluation
+    points: 2
+    pass: Includes positive, boundary, failure, and unauthorized cases.
+pass_rule: At least 8/10 with no zero in authority or surface.

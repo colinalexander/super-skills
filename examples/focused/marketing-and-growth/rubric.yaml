@@ -1,0 +1,19 @@
+skill: marketing-and-growth
+example: positioning-pricing-test
+criteria:
+  - id: evidence
+    points: 2
+    pass: Separates supplied facts, assumptions, and proposed tests without invented proof.
+  - id: segment
+    points: 2
+    pass: Selects a segment from urgency, fit, alternatives, and conversion behavior.
+  - id: packaging
+    points: 2
+    pass: Connects package hypotheses to use cases, value metric, economics, and migration constraints.
+  - id: experiment
+    points: 2
+    pass: Defines a credible test, outcome, guardrails, and falsification condition.
+  - id: boundaries
+    points: 2
+    pass: Leaves visual design and software implementation to their owning skills.
+pass_rule: At least 8/10 with no zero in evidence or experiment.

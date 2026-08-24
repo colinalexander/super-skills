@@ -1,0 +1,6 @@
+account_id,month_end,usage_prior_30d,plan,tenure_months,cancellation_reason,closed_account_at,support_tickets_next_30d,churn_30d
+A01,2026-04-30,3,basic,2,too_expensive,2026-05-12,2,1
+A02,2026-04-30,91,pro,18,,,0,0
+A03,2026-05-31,11,basic,5,missing_feature,2026-06-20,4,1
+A04,2026-05-31,77,pro,24,,,1,0
+A05,2026-06-30,44,basic,9,,,0,0

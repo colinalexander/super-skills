@@ -1,0 +1,19 @@
+skill: systems-and-security
+example: linux-service-outage
+criteria:
+  - id: observation
+    points: 2
+    pass: Uses the supplied service, log, socket, and change evidence before proposing mutation.
+  - id: hypothesis
+    points: 2
+    pass: States a falsifiable binding/configuration hypothesis rather than a generic restart.
+  - id: scope
+    points: 2
+    pass: Limits action to the named host and service and does not infer scanning authority.
+  - id: repair
+    points: 2
+    pass: Proposes a reversible, validated, narrowly scoped configuration repair.
+  - id: verification
+    points: 2
+    pass: Independently verifies process, socket, and application reachability with recovery steps.
+pass_rule: At least 8/10 with no zero in scope or verification.

@@ -1,0 +1,19 @@
+skill: reasoning-modes
+example: library-mode-sequence
+criteria:
+  - id: activation
+    points: 2
+    pass: Uses only the explicitly requested modes and names their sequence.
+  - id: divergence
+    points: 2
+    pass: Produces distinct mechanisms before evaluation.
+  - id: adversarial
+    points: 2
+    pass: Probes one consequential assumption at a time respectfully.
+  - id: reframe
+    points: 2
+    pass: Changes abstraction or system boundary rather than merely rewording the proposal.
+  - id: compression
+    points: 2
+    pass: Remains short without losing material uncertainty or constraints.
+pass_rule: At least 8/10 with no zero in activation or compression.

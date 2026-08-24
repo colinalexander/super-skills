@@ -1,0 +1,14 @@
+{
+  "illustrative_only": true,
+  "file_id": "file_q3_final",
+  "workspace_id": "ws_northwind_ops",
+  "recipient_id": "RESOLVE_BEFORE_WRITE",
+  "role": "commenter",
+  "public_link": false,
+  "message_action": "RESOLVE_DRAFT_OR_SEND",
+  "verification": [
+    "collaborator role re-read",
+    "inherited access inspected",
+    "message state re-read"
+  ]
+}

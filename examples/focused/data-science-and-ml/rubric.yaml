@@ -1,0 +1,19 @@
+skill: data-science-and-ml
+example: churn-leakage
+criteria:
+  - id: estimand
+    points: 2
+    pass: Defines churn, unit, prediction time, horizon, intervention, and error costs.
+  - id: provenance
+    points: 2
+    pass: Traces feature availability and identifies all post-decision leakage.
+  - id: validation
+    points: 2
+    pass: Replaces the random split with a deployment-matched temporal design.
+  - id: baseline_metrics
+    points: 2
+    pass: Uses a credible baseline and decision-linked metrics with relevant slices.
+  - id: operations
+    points: 2
+    pass: Defines reproducibility, monitoring, fallback, and retirement conditions.
+pass_rule: At least 8/10 with no zero in provenance or validation.

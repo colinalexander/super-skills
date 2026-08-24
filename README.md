@@ -68,6 +68,14 @@ Description counts measure the always-loaded front-matter discovery text. The 10
 - [`connected-service-automation`](skills/connected-service-automation/): Operate user-authorized messaging, notes, media, cloud storage, sharing, and similar connected services through available tools or CLIs. Use when the task is to inspect or change state in an external personal or workplace service; use another skill to design a new integration or agent tool.
 - [`data-science-and-ml`](skills/data-science-and-ml/): Design, analyze, train, evaluate, and operationalize statistical or machine-learning systems. Use for data quality, experiments, causal inference, predictive modeling, deep learning, computer vision, fine-tuning, distributed training, or model monitoring; use application engineering for ordinary product architecture without an analytical or learned-model decision.
 
+## Examples
+
+The [example gallery](examples/) contains one focused demonstration for each active skill. Every example defines the trigger and a nearby non-trigger, supplies a concrete fixture or evidence pack, records the expected decisions, includes an inspectable reference artifact, and provides a skill-specific rubric. Runnable examples include a dispatcher dashboard, a seeded Python defect, and a browser microgame.
+
+Three integrated showcases demonstrate explicit skill composition for [shipping a product feature](examples/showcases/ship-a-product-feature.md), [investigating a model incident](examples/showcases/investigate-a-model-incident.md), and [preparing and executing a launch](examples/showcases/prepare-and-execute-a-launch.md).
+
+Reference artifacts make the intended behavior inspectable; they are not model outputs or benchmark results. Comparative claims remain governed by the preregistered evaluation protocol.
+
 ## Installation
 
 Install interactively with [skills.sh](https://skills.sh/):
@@ -276,6 +284,9 @@ super-skills/
 │   ├── marketing-and-growth/
 │   ├── connected-service-automation/
 │   └── data-science-and-ml/
+├── examples/
+│   ├── focused/
+│   └── showcases/
 ├── research/
 ├── evals/
 ├── scripts/
@@ -285,7 +296,7 @@ super-skills/
 
 ## Licensing
 
-Unless otherwise noted, independently authored implementation materials—including `skills/`, `scripts/`, and `evals/`—are licensed under the [Apache License 2.0](LICENSE).
+Unless otherwise noted, independently authored implementation materials—including `skills/`, `examples/`, `scripts/`, and `evals/`—are licensed under the [Apache License 2.0](LICENSE).
 
 Research materials under `research/` are licensed under [Creative Commons Attribution 4.0 International](research/LICENSE). Material derived from GitSkills metadata carries the attribution and modification notice in [research/ATTRIBUTION.md](research/ATTRIBUTION.md).
 

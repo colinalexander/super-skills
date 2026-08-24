@@ -1,0 +1,38 @@
+version: 1
+tools:
+  - name: get_ticket
+    side_effects: none
+    input:
+      ticket_id: stable ticket identifier
+    output:
+      ticket: current ticket record
+      version: optimistic concurrency token
+      allowed_transitions: statuses permitted for the caller
+  - name: create_internal_comment
+    side_effects: publishes an internal comment
+    input:
+      ticket_id: stable ticket identifier
+      body: non-empty comment text
+      expected_version: version returned by get_ticket
+      idempotency_key: caller-generated unique key
+    errors:
+      - unauthorized
+      - stale_ticket
+      - duplicate_request
+  - name: change_ticket_status
+    side_effects: changes ticket workflow state
+    input:
+      ticket_id: stable ticket identifier
+      to_status: one of the current allowed transitions
+      expected_version: version returned by get_ticket
+      idempotency_key: caller-generated unique key
+    errors:
+      - unauthorized
+      - invalid_transition
+      - stale_ticket
+      - duplicate_request
+non_goals:
+  - customer messaging
+  - deletion
+  - reassignment
+  - arbitrary API execution
