@@ -8,35 +8,19 @@
 |____/ \___/|_|   |_____|_| \_\    |____/|_|\_\___|_____|_____|____/
 ```
 
-**Synthesized agent skills from the patterns, conflicts, and safeguards found across widely used public skills.**
+**Super Skills is an open-source project for synthesizing broad agent capabilities from patterns found across widely reused public skills.**
 
-**Super Skills is an open-source project for synthesizing broad agent capabilities from patterns found across widely reused public skills.** The [GitSkills dataset](https://huggingface.co/datasets/mvaccargiu/gitskills) and accompanying [paper](https://arxiv.org/abs/2608.10906) define the project's initial sampling frame.
-
-**These are not bundles of copied prompts or concatenated skills.** The suite currently contains 10 independently installable super-skills. Each combines overlapping guidance, resolves conflicting approaches into contextual modes or decision rules, adds missing safeguards, and defines when the capability should—and should not—activate.
-
-> **Status:** Active research project. Super Skills draws from a ranked top-1,000 GitSkills frame. Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the 10-skill active suite; the remaining 805 hashes have received metadata and lineage triage only. The full-corpus similarity gate has passed. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
-
-The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
-
-## Introduction
+## What Super Skills are
 
 An agent skill is a reusable operating procedure for an AI agent. A one-off prompt asks a model to handle the current request; a skill describes when a capability applies and supplies the process, decision rules, references, and safeguards to use when it activates.
 
 Agent hosts typically use each skill's short name and description to decide what may be relevant, then load the full instructions only when needed. This makes capabilities modular, but a growing collection can accumulate overlapping triggers, duplicated guidance, incompatible defaults, and copied versions that drift from their upstream sources. Installing more skills can therefore increase discovery cost and routing ambiguity without adding proportionate capability.
 
-Super Skills treats public skills as research evidence rather than components to bundle together. It extracts recurring principles, preserves useful specialist techniques, turns genuine disagreements into contextual modes or selection rules, and independently authors broader capabilities with explicit boundaries and safeguards. The aim is not a single universal prompt. It is a coherent set of operating procedures that loads specialized detail only when the task requires it.
+Super Skills treats public skills as research evidence rather than components to bundle together. **These are not bundles of copied prompts or concatenated skills.** The suite currently contains 10 independently installable super-skills. Each extracts recurring principles, preserves useful specialist techniques, turns genuine disagreements into contextual modes or selection rules, adds missing safeguards, and defines when the capability should—and should not—activate.
 
-The repository publishes both the installable skills and the evidence behind them so that the synthesis can be inspected, challenged, and evaluated. Provenance records, review decisions, conflict resolutions, corpus analysis, token counts, and evaluation specifications are part of the project rather than private development notes.
+Together, the installable suite and its public evidence record make Super Skills a **research-backed open-source agent-capability project**, not merely a prompt collection. Provenance records, review decisions, conflict resolutions, corpus analysis, token counts, and evaluation specifications are part of the project rather than private development notes.
 
-## What occurrence rank measures
-
-GitSkills occurrence rank measures redistribution as well as individual adoption. In the 99-hash baseline, **34.0% of distinct repository–hash coverage appears in repeated multi-skill collection signatures**, and **41.9% appears in repositories containing at least 10 baseline hashes**. Curated bundles, registries, and mirrors therefore materially amplify occurrence counts.
-
-The frame is not dominated by one owner: deduplicating repository coverage by owner retains 95.8% of repository–hash coverage. But repository counts still must not be read as independent authorship or independent selection decisions.
-
-> “Widely reused public skills” means files redistributed across many non-fork repositories. It does not necessarily mean independently authored or independently selected community practices.
-
-Historical-lineage analysis found 21 exact Anthropic Git blobs among the 99 baseline hashes and two additional near matches, representing 34.1% of repository–hash coverage. Eleven of the 21 exact matches were already older than Anthropic's version at the GitSkills collection cutoff, directly demonstrating stale-copy propagation. Exact and thresholded near matching still provide only a floor on broader lineage because edited descendants can fall below the threshold. Separately, GitSkills retrieved only three artifacts from the origin repository, so origin absence cannot classify a copy as stale. See the [corpus audit](research/CORPUS_AUDIT.md) for methods, counts, and limitations.
+The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
 ## Skills
 
@@ -67,14 +51,6 @@ Description counts measure the always-loaded front-matter discovery text. The 10
 - [`marketing-and-growth`](skills/marketing-and-growth/): Develop evidence-based marketing, pricing, growth, positioning, conversion, and fundraising. Use for market research, product marketing, pricing tiers/plans/packages, SEO, acquisition, lifecycle, monetization, copy, ads, or investor communications; exclude visual design, office-artifact mechanics, and software implementation.
 - [`connected-service-automation`](skills/connected-service-automation/): Operate user-authorized messaging, notes, media, cloud storage, sharing, and similar connected services through available tools or CLIs. Use when the task is to inspect or change state in an external personal or workplace service; use another skill to design a new integration or agent tool.
 - [`data-science-and-ml`](skills/data-science-and-ml/): Design, analyze, train, evaluate, and operationalize statistical or machine-learning systems. Use for data quality, experiments, causal inference, predictive modeling, deep learning, computer vision, fine-tuning, distributed training, or model monitoring; use application engineering for ordinary product architecture without an analytical or learned-model decision.
-
-## Examples
-
-The [example gallery](examples/) contains one focused demonstration for each active skill. Every example defines the trigger and a nearby non-trigger, supplies a concrete fixture or evidence pack, records the expected decisions, includes an inspectable reference artifact, and provides a skill-specific rubric. Runnable examples include a dispatcher dashboard, a seeded Python defect, and a browser microgame.
-
-Three integrated showcases demonstrate explicit skill composition for [shipping a product feature](examples/showcases/ship-a-product-feature.md), [investigating a model incident](examples/showcases/investigate-a-model-incident.md), and [preparing and executing a launch](examples/showcases/prepare-and-execute-a-launch.md).
-
-Reference artifacts make the intended behavior inspectable; they are not model outputs or benchmark results. Comparative claims remain governed by the preregistered evaluation protocol.
 
 ## Installation
 
@@ -130,6 +106,14 @@ npx skills remove \
 
 For a manual installation, remove only the skill directory you previously copied.
 
+## Examples
+
+The [example gallery](examples/) contains one focused demonstration for each active skill. Every example defines the trigger and a nearby non-trigger, supplies a concrete fixture or evidence pack, records the expected decisions, includes an inspectable reference artifact, and provides a skill-specific rubric. Runnable examples include a dispatcher dashboard, a seeded Python defect, and a browser microgame.
+
+Three integrated showcases demonstrate explicit skill composition for [shipping a product feature](examples/showcases/ship-a-product-feature.md), [investigating a model incident](examples/showcases/investigate-a-model-incident.md), and [preparing and executing a launch](examples/showcases/prepare-and-execute-a-launch.md).
+
+Reference artifacts make the intended behavior inspectable; they are not model outputs or benchmark results. Comparative claims remain governed by the preregistered evaluation protocol.
+
 ## Why Super Skills?
 
 Public agent-skill ecosystems contain substantial duplication. Similar skills often:
@@ -164,7 +148,11 @@ Automatic skill selection depends on the host and model and is not guaranteed. W
 
 ## Synthesis methodology
 
-The research uses a ranked top-1,000 GitSkills frame. Its initial substantive review covered 99 eligible hashes in the top 100; subsequent targeted review covered 95 expansion hashes. Together, those reviews retained 130 hashes and identified 11 capability categories. One category is withheld, leaving 119 evidence hashes across the 10-skill active suite. Categories are analyzed for:
+The [GitSkills dataset](https://huggingface.co/datasets/mvaccargiu/gitskills) and accompanying [paper](https://arxiv.org/abs/2608.10906) define the project's sampling frame. The research uses a ranked top-1,000 frame from the dataset. Its initial substantive review covered 99 eligible hashes in the top 100; subsequent targeted review covered 95 expansion hashes. Together, those reviews retained 130 hashes and identified 11 capability categories. One category is withheld, leaving 119 evidence hashes across the 10-skill active suite.
+
+> **Research status:** Of 999 eligible hashes, 194 have been substantively reviewed and 130 retained as research evidence. Eleven retained hashes support the deliberately withheld `document-productivity` category, leaving 119 evidence hashes for the active suite; the remaining 805 hashes have received metadata and lineage triage only. The full-corpus similarity gate has passed. Comparative benchmarks, the preregistered random probe, and remaining candidate and upstream-lineage review are pending.
+
+Categories are analyzed for:
 
 1. recurring principles;
 2. distinctive specialist guidance;
@@ -189,6 +177,16 @@ The synthesis resolves them with an explicit rule:
 4. If neither audience/task pattern applies, choose neither; derive another visual thesis. Accessibility, platform behavior, legibility, and performance override either profile.
 
 A majority-vote pipeline would make whichever profile appeared more often the default and silently discard the other. Super Skills retains both as contextual modes. The full decision record is in [research/conflict-decisions/interface-aesthetic-profiles.md](research/conflict-decisions/interface-aesthetic-profiles.md).
+
+## What occurrence rank measures
+
+GitSkills occurrence rank measures redistribution as well as individual adoption. In the 99-hash baseline, **34.0% of distinct repository–hash coverage appears in repeated multi-skill collection signatures**, and **41.9% appears in repositories containing at least 10 baseline hashes**. Curated bundles, registries, and mirrors therefore materially amplify occurrence counts.
+
+The frame is not dominated by one owner: deduplicating repository coverage by owner retains 95.8% of repository–hash coverage. But repository counts still must not be read as independent authorship or independent selection decisions.
+
+> “Widely reused public skills” means files redistributed across many non-fork repositories. It does not necessarily mean independently authored or independently selected community practices.
+
+Historical-lineage analysis found 21 exact Anthropic Git blobs among the 99 baseline hashes and two additional near matches, representing 34.1% of repository–hash coverage. Eleven of the 21 exact matches were already older than Anthropic's version at the GitSkills collection cutoff, directly demonstrating stale-copy propagation. Exact and thresholded near matching still provide only a floor on broader lineage because edited descendants can fall below the threshold. Separately, GitSkills retrieved only three artifacts from the origin repository, so origin absence cannot classify a copy as stale. See the [corpus audit](research/CORPUS_AUDIT.md) for methods, counts, and limitations.
 
 ## Provenance and reproducibility
 
