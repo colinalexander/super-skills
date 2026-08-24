@@ -1,0 +1,16 @@
+{
+  "workspaces": [
+    {"id": "ws_northwind_ops", "name": "Northwind Operations", "account": "work"},
+    {"id": "ws_northwind_personal", "name": "Northwind Notes", "account": "personal"}
+  ],
+  "files": [
+    {"id": "file_q3_draft", "workspace_id": "ws_northwind_ops", "name": "Q3 operating plan - DRAFT", "version": 7},
+    {"id": "file_q3_final", "workspace_id": "ws_northwind_ops", "name": "Q3 operating plan", "version": 3}
+  ],
+  "contacts": [
+    {"id": "person_jlee_204", "name": "Jordan Lee", "company": "Northwind", "type": "contractor", "email": "jordan.lee@example.invalid"},
+    {"id": "person_jlee_319", "name": "Jordan Lee", "company": "Northwind", "type": "employee", "email": "j.lee@example.invalid"}
+  ],
+  "available_roles": ["viewer", "commenter", "editor"],
+  "message_channels": ["workspace_message", "email"]
+}

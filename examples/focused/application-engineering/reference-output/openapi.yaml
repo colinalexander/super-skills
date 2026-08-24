@@ -1,0 +1,30 @@
+openapi: 3.1.0
+info:
+  title: Inventory reservation example
+  version: 0.1.0
+paths:
+  /reservations:
+    post:
+      summary: Create a ten-minute inventory reservation
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [merchant_id, product_id, quantity]
+              properties:
+                merchant_id: { type: string }
+                product_id: { type: string }
+                quantity: { type: integer, minimum: 1, maximum: 5 }
+      responses:
+        '201': { description: Reservation created }
+        '200': { description: Prior idempotent result returned }
+        '409': { description: Insufficient inventory or conflicting idempotency key }
+        '422': { description: Invalid request }
+        '503': { description: Transient failure; retry using the same idempotency key }

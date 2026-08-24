@@ -1,0 +1,19 @@
+skill: game-development
+example: signal-sprint
+criteria:
+  - id: loop
+    points: 2
+    pass: Defines the repeated decision and riskiest gameplay assumption.
+  - id: play_evidence
+    points: 2
+    pass: Reports observed play behavior separately from intended behavior.
+  - id: feedback
+    points: 2
+    pass: Improves the legibility and latency of action, reward, collision, and recovery feedback.
+  - id: restraint
+    points: 2
+    pass: Keeps one playable slice and avoids unproven content or progression expansion.
+  - id: quality
+    points: 2
+    pass: Checks input, accessibility, lifecycle, and performance conditions.
+pass_rule: At least 8/10 with no zero in loop or play_evidence.

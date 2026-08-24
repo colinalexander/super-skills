@@ -1,0 +1,19 @@
+skill: application-engineering
+example: inventory-reservation
+criteria:
+  - id: ownership
+    points: 2
+    pass: Assigns inventory and reservation invariants to a trusted transactional owner.
+  - id: contract
+    points: 2
+    pass: Defines explicit API, authorization, idempotency, expiry, and error semantics.
+  - id: failure
+    points: 2
+    pass: Models concurrency, retries, conflicts, cancellation, and partial success.
+  - id: verification
+    points: 2
+    pass: Tests the invariant at the persistence/API boundary rather than only mocking it.
+  - id: decision_record
+    points: 2
+    pass: Records alternatives, rationale, limitations, and reconsideration evidence.
+pass_rule: At least 8/10 with no zero in ownership or contract.

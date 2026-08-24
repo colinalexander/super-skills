@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispatch board fixture</title>
+  <style>
+    body { margin: 0; font: 16px Arial, sans-serif; color: #333; background: #eee; }
+    header { padding: 18px; color: white; background: #555; }
+    main { padding: 18px; }
+    .summary { display: flex; gap: 10px; margin-bottom: 18px; }
+    .card { flex: 1; padding: 16px; background: white; border: 1px solid #bbb; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 9px; border: 1px solid #bbb; text-align: left; }
+    .late { color: red; }
+    button { padding: 7px; }
+  </style>
+</head>
+<body>
+  <header><strong>Dispatch Board</strong></header>
+  <main>
+    <section class="summary" aria-label="Delivery summary">
+      <div class="card"><b>72</b><br>Active</div>
+      <div class="card"><b>8</b><br>Late</div>
+      <div class="card"><b>3</b><br>Blocked</div>
+    </section>
+    <table>
+      <thead><tr><th>ID</th><th>Driver</th><th>ETA</th><th>Status</th><th>Cause</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>D-1042</td><td>Nguyen</td><td>14:20</td><td class="late">Late</td><td>Warehouse hold</td><td><button>View</button></td></tr>
+        <tr><td>D-1047</td><td>Patel</td><td>14:35</td><td>On time</td><td>—</td><td><button>View</button></td></tr>
+        <tr><td>D-1051</td><td>Williams</td><td>14:50</td><td class="late">Blocked</td><td>Address mismatch with an unusually long customer note</td><td><button>View</button></td></tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

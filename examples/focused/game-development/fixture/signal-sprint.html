@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Sprint</title>
+  <style>
+    body { margin: 0; display: grid; min-height: 100vh; place-items: center; color: #eee; background: #111; font: 16px system-ui; }
+    canvas { max-width: 92vw; border: 2px solid #555; background: #181818; }
+    p { max-width: 640px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Signal Sprint</h1>
+    <p>Arrow keys move. Collect green signals. Avoid red interference. Press R to restart.</p>
+    <canvas id="game" width="640" height="360" tabindex="0" aria-label="Signal Sprint game"></canvas>
+    <p id="status" aria-live="polite"></p>
+  </main>
+  <script>
+    const canvas = document.querySelector('#game');
+    const ctx = canvas.getContext('2d');
+    const status = document.querySelector('#status');
+    const keys = new Set();
+    let player, signal, hazards, score, startedAt, running;
+
+    function point(color) {
+      return { x: 30 + Math.random() * 580, y: 30 + Math.random() * 300, r: 12, color };
+    }
+    function reset() {
+      player = { x: 320, y: 180, r: 11 };
+      signal = point('#70d870');
+      hazards = [point('#e45b5b'), point('#e45b5b')];
+      score = 0; startedAt = performance.now(); running = true; canvas.focus();
+    }
+    function hit(a, b) { return Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r; }
+    function update(now) {
+      if (!running) return;
+      const speed = 2.8;
+      if (keys.has('ArrowLeft')) player.x -= speed;
+      if (keys.has('ArrowRight')) player.x += speed;
+      if (keys.has('ArrowUp')) player.y -= speed;
+      if (keys.has('ArrowDown')) player.y += speed;
+      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
+      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
+      if (hit(player, signal)) { score += 1; signal = point('#70d870'); }
+      if (hazards.some(h => hit(player, h))) { score = Math.max(0, score - 1); player.x = 320; player.y = 180; }
+      if (now - startedAt >= 30000) running = false;
+    }
+    function draw(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      [signal, ...hazards].forEach(p => { ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); });
+      ctx.beginPath(); ctx.fillStyle = '#f3f3f3'; ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
+      const left = Math.max(0, Math.ceil((30000 - (now - startedAt)) / 1000));
+      status.textContent = running ? `Score ${score}. ${left} seconds remaining.` : `Finished with ${score} signals. Press R to restart.`;
+    }
+    function frame(now) { update(now); draw(now); requestAnimationFrame(frame); }
+    addEventListener('keydown', event => { keys.add(event.key); if (event.key.toLowerCase() === 'r') reset(); });
+    addEventListener('keyup', event => keys.delete(event.key));
+    reset(); requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
