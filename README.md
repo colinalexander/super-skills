@@ -18,6 +18,16 @@
 
 The goal is simple: **fewer, broader, rigorously evaluated skills instead of hundreds of narrowly overlapping ones.**
 
+## Introduction
+
+An agent skill is a reusable operating procedure for an AI agent. A one-off prompt asks a model to handle the current request; a skill describes when a capability applies and supplies the process, decision rules, references, and safeguards to use when it activates.
+
+Agent hosts typically use each skill's short name and description to decide what may be relevant, then load the full instructions only when needed. This makes capabilities modular, but a growing collection can accumulate overlapping triggers, duplicated guidance, incompatible defaults, and copied versions that drift from their upstream sources. Installing more skills can therefore increase discovery cost and routing ambiguity without adding proportionate capability.
+
+Super Skills treats public skills as research evidence rather than components to bundle together. It extracts recurring principles, preserves useful specialist techniques, turns genuine disagreements into contextual modes or selection rules, and independently authors broader capabilities with explicit boundaries and safeguards. The aim is not a single universal prompt. It is a coherent set of operating procedures that loads specialized detail only when the task requires it.
+
+The repository publishes both the installable skills and the evidence behind them so that the synthesis can be inspected, challenged, and evaluated. Provenance records, review decisions, conflict resolutions, corpus analysis, token counts, and evaluation specifications are part of the project rather than private development notes.
+
 ## What occurrence rank measures
 
 GitSkills occurrence rank measures redistribution as well as individual adoption. In the 99-hash baseline, **34.0% of distinct repository–hash coverage appears in repeated multi-skill collection signatures**, and **41.9% appears in repositories containing at least 10 baseline hashes**. Curated bundles, registries, and mirrors therefore materially amplify occurrence counts.
