@@ -106,11 +106,16 @@ npx skills remove \
 
 For a manual installation, remove only the skill directory you previously copied.
 
-## Track named skill requests
+## Track observed skill usage
 
-This repository includes a small local reporter for exact `$skill-name` requests in retained **Codex desktop** task history. It is host-specific but model-independent: it can analyze compatible Codex desktop history regardless of which model handled the task. It does not support Codex CLI's current session-history layout, Claude Code, Cursor, or other agent hosts.
+This repository includes a small local reporter with two separate measures from retained **Codex desktop** task history:
 
-The reporter does not observe automatic skill activation. It counts only user turns containing exact `$skill-name` syntax, so its output is a textual proxy—not complete usage telemetry. Quoted text or examples containing that syntax can produce false positives.
+- **Observed loads:** distinct task turns containing a command that references an installed Super Skill's `SKILL.md` under `.agents/skills` or `.codex/skills`. This is the primary local proxy for skill loading, including background selection.
+- **Explicit requests:** distinct user turns containing exact `$skill-name` syntax.
+
+The reporter is host-specific but model-independent: it can analyze compatible Codex desktop history regardless of which model handled the task. It does not support Codex CLI's current session-history layout, Claude Code, Cursor, or other agent hosts.
+
+The measures are evidence, not complete activation telemetry. An observed file read does not prove that the skill instructions affected the answer, diagnostic commands can produce false positives, and host-internal loads that do not create a visible command can be missed. Likewise, quoted text or examples containing `$skill-name` can count as explicit requests. Do not subtract one measure from the other or compare them across hosts as though they were equivalent instrumentation.
 
 To avoid reading a live SQLite database, first quit Codex desktop and make a stable copy of its newest `thread_history*.sqlite` file. The copy must not have an accompanying `-wal` or `-journal` file. Then run:
 
