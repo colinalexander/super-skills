@@ -190,6 +190,8 @@ class UsageReportTests(unittest.TestCase):
             "I’m using software-delivery as opposed to interface-design.",
             "I’m proceeding without using interface-design.",
             "I’m proceeding except when applying interface-design.",
+            "I never use interface-design.",
+            "I am never using interface-design.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -343,6 +345,42 @@ class UsageReportTests(unittest.TestCase):
 
         self.assertFalse(wal.exists())
         self.assertFalse(Path(f"{database}-shm").exists())
+
+    def test_read_only_connection_rejects_a_changed_wal_generation(self) -> None:
+        database = Path(self.temporary.name) / "restarted-wal.sqlite"
+        with contextlib.closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute("CREATE TABLE example (value TEXT)")
+        wal = Path(f"{database}-wal")
+        wal.touch()
+        real_copy = shutil.copy2
+        wal_copies = 0
+
+        def restart_during_copy(source: Path, destination: Path) -> Path:
+            nonlocal wal_copies
+            result = real_copy(source, destination)
+            if Path(source).name == wal.name:
+                wal_copies += 1
+                if wal_copies == 1:
+                    current = database.stat()
+                    os.utime(
+                        database,
+                        ns=(current.st_atime_ns, current.st_mtime_ns + 1_000_000),
+                    )
+                    wal.touch()
+                else:
+                    wal.unlink()
+            return result
+
+        with mock.patch.object(
+            usage_report.shutil, "copy2", side_effect=restart_during_copy
+        ):
+            with usage_report.connect_read_only(database) as reader:
+                self.assertEqual(
+                    reader.execute("SELECT count(*) FROM example").fetchone()[0], 0
+                )
+
+        self.assertEqual(wal_copies, 2)
+        self.assertFalse(wal.exists())
 
     def test_print_table_supports_an_empty_filtered_report(self) -> None:
         output = io.StringIO()

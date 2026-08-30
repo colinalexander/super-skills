@@ -32,19 +32,16 @@ ACTIVATION_WORDS = re.compile(
     r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
     re.IGNORECASE,
 )
-EXCLUSION_BEFORE_ACTIVATION = re.compile(
-    r"(?:\bnot\b(?!\s+only\b)|\bcannot\b|"
+EXCLUSION_MARKER = (
+    r"(?:\bnot\b(?!\s+only\b)|\bnever\b|\bcannot\b|"
     r"\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b|"
     r"\b(?:except|excluding|without)\b|\brather\s+than\b|"
     r"\bas\s+opposed\s+to\b)"
-    r"(?:\s+\w+){0,2}\s*$",
-    re.IGNORECASE,
 )
-NEGATION_AFTER_ACTIVATION = re.compile(
-    r"(?:\bnot\b(?!\s+only\b)|\b(?:except|excluding|without)\b|"
-    r"\brather\s+than\b|\bas\s+opposed\s+to\b)",
-    re.IGNORECASE,
+EXCLUSION_BEFORE_ACTIVATION = re.compile(
+    EXCLUSION_MARKER + r"(?:\s+\w+){0,2}\s*$", re.IGNORECASE
 )
+EXCLUSION_AFTER_ACTIVATION = re.compile(EXCLUSION_MARKER, re.IGNORECASE)
 CLAUSE_BOUNDARY = re.compile(
     r"(?:[.;:!?](?:\s+|$)|\n+|\b(?:although|but|however|instead|whereas|while)\b)",
     re.IGNORECASE,
@@ -170,6 +167,19 @@ def sqlite_connection(path: Path, parameters: str) -> sqlite3.Connection:
     return connection
 
 
+def file_fingerprint(path: Path) -> tuple[int, int, int, int, int]:
+    """Return metadata that changes when a SQLite file generation changes."""
+
+    metadata = path.stat()
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_size,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+    )
+
+
 @contextmanager
 def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
     resolved = path.resolve()
@@ -182,12 +192,18 @@ def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
                 prefix="super-skills-history-"
             ) as directory:
                 snapshot = Path(directory) / resolved.name
-                shutil.copy2(resolved, snapshot)
                 try:
+                    before = (file_fingerprint(resolved), file_fingerprint(wal))
+                    shutil.copy2(resolved, snapshot)
                     shutil.copy2(wal, Path(f"{snapshot}-wal"))
+                    after = (file_fingerprint(resolved), file_fingerprint(wal))
                 except FileNotFoundError:
                     # A checkpoint can remove the WAL between observation and
                     # copying. Re-evaluate the source sidecar state.
+                    continue
+                if before != after:
+                    # Never open a staged main/WAL pair when either source file
+                    # changed during the sequential copies.
                     continue
                 with closing(sqlite_connection(snapshot, "mode=ro")) as connection:
                     yield connection
@@ -243,7 +259,7 @@ def announced_use(text: str, skill: str) -> bool:
                 between = prefix[activation.end() :]
                 if (
                     not EXCLUSION_BEFORE_ACTIVATION.search(before)
-                    and not NEGATION_AFTER_ACTIVATION.search(between)
+                    and not EXCLUSION_AFTER_ACTIVATION.search(between)
                 ):
                     return True
     return False
