@@ -30,6 +30,10 @@ ACTIVATION_WORDS = re.compile(
     r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
     re.IGNORECASE,
 )
+CLAUSE_BOUNDARY = re.compile(
+    r"(?:[.;:!?](?:\s+|$)|\n+|\b(?:although|but|however|instead|whereas|while)\b)",
+    re.IGNORECASE,
+)
 
 
 class UsageReportError(RuntimeError):
@@ -121,7 +125,7 @@ def discover_database(explicit: Path | None = None) -> Path:
     home = codex_home()
     candidates = sorted(
         (path for path in home.glob("thread_history*.sqlite") if path.is_file()),
-        key=lambda path: path.stat().st_mtime,
+        key=database_activity_mtime,
         reverse=True,
     )
     for path in candidates:
@@ -132,8 +136,20 @@ def discover_database(explicit: Path | None = None) -> Path:
     )
 
 
+def database_activity_mtime(path: Path) -> float:
+    mtimes = [path.stat().st_mtime]
+    wal = Path(f"{path}-wal")
+    if wal.is_file():
+        mtimes.append(wal.stat().st_mtime)
+    return max(mtimes)
+
+
 def connect_read_only(path: Path) -> sqlite3.Connection:
-    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    resolved = path.resolve()
+    wal = Path(f"{resolved}-wal")
+    shm = Path(f"{resolved}-shm")
+    parameters = "mode=ro" if wal.exists() or shm.exists() else "mode=ro&immutable=1"
+    connection = sqlite3.connect(f"{resolved.as_uri()}?{parameters}", uri=True)
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -166,11 +182,10 @@ def announced_use(text: str, skill: str) -> bool:
     skill name. A bare mention in commentary is not treated as usage.
     """
 
-    lower = text.lower()
-    for match in re.finditer(re.escape(skill.lower()), lower):
-        before = lower[max(0, match.start() - 180) : match.start()]
-        if ACTIVATION_WORDS.search(before):
-            return True
+    for clause in CLAUSE_BOUNDARY.split(text.lower()):
+        for match in re.finditer(re.escape(skill.lower()), clause):
+            if ACTIVATION_WORDS.search(clause[: match.start()]):
+                return True
     return False
 
 

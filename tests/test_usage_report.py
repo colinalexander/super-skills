@@ -3,9 +3,11 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import sqlite3
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from scripts import usage_report
@@ -146,6 +148,99 @@ class UsageReportTests(unittest.TestCase):
         usage = usage_report.reconstruct_usage(self.database)
 
         self.assertEqual(len(usage["software-delivery"].detected_turns), 0)
+
+    def test_scopes_activation_verbs_to_the_same_clause(self) -> None:
+        self.insert(
+            "agentMessage",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_000,
+            {
+                "phase": "commentary",
+                "text": (
+                    "I’m using software-delivery; interface-design is unnecessary."
+                ),
+            },
+        )
+        self.insert(
+            "agentMessage",
+            "thread-1",
+            "turn-2",
+            1_700_100_000_000,
+            {
+                "phase": "commentary",
+                "text": "I’m using software-delivery and interface-design together.",
+            },
+        )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertEqual(len(usage["software-delivery"].announced), 2)
+        self.assertEqual(len(usage["interface-design"].announced), 1)
+
+    def test_database_recency_includes_wal_activity(self) -> None:
+        home = Path(self.temporary.name) / "codex-home"
+        home.mkdir()
+        newer_main = home / "thread_history_1.sqlite"
+        active_wal = home / "thread_history_2.sqlite"
+        newer_main.touch()
+        active_wal.touch()
+        wal = Path(f"{active_wal}-wal")
+        wal.touch()
+        os_times = {
+            newer_main: (300, 300),
+            active_wal: (100, 100),
+            wal: (400, 400),
+        }
+        for path, times in os_times.items():
+            path.touch()
+            path.chmod(0o600)
+            os.utime(path, times)
+
+        with (
+            mock.patch.object(usage_report, "codex_home", return_value=home),
+            mock.patch.object(usage_report, "has_supported_schema", return_value=True),
+        ):
+            selected = usage_report.discover_database()
+
+        self.assertEqual(selected, active_wal.resolve())
+
+    def test_quiescent_wal_database_is_opened_without_sidecar_writes(self) -> None:
+        database = Path(self.temporary.name) / "quiescent.sqlite"
+        with contextlib.closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("CREATE TABLE example (value TEXT)")
+        wal = Path(f"{database}-wal")
+        shm = Path(f"{database}-shm")
+        self.assertFalse(wal.exists())
+        self.assertFalse(shm.exists())
+
+        with contextlib.closing(usage_report.connect_read_only(database)) as connection:
+            self.assertEqual(
+                connection.execute("SELECT count(*) FROM example").fetchone()[0], 0
+            )
+
+        self.assertFalse(wal.exists())
+        self.assertFalse(shm.exists())
+
+    def test_live_wal_database_includes_uncheckpointed_history(self) -> None:
+        database = Path(self.temporary.name) / "live.sqlite"
+        with contextlib.closing(sqlite3.connect(database)) as writer:
+            writer.execute("PRAGMA journal_mode=WAL")
+            writer.execute("PRAGMA wal_autocheckpoint=0")
+            writer.execute("CREATE TABLE example (value TEXT)")
+            writer.commit()
+            writer.execute("INSERT INTO example VALUES ('current')")
+            writer.commit()
+            self.assertTrue(Path(f"{database}-wal").exists())
+
+            with contextlib.closing(
+                usage_report.connect_read_only(database)
+            ) as reader:
+                self.assertEqual(
+                    reader.execute("SELECT value FROM example").fetchone()[0],
+                    "current",
+                )
 
     def test_skips_malformed_history_items(self) -> None:
         self.insert(
