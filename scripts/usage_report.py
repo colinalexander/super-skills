@@ -32,16 +32,26 @@ ACTIVATION_WORDS = re.compile(
     r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
     re.IGNORECASE,
 )
+LIST_INTRODUCTION = re.compile(
+    r"\b(using|applying|invoking|loading|following)\s+(?:these\s+)?skills?\s*:",
+    re.IGNORECASE,
+)
 EXCLUSION_MARKER = (
     r"(?:\bnot\b(?!\s+only\b)|\bnever\b|\bcannot\b|"
     r"\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b|"
     r"\b(?:except|excluding|without)\b|\brather\s+than\b|"
-    r"\bas\s+opposed\s+to\b)"
+    r"\bas\s+opposed\s+to\b|\bavoid(?:ed|ing)?\b|"
+    r"\bstop(?:ped|ping)?\b)"
 )
 EXCLUSION_BEFORE_ACTIVATION = re.compile(
     EXCLUSION_MARKER + r"(?:\s+\w+){0,2}\s*$", re.IGNORECASE
 )
 EXCLUSION_AFTER_ACTIVATION = re.compile(EXCLUSION_MARKER, re.IGNORECASE)
+SKILL_FIRST_ACTIVATION = re.compile(
+    r"^\s+(?:is|was|will\s+be)\s+(?:the|a)\s+skill\b.{0,60}?"
+    r"\b(?:using|applying|invoking|loading|following)\b",
+    re.IGNORECASE,
+)
 CLAUSE_BOUNDARY = re.compile(
     r"(?:[.;:!?](?:\s+|$)|\n+|\b(?:although|but|however|instead|whereas|while)\b)",
     re.IGNORECASE,
@@ -184,10 +194,9 @@ def file_fingerprint(path: Path) -> tuple[int, int, int, int, int]:
 def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
     resolved = path.resolve()
     wal = Path(f"{resolved}-wal")
-    shm = Path(f"{resolved}-shm")
-    for _attempt in range(3):
+    for _attempt in range(5):
         wal_exists = wal.is_file()
-        if wal_exists and not shm.is_file():
+        if wal_exists:
             with tempfile.TemporaryDirectory(
                 prefix="super-skills-history-"
             ) as directory:
@@ -209,8 +218,9 @@ def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
                     yield connection
             return
 
-        parameters = "mode=ro" if wal_exists else "mode=ro&immutable=1"
-        with closing(sqlite_connection(resolved, parameters)) as connection:
+        with closing(
+            sqlite_connection(resolved, "mode=ro&immutable=1")
+        ) as connection:
             yield connection
         return
 
@@ -251,7 +261,8 @@ def announced_use(text: str, skill: str) -> bool:
         rf"(?<![A-Za-z0-9_-]){re.escape(skill)}(?![A-Za-z0-9_-])",
         re.IGNORECASE,
     )
-    for clause in CLAUSE_BOUNDARY.split(text):
+    normalized = LIST_INTRODUCTION.sub(r"\1 skills ", text)
+    for clause in CLAUSE_BOUNDARY.split(normalized):
         for skill_match in skill_pattern.finditer(clause):
             prefix = clause[: skill_match.start()]
             for activation in ACTIVATION_WORDS.finditer(prefix):
@@ -262,6 +273,12 @@ def announced_use(text: str, skill: str) -> bool:
                     and not EXCLUSION_AFTER_ACTIVATION.search(between)
                 ):
                     return True
+            suffix = clause[skill_match.end() :]
+            skill_first = SKILL_FIRST_ACTIVATION.match(suffix)
+            if skill_first and not EXCLUSION_AFTER_ACTIVATION.search(
+                skill_first.group(0)
+            ):
+                return True
     return False
 
 

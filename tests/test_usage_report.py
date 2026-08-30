@@ -179,6 +179,18 @@ class UsageReportTests(unittest.TestCase):
         self.assertEqual(len(usage["software-delivery"].announced), 2)
         self.assertEqual(len(usage["interface-design"].announced), 1)
 
+    def test_preserves_activation_for_a_colon_introduced_skill_list(self) -> None:
+        message = "I’m using these skills: software-delivery and interface-design."
+
+        self.assertTrue(usage_report.announced_use(message, "software-delivery"))
+        self.assertTrue(usage_report.announced_use(message, "interface-design"))
+        self.assertFalse(
+            usage_report.announced_use(
+                "I’m using software-delivery: interface-design is unnecessary.",
+                "interface-design",
+            )
+        )
+
     def test_excludes_negated_and_extended_skill_announcements(self) -> None:
         messages = (
             "I won't use interface-design.",
@@ -192,6 +204,8 @@ class UsageReportTests(unittest.TestCase):
             "I’m proceeding except when applying interface-design.",
             "I never use interface-design.",
             "I am never using interface-design.",
+            "I’ll avoid using interface-design.",
+            "I stopped using interface-design.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -211,6 +225,20 @@ class UsageReportTests(unittest.TestCase):
             usage_report.announced_use(
                 "I’m not only using interface-design but also testing it.",
                 "interface-design",
+            )
+        )
+
+    def test_accepts_linked_skill_first_announcement(self) -> None:
+        self.assertTrue(
+            usage_report.announced_use(
+                "software-delivery is the skill I am using for this change.",
+                "software-delivery",
+            )
+        )
+        self.assertFalse(
+            usage_report.announced_use(
+                "software-delivery is the skill I am not using for this change.",
+                "software-delivery",
             )
         )
 
