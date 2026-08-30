@@ -106,6 +106,22 @@ npx skills remove \
 
 For a manual installation, remove only the skill directory you previously copied.
 
+## Track named skill requests
+
+This repository includes a small local reporter for exact `$skill-name` requests in retained **Codex desktop** task history. It is host-specific but model-independent: it can analyze compatible Codex desktop history regardless of which model handled the task. It does not support Codex CLI's current session-history layout, Claude Code, Cursor, or other agent hosts.
+
+The reporter does not observe automatic skill activation. It counts only user turns containing exact `$skill-name` syntax, so its output is a textual proxy—not complete usage telemetry. Quoted text or examples containing that syntax can produce false positives.
+
+To avoid reading a live SQLite database, first quit Codex desktop and make a stable copy of its newest `thread_history*.sqlite` file. The copy must not have an accompanying `-wal` or `-journal` file. Then run:
+
+```bash
+python3 scripts/usage_report.py \
+  --database /path/to/history-copy.sqlite \
+  --active-only
+```
+
+Use `--json` for machine-readable output. The script opens only the supplied copy in immutable read-only mode, performs no network requests, and does not emit prompt or response contents. Codex's internal history schema may change, so treat this as an experimental local diagnostic.
+
 ## Examples
 
 The [example gallery](examples/) contains one focused demonstration for each active skill. Every example defines the trigger and a nearby non-trigger, supplies a concrete fixture or evidence pack, records the expected decisions, includes an inspectable reference artifact, and provides a skill-specific rubric. Runnable examples include a dispatcher dashboard, a seeded Python defect, and a browser microgame.
@@ -278,6 +294,7 @@ super-skills/
 ├── research/
 ├── evals/
 ├── scripts/
+├── tests/
 ├── README.md
 └── LICENSE
 ```
