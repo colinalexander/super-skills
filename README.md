@@ -106,6 +106,26 @@ npx skills remove \
 
 For a manual installation, remove only the skill directory you previously copied.
 
+## Track your skill usage
+
+> **Experimental: local Codex usage.** Codex does not currently expose a documented native skill-activation event. This repository therefore includes a local, read-only reporter that reconstructs a lower bound from retained task history.
+
+From the repository root, run:
+
+```bash
+python3 scripts/usage_report.py
+```
+
+By default, the reporter selects the newest compatible `thread_history*.sqlite` database under your Codex home directory. It reports exact `$skill-name` requests separately from inferred implicit turns, where assistant commentary announced use of a skill without a matching explicit request. Add `--active-only` to omit unused skills, use `--json` for machine-readable output, or supply a particular history database:
+
+```bash
+python3 scripts/usage_report.py --active-only
+python3 scripts/usage_report.py --json
+python3 scripts/usage_report.py --database /path/to/thread_history.sqlite
+```
+
+The script opens task history read-only, performs no network requests, and does not include prompt or response contents in its report. No data leaves your machine. Because the report reconstructs usage from exact invocations and natural-language announcements rather than a platform activation event, counts can omit unannounced activations and can contain heuristic false positives. Deleted, unavailable, or unretained tasks cannot be counted, and Codex's internal history schema may change. Treat the results as experimental lower-bound diagnostics, not authoritative telemetry. See the current [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks) for the documented lifecycle events.
+
 ## Examples
 
 The [example gallery](examples/) contains one focused demonstration for each active skill. Every example defines the trigger and a nearby non-trigger, supplies a concrete fixture or evidence pack, records the expected decisions, includes an inspectable reference artifact, and provides a skill-specific rubric. Runnable examples include a dispatcher dashboard, a seeded Python defect, and a browser microgame.
@@ -278,6 +298,7 @@ super-skills/
 ├── research/
 ├── evals/
 ├── scripts/
+├── tests/
 ├── README.md
 └── LICENSE
 ```

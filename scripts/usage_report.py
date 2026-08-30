@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""Reconstruct local Super Skills usage from retained Codex task history."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sqlite3
+import sys
+from contextlib import closing
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Iterable
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SKILLS = tuple(sorted(path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md")))
+REQUIRED_COLUMNS = {
+    "thread_id",
+    "turn_id",
+    "created_at_ms",
+    "item_json",
+    "item_type",
+    "rollout_ordinal",
+}
+ACTIVATION_WORDS = re.compile(
+    r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
+    re.IGNORECASE,
+)
+
+
+class UsageReportError(RuntimeError):
+    """Raised when local history cannot be read safely."""
+
+
+@dataclass
+class SkillUsage:
+    explicit: dict[tuple[str, str], int] = field(default_factory=dict)
+    announced: dict[tuple[str, str], int] = field(default_factory=dict)
+
+    @property
+    def detected_turns(self) -> set[tuple[str, str]]:
+        return set(self.explicit) | set(self.announced)
+
+    @property
+    def implicit_turns(self) -> set[tuple[str, str]]:
+        return set(self.announced) - set(self.explicit)
+
+    def timestamps(self) -> list[int]:
+        values: list[int] = []
+        for turn in self.detected_turns:
+            candidates = [
+                source[turn]
+                for source in (self.explicit, self.announced)
+                if turn in source
+            ]
+            values.append(min(candidates))
+        return values
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Reconstruct explicit requests and announced implicit Super Skills "
+            "usage from retained local Codex task history."
+        )
+    )
+    parser.add_argument(
+        "--database",
+        type=Path,
+        help=(
+            "Codex thread-history SQLite database. By default, use the newest "
+            "supported thread_history*.sqlite under the Codex home directory."
+        ),
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit a machine-readable report.",
+    )
+    parser.add_argument(
+        "--active-only",
+        action="store_true",
+        help="Omit skills with no detected usage.",
+    )
+    return parser.parse_args(argv)
+
+
+def codex_home() -> Path:
+    configured = os.environ.get("CODEX_HOME")
+    return Path(configured).expanduser() if configured else Path.home() / ".codex"
+
+
+def has_supported_schema(path: Path) -> bool:
+    try:
+        with closing(connect_read_only(path)) as connection:
+            columns = {
+                row[1]
+                for row in connection.execute("PRAGMA table_info(thread_items)")
+            }
+    except (OSError, sqlite3.Error):
+        return False
+    return REQUIRED_COLUMNS <= columns
+
+
+def discover_database(explicit: Path | None = None) -> Path:
+    if explicit is not None:
+        path = explicit.expanduser().resolve()
+        if not path.is_file():
+            raise UsageReportError(f"history database does not exist: {path}")
+        if not has_supported_schema(path):
+            raise UsageReportError(
+                f"unsupported Codex history schema in {path}; "
+                "expected a compatible thread_items table"
+            )
+        return path
+
+    home = codex_home()
+    candidates = sorted(
+        (path for path in home.glob("thread_history*.sqlite") if path.is_file()),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for path in candidates:
+        if has_supported_schema(path):
+            return path.resolve()
+    raise UsageReportError(
+        f"no supported thread_history*.sqlite database found under {home}"
+    )
+
+
+def connect_read_only(path: Path) -> sqlite3.Connection:
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def content_text(payload: dict[str, object]) -> str:
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return ""
+    parts: list[str] = []
+    for item in content:
+        if isinstance(item, dict) and item.get("type") == "text":
+            text = item.get("text")
+            if isinstance(text, str):
+                parts.append(text)
+    return "\n".join(parts)
+
+
+def explicit_request(text: str, skill: str) -> bool:
+    pattern = re.compile(
+        rf"(?<![A-Za-z0-9_-])\${re.escape(skill)}(?![A-Za-z0-9_-])",
+        re.IGNORECASE,
+    )
+    return bool(pattern.search(text))
+
+
+def announced_use(text: str, skill: str) -> bool:
+    """Return whether nearby activation language announces use of a skill.
+
+    This intentionally requires an activation verb shortly before the exact
+    skill name. A bare mention in commentary is not treated as usage.
+    """
+
+    lower = text.lower()
+    for match in re.finditer(re.escape(skill.lower()), lower):
+        before = lower[max(0, match.start() - 180) : match.start()]
+        if ACTIVATION_WORDS.search(before):
+            return True
+    return False
+
+
+def iter_history_rows(connection: sqlite3.Connection) -> Iterable[sqlite3.Row]:
+    return connection.execute(
+        """
+        SELECT thread_id, turn_id, created_at_ms, item_type, item_json
+        FROM thread_items
+        WHERE item_type IN ('userMessage', 'agentMessage')
+        ORDER BY created_at_ms, rollout_ordinal
+        """
+    )
+
+
+def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
+    usage = {skill: SkillUsage() for skill in SKILLS}
+    with closing(connect_read_only(path)) as connection:
+        for row in iter_history_rows(connection):
+            try:
+                payload = json.loads(row["item_json"])
+            except (TypeError, json.JSONDecodeError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+
+            item_type = row["item_type"]
+            if item_type == "userMessage":
+                text = content_text(payload)
+            elif item_type == "agentMessage" and payload.get("phase") == "commentary":
+                value = payload.get("text")
+                text = value if isinstance(value, str) else ""
+            else:
+                continue
+
+            turn = (str(row["thread_id"]), str(row["turn_id"]))
+            timestamp = int(row["created_at_ms"])
+            for skill, record in usage.items():
+                if item_type == "userMessage" and explicit_request(text, skill):
+                    record.explicit.setdefault(turn, timestamp)
+                elif item_type == "agentMessage" and announced_use(text, skill):
+                    record.announced.setdefault(turn, timestamp)
+    return usage
+
+
+def local_date(timestamp_ms: int) -> str:
+    return datetime.fromtimestamp(timestamp_ms / 1000).astimezone().date().isoformat()
+
+
+def report_rows(usage: dict[str, SkillUsage], active_only: bool) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for skill in SKILLS:
+        record = usage[skill]
+        timestamps = record.timestamps()
+        row: dict[str, object] = {
+            "skill": skill,
+            "detected_turns": len(record.detected_turns),
+            "explicit_requests": len(record.explicit),
+            "inferred_implicit_turns": len(record.implicit_turns),
+            "announced_turns": len(record.announced),
+            "first_detected": local_date(min(timestamps)) if timestamps else None,
+            "last_detected": local_date(max(timestamps)) if timestamps else None,
+        }
+        if not active_only or row["detected_turns"]:
+            rows.append(row)
+    return rows
+
+
+def print_table(path: Path, rows: list[dict[str, object]]) -> None:
+    print("Experimental local Codex usage (reconstructed)")
+    print(f"Database: {path}")
+    print()
+    headings = ("Skill", "Detected", "Explicit", "Implicit*", "First", "Last")
+    widths = [
+        max(len(headings[0]), *(len(str(row["skill"])) for row in rows)),
+        len(headings[1]),
+        len(headings[2]),
+        len(headings[3]),
+        len(headings[4]),
+        len(headings[5]),
+    ]
+    print(
+        f"{headings[0]:<{widths[0]}}  {headings[1]:>{widths[1]}}  "
+        f"{headings[2]:>{widths[2]}}  {headings[3]:>{widths[3]}}  "
+        f"{headings[4]:<{widths[4]}}  {headings[5]:<{widths[5]}}"
+    )
+    for row in rows:
+        first = row["first_detected"] or "—"
+        last = row["last_detected"] or "—"
+        print(
+            f"{row['skill']:<{widths[0]}}  "
+            f"{row['detected_turns']:>{widths[1]}}  "
+            f"{row['explicit_requests']:>{widths[2]}}  "
+            f"{row['inferred_implicit_turns']:>{widths[3]}}  "
+            f"{first:<{widths[4]}}  {last:<{widths[5]}}"
+        )
+    print()
+    print("* Announced use without a matching explicit $skill-name request.")
+    print("Detected counts are lower-bound heuristics, not native activation telemetry.")
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    try:
+        path = discover_database(args.database)
+        usage = reconstruct_usage(path)
+    except (UsageReportError, OSError, sqlite3.Error) as error:
+        print(f"usage report failed: {error}", file=sys.stderr)
+        return 2
+
+    rows = report_rows(usage, args.active_only)
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "experimental",
+                    "source": "retained-local-codex-history",
+                    "database": str(path),
+                    "skills": rows,
+                },
+                indent=2,
+            )
+        )
+    else:
+        print_table(path, rows)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
