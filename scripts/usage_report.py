@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report exact Super Skills requests from a Codex desktop history copy."""
+"""Report observed Super Skills loads and requests from Codex desktop history."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 import sqlite3
 import sys
 from contextlib import closing
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -24,6 +25,16 @@ REQUIRED_COLUMNS = {
     "item_type",
     "rollout_ordinal",
 }
+SKILL_PATH_MARKERS = (".agents/skills", ".codex/skills")
+TurnKey = tuple[str, str]
+
+
+@dataclass
+class SkillUsage:
+    """Distinct turns with an observed load or explicit request for one skill."""
+
+    observed_loads: dict[TurnKey, int] = field(default_factory=dict)
+    explicit_requests: dict[TurnKey, int] = field(default_factory=dict)
 
 
 class UsageReportError(RuntimeError):
@@ -33,8 +44,9 @@ class UsageReportError(RuntimeError):
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Count exact $skill-name requests in a stable, sidecar-free copy "
-            "of a Codex desktop thread-history database."
+            "Count observed SKILL.md loads and exact $skill-name requests in "
+            "a stable, sidecar-free copy of a Codex desktop thread-history "
+            "database."
         )
     )
     parser.add_argument(
@@ -51,7 +63,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--active-only",
         action="store_true",
-        help="Omit skills with no exact named requests.",
+        help="Omit skills with neither an observed load nor a named request.",
     )
     return parser.parse_args(argv)
 
@@ -114,12 +126,21 @@ def explicit_request(text: str, skill: str) -> bool:
     return bool(pattern.search(text))
 
 
-def iter_user_messages(connection: sqlite3.Connection) -> Iterable[sqlite3.Row]:
+def observed_load(command: str, skill: str) -> bool:
+    """Return whether a command references an installed skill instruction file."""
+    normalized = command.replace("\\", "/")
+    return any(
+        f"{marker}/{skill}/SKILL.md" in normalized
+        for marker in SKILL_PATH_MARKERS
+    )
+
+
+def iter_usage_items(connection: sqlite3.Connection) -> Iterable[sqlite3.Row]:
     return connection.execute(
         """
-        SELECT thread_id, turn_id, created_at_ms, item_json
+        SELECT thread_id, turn_id, created_at_ms, item_json, item_type
         FROM thread_items
-        WHERE item_type = 'userMessage'
+        WHERE item_type IN ('userMessage', 'commandExecution')
         ORDER BY created_at_ms, rollout_ordinal
         """
     )
@@ -129,12 +150,10 @@ def local_date(timestamp_ms: int) -> str:
     return datetime.fromtimestamp(timestamp_ms / 1000).astimezone().date().isoformat()
 
 
-def reconstruct_requests(path: Path) -> dict[str, dict[tuple[str, str], int]]:
-    requests: dict[str, dict[tuple[str, str], int]] = {
-        skill: {} for skill in SKILLS
-    }
+def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
+    usage = {skill: SkillUsage() for skill in SKILLS}
     with closing(connect_database_copy(path)) as connection:
-        for row in iter_user_messages(connection):
+        for row in iter_usage_items(connection):
             try:
                 payload = json.loads(row["item_json"])
             except (
@@ -162,42 +181,63 @@ def reconstruct_requests(path: Path) -> dict[str, dict[tuple[str, str], int]]:
             except (TypeError, ValueError, OverflowError, OSError):
                 continue
 
-            text = content_text(payload)
             turn = (thread_id, turn_id)
-            for skill in SKILLS:
-                if explicit_request(text, skill):
-                    requests[skill].setdefault(turn, timestamp)
-    return requests
+            if row["item_type"] == "userMessage":
+                text = content_text(payload)
+                for skill in SKILLS:
+                    if explicit_request(text, skill):
+                        usage[skill].explicit_requests.setdefault(turn, timestamp)
+            elif row["item_type"] == "commandExecution":
+                command = payload.get("command")
+                if not isinstance(command, str):
+                    continue
+                for skill in SKILLS:
+                    if observed_load(command, skill):
+                        usage[skill].observed_loads.setdefault(turn, timestamp)
+    return usage
 
 
 def report_rows(
-    requests: dict[str, dict[tuple[str, str], int]], active_only: bool
+    usage: dict[str, SkillUsage], active_only: bool
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for skill in SKILLS:
-        timestamps = list(requests[skill].values())
+        load_timestamps = list(usage[skill].observed_loads.values())
+        request_timestamps = list(usage[skill].explicit_requests.values())
         row: dict[str, object] = {
             "skill": skill,
-            "explicit_requests": len(timestamps),
-            "first_requested": local_date(min(timestamps)) if timestamps else None,
-            "last_requested": local_date(max(timestamps)) if timestamps else None,
+            "observed_loads": len(load_timestamps),
+            "explicit_requests": len(request_timestamps),
+            "first_observed_load": (
+                local_date(min(load_timestamps)) if load_timestamps else None
+            ),
+            "last_observed_load": (
+                local_date(max(load_timestamps)) if load_timestamps else None
+            ),
+            "first_explicit_request": (
+                local_date(min(request_timestamps)) if request_timestamps else None
+            ),
+            "last_explicit_request": (
+                local_date(max(request_timestamps)) if request_timestamps else None
+            ),
         }
-        if not active_only or row["explicit_requests"]:
+        if not active_only or row["observed_loads"] or row["explicit_requests"]:
             rows.append(row)
     return rows
 
 
 def print_table(path: Path, rows: list[dict[str, object]]) -> None:
-    print("Exact $skill-name mentions in Codex desktop user turns")
+    print("Observed Super Skill loads and exact named requests in Codex desktop")
     print(f"Database copy: {path.expanduser().resolve()}")
     print()
-    headings = ("Skill", "Requests", "First", "Last")
+    headings = ("Skill", "Observed loads", "Explicit", "First load", "Last load")
     rendered_rows = [
         (
             str(row["skill"]),
+            str(row["observed_loads"]),
             str(row["explicit_requests"]),
-            str(row["first_requested"] or "—"),
-            str(row["last_requested"] or "—"),
+            str(row["first_observed_load"] or "—"),
+            str(row["last_observed_load"] or "—"),
         )
         for row in rows
     ]
@@ -207,32 +247,35 @@ def print_table(path: Path, rows: list[dict[str, object]]) -> None:
     ]
     print(
         f"{headings[0]:<{widths[0]}}  {headings[1]:>{widths[1]}}  "
-        f"{headings[2]:<{widths[2]}}  {headings[3]:<{widths[3]}}"
+        f"{headings[2]:>{widths[2]}}  {headings[3]:<{widths[3]}}  "
+        f"{headings[4]:<{widths[4]}}"
     )
     for row in rendered_rows:
         print(
             f"{row[0]:<{widths[0]}}  {row[1]:>{widths[1]}}  "
-            f"{row[2]:<{widths[2]}}  {row[3]:<{widths[3]}}"
+            f"{row[2]:>{widths[2]}}  {row[3]:<{widths[3]}}  "
+            f"{row[4]:<{widths[4]}}"
         )
     print()
-    print("Counts are a textual proxy, not automatic-activation telemetry.")
+    print("Observed loads and explicit requests are separate local proxies.")
+    print("A skill-file read does not prove that its instructions affected output.")
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        requests = reconstruct_requests(args.database)
+        usage = reconstruct_usage(args.database)
     except (UsageReportError, OSError, sqlite3.Error) as error:
         print(f"usage report failed: {error}", file=sys.stderr)
         return 2
 
-    rows = report_rows(requests, args.active_only)
+    rows = report_rows(usage, args.active_only)
     if args.json:
         print(
             json.dumps(
                 {
-                    "schema_version": 1,
-                    "scope": "exact-named-requests-only",
+                    "schema_version": 2,
+                    "scope": "observed-loads-and-explicit-requests",
                     "host": "codex-desktop",
                     "database_copy": str(args.database.expanduser().resolve()),
                     "skills": rows,

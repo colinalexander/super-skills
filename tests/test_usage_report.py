@@ -52,7 +52,7 @@ class UsageReportTests(unittest.TestCase):
                 (thread, turn, timestamp, ordinal, value, item_type),
             )
 
-    def test_counts_exact_named_requests_once_per_turn(self) -> None:
+    def test_counts_observed_loads_and_explicit_requests_once_per_turn(self) -> None:
         self.insert(
             "userMessage",
             "thread-1",
@@ -67,15 +67,44 @@ class UsageReportTests(unittest.TestCase):
                 ]
             },
         )
+        self.insert(
+            "commandExecution",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_001,
+            {
+                "command": (
+                    "cat /Users/example/.agents/skills/"
+                    "software-delivery/SKILL.md"
+                )
+            },
+            ordinal=1,
+        )
+        self.insert(
+            "commandExecution",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_002,
+            {
+                "command": (
+                    "sed -n '1,80p' /Users/example/.agents/skills/"
+                    "software-delivery/SKILL.md"
+                )
+            },
+            ordinal=2,
+        )
 
-        requests = usage_report.reconstruct_requests(self.database)
+        usage = usage_report.reconstruct_usage(self.database)
 
-        self.assertEqual(len(requests["software-delivery"]), 1)
+        self.assertEqual(len(usage["software-delivery"].explicit_requests), 1)
+        self.assertEqual(len(usage["software-delivery"].observed_loads), 1)
         self.assertFalse(Path(f"{self.database}-wal").exists())
         self.assertFalse(Path(f"{self.database}-journal").exists())
         self.assertFalse(Path(f"{self.database}-shm").exists())
 
-    def test_ignores_announced_implicit_use_and_extended_names(self) -> None:
+    def test_ignores_announcements_extended_names_and_repository_source_reads(
+        self,
+    ) -> None:
         self.insert(
             "agentMessage",
             "thread-1",
@@ -90,10 +119,18 @@ class UsageReportTests(unittest.TestCase):
             1_700_000_000_001,
             {"content": [{"type": "text", "text": "$interface-design-extra"}]},
         )
+        self.insert(
+            "commandExecution",
+            "thread-1",
+            "turn-2",
+            1_700_000_000_002,
+            {"command": "cat skills/interface-design/SKILL.md"},
+        )
 
-        requests = usage_report.reconstruct_requests(self.database)
+        usage = usage_report.reconstruct_usage(self.database)
 
-        self.assertEqual(len(requests["interface-design"]), 0)
+        self.assertEqual(len(usage["interface-design"].explicit_requests), 0)
+        self.assertEqual(len(usage["interface-design"].observed_loads), 0)
 
     def test_skips_malformed_rows(self) -> None:
         self.insert(
@@ -118,9 +155,10 @@ class UsageReportTests(unittest.TestCase):
             "not-json",
         )
 
-        requests = usage_report.reconstruct_requests(self.database)
+        usage = usage_report.reconstruct_usage(self.database)
 
-        self.assertEqual(len(requests["reasoning-modes"]), 0)
+        self.assertEqual(len(usage["reasoning-modes"].explicit_requests), 0)
+        self.assertEqual(len(usage["reasoning-modes"].observed_loads), 0)
 
     def test_rejects_database_with_a_data_bearing_sidecar(self) -> None:
         Path(f"{self.database}-wal").touch()
@@ -128,7 +166,7 @@ class UsageReportTests(unittest.TestCase):
         with self.assertRaisesRegex(
             usage_report.UsageReportError, "stable, sidecar-free copy"
         ):
-            usage_report.reconstruct_requests(self.database)
+            usage_report.reconstruct_usage(self.database)
 
     def test_rejects_an_unsupported_schema(self) -> None:
         unsupported = Path(self.temporary.name) / "unsupported.sqlite"
@@ -141,7 +179,7 @@ class UsageReportTests(unittest.TestCase):
         with self.assertRaisesRegex(
             usage_report.UsageReportError, "unsupported Codex desktop history schema"
         ):
-            usage_report.reconstruct_requests(unsupported)
+            usage_report.reconstruct_usage(unsupported)
 
     def test_json_report_is_machine_readable(self) -> None:
         self.insert(
@@ -151,6 +189,18 @@ class UsageReportTests(unittest.TestCase):
             1_700_000_000_000,
             {"content": [{"type": "text", "text": "Use $reasoning-modes."}]},
         )
+        self.insert(
+            "commandExecution",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_001,
+            {
+                "command": (
+                    "cat /Users/example/.codex/skills/reasoning-modes/SKILL.md"
+                )
+            },
+            ordinal=1,
+        )
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             result = usage_report.main(
@@ -159,19 +209,24 @@ class UsageReportTests(unittest.TestCase):
 
         payload = json.loads(output.getvalue())
         self.assertEqual(result, 0)
-        self.assertEqual(payload["scope"], "exact-named-requests-only")
+        self.assertEqual(
+            payload["scope"], "observed-loads-and-explicit-requests"
+        )
         self.assertEqual(payload["host"], "codex-desktop")
         self.assertEqual(
             [row["skill"] for row in payload["skills"]], ["reasoning-modes"]
         )
+        self.assertEqual(payload["skills"][0]["observed_loads"], 1)
+        self.assertEqual(payload["skills"][0]["explicit_requests"], 1)
 
     def test_empty_filtered_table_is_renderable(self) -> None:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             usage_report.print_table(self.database, [])
 
-        self.assertIn("Requests", output.getvalue())
-        self.assertIn("textual proxy", output.getvalue())
+        self.assertIn("Observed loads", output.getvalue())
+        self.assertIn("Explicit", output.getvalue())
+        self.assertIn("proxies", output.getvalue())
 
 
 if __name__ == "__main__":
