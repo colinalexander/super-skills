@@ -185,6 +185,7 @@ class UsageReportTests(unittest.TestCase):
             "Do not use interface-design.",
             "I am not currently using interface-design.",
             "I’m using interface-design-extra.",
+            "I’m using software-delivery and not interface-design.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -294,8 +295,21 @@ class UsageReportTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             usage_report.print_table(self.database, [])
 
-        self.assertIn("Experimental local Codex usage", output.getvalue())
+        self.assertIn("Experimental local Codex desktop usage", output.getvalue())
         self.assertIn("Detected", output.getvalue())
+
+    def test_default_discovery_explains_desktop_only_scope(self) -> None:
+        home = Path(self.temporary.name) / "cli-only-home"
+        home.mkdir()
+        (home / "state_5.sqlite").touch()
+        (home / "sessions").mkdir()
+
+        with mock.patch.object(usage_report, "codex_home", return_value=home):
+            with self.assertRaisesRegex(
+                usage_report.UsageReportError,
+                "Codex desktop.*Codex CLI session history is not currently supported",
+            ):
+                usage_report.discover_database()
 
     def test_skips_malformed_history_items(self) -> None:
         self.insert(

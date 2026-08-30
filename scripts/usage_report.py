@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reconstruct local Super Skills usage from retained Codex task history."""
+"""Reconstruct Super Skills usage from retained Codex desktop task history."""
 
 from __future__ import annotations
 
@@ -35,6 +35,10 @@ ACTIVATION_WORDS = re.compile(
 NEGATION_BEFORE_ACTIVATION = re.compile(
     r"(?:\bnot\b|\bcannot\b|\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b)"
     r"(?:\s+\w+){0,2}\s*$",
+    re.IGNORECASE,
+)
+NEGATION_AFTER_ACTIVATION = re.compile(
+    r"(?:\bnot\b(?!\s+only\b)|\b(?:except|excluding|without)\b)",
     re.IGNORECASE,
 )
 CLAUSE_BOUNDARY = re.compile(
@@ -76,15 +80,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Reconstruct explicit requests and announced implicit Super Skills "
-            "usage from retained local Codex task history."
+            "usage from retained local Codex desktop task history."
         )
     )
     parser.add_argument(
         "--database",
         type=Path,
         help=(
-            "Codex thread-history SQLite database. By default, use the newest "
-            "supported thread_history*.sqlite under the Codex home directory."
+            "Codex desktop thread-history SQLite database. By default, use the "
+            "newest supported thread_history*.sqlite under the Codex home directory."
         ),
     )
     parser.add_argument(
@@ -139,7 +143,8 @@ def discover_database(explicit: Path | None = None) -> Path:
         if has_supported_schema(path):
             return path.resolve()
     raise UsageReportError(
-        f"no supported thread_history*.sqlite database found under {home}"
+        "no supported Codex desktop thread_history*.sqlite database found under "
+        f"{home}; Codex CLI session history is not currently supported"
     )
 
 
@@ -213,7 +218,11 @@ def announced_use(text: str, skill: str) -> bool:
             prefix = clause[: skill_match.start()]
             for activation in ACTIVATION_WORDS.finditer(prefix):
                 before = prefix[: activation.start()]
-                if not NEGATION_BEFORE_ACTIVATION.search(before):
+                between = prefix[activation.end() :]
+                if (
+                    not NEGATION_BEFORE_ACTIVATION.search(before)
+                    and not NEGATION_AFTER_ACTIVATION.search(between)
+                ):
                     return True
     return False
 
@@ -283,7 +292,7 @@ def report_rows(usage: dict[str, SkillUsage], active_only: bool) -> list[dict[st
 
 
 def print_table(path: Path, rows: list[dict[str, object]]) -> None:
-    print("Experimental local Codex usage (reconstructed)")
+    print("Experimental local Codex desktop usage (reconstructed)")
     print(f"Database: {path}")
     print()
     headings = ("Skill", "Detected", "Explicit", "Implicit*", "First", "Last")
@@ -331,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
                 {
                     "schema_version": 1,
                     "status": "experimental",
-                    "source": "retained-local-codex-history",
+                    "source": "retained-local-codex-desktop-history",
                     "database": str(path),
                     "skills": rows,
                 },

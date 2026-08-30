@@ -108,7 +108,7 @@ For a manual installation, remove only the skill directory you previously copied
 
 ## Track your skill usage
 
-> **Experimental: local Codex usage.** Codex does not currently expose a documented native skill-activation event. This repository therefore includes a local, read-only reporter that reconstructs a lower bound from retained task history.
+> **Experimental: local Codex desktop usage.** Codex does not currently expose a documented native skill-activation event. This repository therefore includes a local, read-only reporter that reconstructs a lower bound from retained Codex desktop task history. Codex CLI currently uses a different retained-history layout and is not supported by this reporter.
 
 From the repository root, run:
 
