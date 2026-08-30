@@ -4,6 +4,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -178,6 +179,26 @@ class UsageReportTests(unittest.TestCase):
         self.assertEqual(len(usage["software-delivery"].announced), 2)
         self.assertEqual(len(usage["interface-design"].announced), 1)
 
+    def test_excludes_negated_and_extended_skill_announcements(self) -> None:
+        messages = (
+            "I won't use interface-design.",
+            "Do not use interface-design.",
+            "I am not currently using interface-design.",
+            "I’m using interface-design-extra.",
+        )
+        for index, text in enumerate(messages):
+            self.insert(
+                "agentMessage",
+                "thread-1",
+                f"turn-{index}",
+                1_700_000_000_000 + index,
+                {"phase": "commentary", "text": text},
+            )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertEqual(len(usage["interface-design"].announced), 0)
+
     def test_database_recency_includes_wal_activity(self) -> None:
         home = Path(self.temporary.name) / "codex-home"
         home.mkdir()
@@ -215,7 +236,7 @@ class UsageReportTests(unittest.TestCase):
         self.assertFalse(wal.exists())
         self.assertFalse(shm.exists())
 
-        with contextlib.closing(usage_report.connect_read_only(database)) as connection:
+        with usage_report.connect_read_only(database) as connection:
             self.assertEqual(
                 connection.execute("SELECT count(*) FROM example").fetchone()[0], 0
             )
@@ -234,13 +255,47 @@ class UsageReportTests(unittest.TestCase):
             writer.commit()
             self.assertTrue(Path(f"{database}-wal").exists())
 
-            with contextlib.closing(
-                usage_report.connect_read_only(database)
-            ) as reader:
+            with usage_report.connect_read_only(database) as reader:
                 self.assertEqual(
                     reader.execute("SELECT value FROM example").fetchone()[0],
                     "current",
                 )
+
+    def test_read_only_wal_snapshot_without_shm_is_staged_safely(self) -> None:
+        source = Path(self.temporary.name) / "source.sqlite"
+        snapshot_directory = Path(self.temporary.name) / "snapshot"
+        snapshot_directory.mkdir()
+        snapshot = snapshot_directory / "history.sqlite"
+        with contextlib.closing(sqlite3.connect(source)) as writer:
+            writer.execute("PRAGMA journal_mode=WAL")
+            writer.execute("PRAGMA wal_autocheckpoint=0")
+            writer.execute("CREATE TABLE example (value TEXT)")
+            writer.commit()
+            writer.execute("INSERT INTO example VALUES ('from-wal')")
+            writer.commit()
+            shutil.copy2(source, snapshot)
+            shutil.copy2(Path(f"{source}-wal"), Path(f"{snapshot}-wal"))
+
+        snapshot.chmod(0o400)
+        Path(f"{snapshot}-wal").chmod(0o400)
+        snapshot_directory.chmod(0o500)
+        try:
+            with usage_report.connect_read_only(snapshot) as reader:
+                self.assertEqual(
+                    reader.execute("SELECT value FROM example").fetchone()[0],
+                    "from-wal",
+                )
+            self.assertFalse(Path(f"{snapshot}-shm").exists())
+        finally:
+            snapshot_directory.chmod(0o700)
+
+    def test_print_table_supports_an_empty_filtered_report(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            usage_report.print_table(self.database, [])
+
+        self.assertIn("Experimental local Codex usage", output.getvalue())
+        self.assertIn("Detected", output.getvalue())
 
     def test_skips_malformed_history_items(self) -> None:
         self.insert(

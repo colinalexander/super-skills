@@ -7,13 +7,15 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sqlite3
 import sys
-from contextlib import closing
+import tempfile
+from contextlib import closing, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Iterator
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +30,11 @@ REQUIRED_COLUMNS = {
 }
 ACTIVATION_WORDS = re.compile(
     r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
+    re.IGNORECASE,
+)
+NEGATION_BEFORE_ACTIVATION = re.compile(
+    r"(?:\bnot\b|\bcannot\b|\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b)"
+    r"(?:\s+\w+){0,2}\s*$",
     re.IGNORECASE,
 )
 CLAUSE_BOUNDARY = re.compile(
@@ -100,7 +107,7 @@ def codex_home() -> Path:
 
 def has_supported_schema(path: Path) -> bool:
     try:
-        with closing(connect_read_only(path)) as connection:
+        with connect_read_only(path) as connection:
             columns = {
                 row[1]
                 for row in connection.execute("PRAGMA table_info(thread_items)")
@@ -144,14 +151,29 @@ def database_activity_mtime(path: Path) -> float:
     return max(mtimes)
 
 
-def connect_read_only(path: Path) -> sqlite3.Connection:
+def sqlite_connection(path: Path, parameters: str) -> sqlite3.Connection:
+    connection = sqlite3.connect(f"{path.as_uri()}?{parameters}", uri=True)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+@contextmanager
+def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
     resolved = path.resolve()
     wal = Path(f"{resolved}-wal")
     shm = Path(f"{resolved}-shm")
-    parameters = "mode=ro" if wal.exists() or shm.exists() else "mode=ro&immutable=1"
-    connection = sqlite3.connect(f"{resolved.as_uri()}?{parameters}", uri=True)
-    connection.row_factory = sqlite3.Row
-    return connection
+    if wal.is_file() and not shm.is_file():
+        with tempfile.TemporaryDirectory(prefix="super-skills-history-") as directory:
+            snapshot = Path(directory) / resolved.name
+            shutil.copy2(resolved, snapshot)
+            shutil.copy2(wal, Path(f"{snapshot}-wal"))
+            with closing(sqlite_connection(snapshot, "mode=ro")) as connection:
+                yield connection
+        return
+
+    parameters = "mode=ro" if wal.is_file() else "mode=ro&immutable=1"
+    with closing(sqlite_connection(resolved, parameters)) as connection:
+        yield connection
 
 
 def content_text(payload: dict[str, object]) -> str:
@@ -182,10 +204,17 @@ def announced_use(text: str, skill: str) -> bool:
     skill name. A bare mention in commentary is not treated as usage.
     """
 
-    for clause in CLAUSE_BOUNDARY.split(text.lower()):
-        for match in re.finditer(re.escape(skill.lower()), clause):
-            if ACTIVATION_WORDS.search(clause[: match.start()]):
-                return True
+    skill_pattern = re.compile(
+        rf"(?<![A-Za-z0-9_-]){re.escape(skill)}(?![A-Za-z0-9_-])",
+        re.IGNORECASE,
+    )
+    for clause in CLAUSE_BOUNDARY.split(text):
+        for skill_match in skill_pattern.finditer(clause):
+            prefix = clause[: skill_match.start()]
+            for activation in ACTIVATION_WORDS.finditer(prefix):
+                before = prefix[: activation.start()]
+                if not NEGATION_BEFORE_ACTIVATION.search(before):
+                    return True
     return False
 
 
@@ -202,7 +231,7 @@ def iter_history_rows(connection: sqlite3.Connection) -> Iterable[sqlite3.Row]:
 
 def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
     usage = {skill: SkillUsage() for skill in SKILLS}
-    with closing(connect_read_only(path)) as connection:
+    with connect_read_only(path) as connection:
         for row in iter_history_rows(connection):
             try:
                 payload = json.loads(row["item_json"])
@@ -259,7 +288,7 @@ def print_table(path: Path, rows: list[dict[str, object]]) -> None:
     print()
     headings = ("Skill", "Detected", "Explicit", "Implicit*", "First", "Last")
     widths = [
-        max(len(headings[0]), *(len(str(row["skill"])) for row in rows)),
+        max((len(str(row["skill"])) for row in rows), default=len(headings[0])),
         len(headings[1]),
         len(headings[2]),
         len(headings[3]),
