@@ -230,6 +230,28 @@ class UsageReportTests(unittest.TestCase):
                 "interface-design",
             )
         )
+        self.assertTrue(
+            usage_report.announced_use(
+                "I’m using interface-design not only for layout but also accessibility.",
+                "interface-design",
+            )
+        )
+
+    def test_accepts_a_multiline_announced_skill_list(self) -> None:
+        message = (
+            "I’m using these skills:\n"
+            "- software-delivery\n"
+            "- interface-design"
+        )
+
+        self.assertTrue(usage_report.announced_use(message, "software-delivery"))
+        self.assertTrue(usage_report.announced_use(message, "interface-design"))
+        self.assertFalse(
+            usage_report.announced_use(
+                "I’m using these skills:\n- software-delivery\n- not interface-design",
+                "interface-design",
+            )
+        )
 
     def test_accepts_linked_skill_first_announcement(self) -> None:
         self.assertTrue(
@@ -297,6 +319,30 @@ class UsageReportTests(unittest.TestCase):
             selected = usage_report.discover_database()
 
         self.assertEqual(selected, active_wal.resolve())
+
+    def test_database_discovery_ignores_a_candidate_rotated_before_sorting(self) -> None:
+        home = Path(self.temporary.name) / "codex-home"
+        home.mkdir()
+        vanished = home / "thread_history_1.sqlite"
+        survivor = home / "thread_history_2.sqlite"
+        vanished.touch()
+        survivor.touch()
+
+        def activity(path: Path) -> float:
+            if path == vanished:
+                raise FileNotFoundError(path)
+            return 100.0
+
+        with (
+            mock.patch.object(usage_report, "codex_home", return_value=home),
+            mock.patch.object(
+                usage_report, "database_activity_mtime", side_effect=activity
+            ),
+            mock.patch.object(usage_report, "has_supported_schema", return_value=True),
+        ):
+            selected = usage_report.discover_database()
+
+        self.assertEqual(selected, survivor.resolve())
 
     def test_quiescent_wal_database_is_opened_without_sidecar_writes(self) -> None:
         database = Path(self.temporary.name) / "quiescent.sqlite"
@@ -572,6 +618,20 @@ os._exit(0)
                 "UPDATE thread_items SET item_json = ?",
                 (sqlite3.Binary(b"\xff"),),
             )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertTrue(all(not record.detected_turns for record in usage.values()))
+
+    def test_skips_item_json_that_exceeds_the_decoder_recursion_limit(self) -> None:
+        nested_json = "[" * 10_000 + "0" + "]" * 10_000
+        self.insert(
+            "userMessage",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_000,
+            nested_json,
+        )
 
         usage = usage_report.reconstruct_usage(self.database)
 

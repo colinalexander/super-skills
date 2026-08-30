@@ -37,6 +37,12 @@ LIST_INTRODUCTION = re.compile(
     r"\b(using|applying|invoking|loading|following)\s+(?:these\s+)?skills?\s*:",
     re.IGNORECASE,
 )
+MULTILINE_SKILL_LIST = re.compile(
+    r"\b(?:using|applying|invoking|loading|following)\s+"
+    r"(?:these\s+)?skills?\s*:\s*"
+    r"(?P<items>(?:\n[ \t]*[-*+]\s+[^\n]+)+)",
+    re.IGNORECASE,
+)
 EXCLUSION_MARKER = (
     r"(?:\bnot\b(?!\s+only\b)|\bnever\b|\bneither\b|\bnor\b|\bcannot\b|"
     r"\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b|"
@@ -55,7 +61,7 @@ SKILL_FIRST_ACTIVATION = re.compile(
 )
 POST_SKILL_EXCLUSION = re.compile(
     r"^\s+(?:(?:is|was|does|do|did|can|could|should|would|will)\s+)?"
-    r"(?:not|never)\b",
+    r"(?:not\b(?!\s+only\b)|never\b)",
     re.IGNORECASE,
 )
 CLAUSE_BOUNDARY = re.compile(
@@ -151,10 +157,20 @@ def discover_database(explicit: Path | None = None) -> Path:
         return path
 
     home = codex_home()
-    candidates = sorted(
-        (path for path in home.glob("thread_history*.sqlite") if path.is_file()),
-        key=database_activity_mtime,
-        reverse=True,
+    candidates_with_activity: list[tuple[float, Path]] = []
+    for path in home.glob("thread_history*.sqlite"):
+        try:
+            if path.is_file():
+                candidates_with_activity.append((database_activity_mtime(path), path))
+        except (FileNotFoundError, NotADirectoryError):
+            # Codex desktop may rotate a candidate after glob/is_file but before
+            # recency sorting. Continue with the remaining history databases.
+            continue
+    candidates = (
+        path
+        for _, path in sorted(
+            candidates_with_activity, key=lambda item: item[0], reverse=True
+        )
     )
     for path in candidates:
         if has_supported_schema(path):
@@ -288,6 +304,16 @@ def announced_use(text: str, skill: str) -> bool:
         rf"(?<![A-Za-z0-9_-]){re.escape(skill)}(?![A-Za-z0-9_-])",
         re.IGNORECASE,
     )
+    for list_match in MULTILINE_SKILL_LIST.finditer(text):
+        for item in list_match.group("items").splitlines():
+            skill_match = skill_pattern.search(item)
+            if (
+                skill_match
+                and not EXCLUSION_AFTER_ACTIVATION.search(item[: skill_match.start()])
+                and not POST_SKILL_EXCLUSION.search(item[skill_match.end() :])
+            ):
+                return True
+
     normalized = LIST_INTRODUCTION.sub(r"\1 skills ", text)
     for clause in CLAUSE_BOUNDARY.split(normalized):
         for skill_match in skill_pattern.finditer(clause):
@@ -329,7 +355,12 @@ def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
         for row in iter_history_rows(connection):
             try:
                 payload = json.loads(row["item_json"])
-            except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
+            except (
+                TypeError,
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+                RecursionError,
+            ):
                 continue
             if not isinstance(payload, dict):
                 continue
