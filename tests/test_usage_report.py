@@ -188,6 +188,8 @@ class UsageReportTests(unittest.TestCase):
             "I’m using software-delivery and not interface-design.",
             "I’m using software-delivery rather than interface-design.",
             "I’m using software-delivery as opposed to interface-design.",
+            "I’m proceeding without using interface-design.",
+            "I’m proceeding except when applying interface-design.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -201,6 +203,14 @@ class UsageReportTests(unittest.TestCase):
         usage = usage_report.reconstruct_usage(self.database)
 
         self.assertEqual(len(usage["interface-design"].announced), 0)
+
+    def test_accepts_affirmative_not_only_announcement(self) -> None:
+        self.assertTrue(
+            usage_report.announced_use(
+                "I’m not only using interface-design but also testing it.",
+                "interface-design",
+            )
+        )
 
     def test_database_recency_tolerates_a_disappearing_wal(self) -> None:
         database = Path(self.temporary.name) / "thread_history.sqlite"
@@ -309,6 +319,31 @@ class UsageReportTests(unittest.TestCase):
         finally:
             snapshot_directory.chmod(0o700)
 
+    def test_read_only_connection_rechecks_a_vanished_wal(self) -> None:
+        database = Path(self.temporary.name) / "checkpointing.sqlite"
+        with contextlib.closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute("CREATE TABLE example (value TEXT)")
+        wal = Path(f"{database}-wal")
+        wal.touch()
+        real_copy = shutil.copy2
+
+        def checkpoint_during_copy(source: Path, destination: Path) -> Path:
+            if Path(source).name == wal.name:
+                wal.unlink()
+                raise FileNotFoundError(wal)
+            return real_copy(source, destination)
+
+        with mock.patch.object(
+            usage_report.shutil, "copy2", side_effect=checkpoint_during_copy
+        ):
+            with usage_report.connect_read_only(database) as reader:
+                self.assertEqual(
+                    reader.execute("SELECT count(*) FROM example").fetchone()[0], 0
+                )
+
+        self.assertFalse(wal.exists())
+        self.assertFalse(Path(f"{database}-shm").exists())
+
     def test_print_table_supports_an_empty_filtered_report(self) -> None:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -316,6 +351,27 @@ class UsageReportTests(unittest.TestCase):
 
         self.assertIn("Experimental local Codex desktop usage", output.getvalue())
         self.assertIn("Detected", output.getvalue())
+
+    def test_print_table_sizes_columns_from_rendered_values(self) -> None:
+        rows = [
+            {
+                "skill": "interface-design",
+                "detected_turns": 1,
+                "explicit_requests": 0,
+                "inferred_implicit_turns": 1,
+                "first_detected": "2026-08-30",
+                "last_detected": "2026-08-30",
+            }
+        ]
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            usage_report.print_table(self.database, rows)
+
+        lines = output.getvalue().splitlines()
+        header = next(line for line in lines if line.startswith("Skill"))
+        value = next(line for line in lines if line.startswith("interface-design"))
+        self.assertEqual(header.index("First"), value.index("2026-08-30"))
+        self.assertEqual(header.index("Last"), value.rindex("2026-08-30"))
 
     def test_default_discovery_explains_desktop_only_scope(self) -> None:
         home = Path(self.temporary.name) / "cli-only-home"

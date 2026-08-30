@@ -108,7 +108,7 @@ For a manual installation, remove only the skill directory you previously copied
 
 ## Track your skill usage
 
-> **Experimental: local Codex desktop usage.** Codex does not currently expose a documented native skill-activation event. This repository therefore includes a local, read-only reporter that reconstructs a lower bound from retained Codex desktop task history. Codex CLI currently uses a different retained-history layout and is not supported by this reporter.
+> **Experimental: local Codex desktop usage.** Codex does not currently expose a documented native skill-activation event. This repository therefore includes a local, read-only reporter that produces a partial heuristic reconstruction from retained Codex desktop task history. Codex CLI currently uses a different retained-history layout and is not supported by this reporter.
 
 From the repository root, run:
 
@@ -124,7 +124,7 @@ python3 scripts/usage_report.py --json
 python3 scripts/usage_report.py --database /path/to/thread_history.sqlite
 ```
 
-The script opens task history read-only, performs no network requests, and does not include prompt or response contents in its report. No data leaves your machine. Because the report reconstructs usage from exact invocations and natural-language announcements rather than a platform activation event, counts can omit unannounced activations and can contain heuristic false positives. Deleted, unavailable, or unretained tasks cannot be counted, and Codex's internal history schema may change. Treat the results as experimental lower-bound diagnostics, not authoritative telemetry. See the current [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks) for the documented lifecycle events.
+The script opens task history read-only, performs no network requests, and does not include prompt or response contents in its report. No data leaves your machine. Because the report reconstructs usage from exact invocations and natural-language announcements rather than a platform activation event, counts can omit unannounced activations and can contain heuristic false positives. Deleted, unavailable, or unretained tasks cannot be counted, and Codex's internal history schema may change. Treat the results as experimental diagnostics, not authoritative telemetry. See the current [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks) for the documented lifecycle events.
 
 ## Examples
 

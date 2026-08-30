@@ -32,8 +32,11 @@ ACTIVATION_WORDS = re.compile(
     r"\b(?:using|use|applying|apply|invoking|invoke|loading|load|following|follow)\b",
     re.IGNORECASE,
 )
-NEGATION_BEFORE_ACTIVATION = re.compile(
-    r"(?:\bnot\b|\bcannot\b|\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b)"
+EXCLUSION_BEFORE_ACTIVATION = re.compile(
+    r"(?:\bnot\b(?!\s+only\b)|\bcannot\b|"
+    r"\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b|"
+    r"\b(?:except|excluding|without)\b|\brather\s+than\b|"
+    r"\bas\s+opposed\s+to\b)"
     r"(?:\s+\w+){0,2}\s*$",
     re.IGNORECASE,
 )
@@ -172,18 +175,32 @@ def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
     resolved = path.resolve()
     wal = Path(f"{resolved}-wal")
     shm = Path(f"{resolved}-shm")
-    if wal.is_file() and not shm.is_file():
-        with tempfile.TemporaryDirectory(prefix="super-skills-history-") as directory:
-            snapshot = Path(directory) / resolved.name
-            shutil.copy2(resolved, snapshot)
-            shutil.copy2(wal, Path(f"{snapshot}-wal"))
-            with closing(sqlite_connection(snapshot, "mode=ro")) as connection:
-                yield connection
+    for _attempt in range(3):
+        wal_exists = wal.is_file()
+        if wal_exists and not shm.is_file():
+            with tempfile.TemporaryDirectory(
+                prefix="super-skills-history-"
+            ) as directory:
+                snapshot = Path(directory) / resolved.name
+                shutil.copy2(resolved, snapshot)
+                try:
+                    shutil.copy2(wal, Path(f"{snapshot}-wal"))
+                except FileNotFoundError:
+                    # A checkpoint can remove the WAL between observation and
+                    # copying. Re-evaluate the source sidecar state.
+                    continue
+                with closing(sqlite_connection(snapshot, "mode=ro")) as connection:
+                    yield connection
+            return
+
+        parameters = "mode=ro" if wal_exists else "mode=ro&immutable=1"
+        with closing(sqlite_connection(resolved, parameters)) as connection:
+            yield connection
         return
 
-    parameters = "mode=ro" if wal.is_file() else "mode=ro&immutable=1"
-    with closing(sqlite_connection(resolved, parameters)) as connection:
-        yield connection
+    raise UsageReportError(
+        f"Codex desktop history sidecars changed repeatedly while reading {resolved}"
+    )
 
 
 def content_text(payload: dict[str, object]) -> str:
@@ -225,7 +242,7 @@ def announced_use(text: str, skill: str) -> bool:
                 before = prefix[: activation.start()]
                 between = prefix[activation.end() :]
                 if (
-                    not NEGATION_BEFORE_ACTIVATION.search(before)
+                    not EXCLUSION_BEFORE_ACTIVATION.search(before)
                     and not NEGATION_AFTER_ACTIVATION.search(between)
                 ):
                     return True
@@ -301,32 +318,35 @@ def print_table(path: Path, rows: list[dict[str, object]]) -> None:
     print(f"Database: {path}")
     print()
     headings = ("Skill", "Detected", "Explicit", "Implicit*", "First", "Last")
+    rendered_rows = [
+        (
+            str(row["skill"]),
+            str(row["detected_turns"]),
+            str(row["explicit_requests"]),
+            str(row["inferred_implicit_turns"]),
+            str(row["first_detected"] or "—"),
+            str(row["last_detected"] or "—"),
+        )
+        for row in rows
+    ]
     widths = [
-        max((len(str(row["skill"])) for row in rows), default=len(headings[0])),
-        len(headings[1]),
-        len(headings[2]),
-        len(headings[3]),
-        len(headings[4]),
-        len(headings[5]),
+        max([len(headings[index]), *(len(row[index]) for row in rendered_rows)])
+        for index in range(len(headings))
     ]
     print(
         f"{headings[0]:<{widths[0]}}  {headings[1]:>{widths[1]}}  "
         f"{headings[2]:>{widths[2]}}  {headings[3]:>{widths[3]}}  "
         f"{headings[4]:<{widths[4]}}  {headings[5]:<{widths[5]}}"
     )
-    for row in rows:
-        first = row["first_detected"] or "—"
-        last = row["last_detected"] or "—"
+    for row in rendered_rows:
         print(
-            f"{row['skill']:<{widths[0]}}  "
-            f"{row['detected_turns']:>{widths[1]}}  "
-            f"{row['explicit_requests']:>{widths[2]}}  "
-            f"{row['inferred_implicit_turns']:>{widths[3]}}  "
-            f"{first:<{widths[4]}}  {last:<{widths[5]}}"
+            f"{row[0]:<{widths[0]}}  {row[1]:>{widths[1]}}  "
+            f"{row[2]:>{widths[2]}}  {row[3]:>{widths[3]}}  "
+            f"{row[4]:<{widths[4]}}  {row[5]:<{widths[5]}}"
         )
     print()
     print("* Announced use without a matching explicit $skill-name request.")
-    print("Detected counts are lower-bound heuristics, not native activation telemetry.")
+    print("Detected counts are heuristic, not native activation telemetry.")
 
 
 def main(argv: list[str] | None = None) -> int:
