@@ -11,6 +11,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+import time
 from contextlib import closing, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -37,7 +38,7 @@ LIST_INTRODUCTION = re.compile(
     re.IGNORECASE,
 )
 EXCLUSION_MARKER = (
-    r"(?:\bnot\b(?!\s+only\b)|\bnever\b|\bcannot\b|"
+    r"(?:\bnot\b(?!\s+only\b)|\bnever\b|\bneither\b|\bnor\b|\bcannot\b|"
     r"\b(?:ca|did|do|does|must|should|wo|would)n['’]t\b|"
     r"\b(?:except|excluding|without)\b|\brather\s+than\b|"
     r"\bas\s+opposed\s+to\b|\bavoid(?:ed|ing)?\b|"
@@ -190,43 +191,61 @@ def file_fingerprint(path: Path) -> tuple[int, int, int, int, int]:
     )
 
 
+def snapshot_sources(path: Path) -> tuple[Path, ...]:
+    """Return the main database and data-bearing sidecars currently present."""
+
+    candidates = (path, Path(f"{path}-wal"), Path(f"{path}-journal"))
+    return (path, *(candidate for candidate in candidates[1:] if candidate.is_file()))
+
+
+def stage_consistent_snapshot(path: Path, directory: Path) -> tuple[Path, set[str]]:
+    """Copy a stable SQLite generation into a private directory."""
+
+    for attempt in range(8):
+        sources = snapshot_sources(path)
+        try:
+            before = tuple((source.name, file_fingerprint(source)) for source in sources)
+            for source in sources:
+                shutil.copy2(source, directory / source.name)
+            after_sources = snapshot_sources(path)
+            after = tuple(
+                (source.name, file_fingerprint(source)) for source in after_sources
+            )
+        except FileNotFoundError:
+            after_sources = ()
+            after = ()
+
+        if sources == after_sources and before == after:
+            suffixes = {
+                source.name.removeprefix(path.name)
+                for source in sources
+                if source != path
+            }
+            return directory / path.name, suffixes
+
+        if attempt < 7:
+            time.sleep(0.01 * (2**attempt))
+
+    raise UsageReportError(
+        f"Codex desktop history changed throughout snapshot staging: {path}"
+    )
+
+
 @contextmanager
 def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
     resolved = path.resolve()
-    wal = Path(f"{resolved}-wal")
-    for _attempt in range(5):
-        wal_exists = wal.is_file()
-        if wal_exists:
-            with tempfile.TemporaryDirectory(
-                prefix="super-skills-history-"
-            ) as directory:
-                snapshot = Path(directory) / resolved.name
-                try:
-                    before = (file_fingerprint(resolved), file_fingerprint(wal))
-                    shutil.copy2(resolved, snapshot)
-                    shutil.copy2(wal, Path(f"{snapshot}-wal"))
-                    after = (file_fingerprint(resolved), file_fingerprint(wal))
-                except FileNotFoundError:
-                    # A checkpoint can remove the WAL between observation and
-                    # copying. Re-evaluate the source sidecar state.
-                    continue
-                if before != after:
-                    # Never open a staged main/WAL pair when either source file
-                    # changed during the sequential copies.
-                    continue
-                with closing(sqlite_connection(snapshot, "mode=ro")) as connection:
-                    yield connection
-            return
-
-        with closing(
-            sqlite_connection(resolved, "mode=ro&immutable=1")
-        ) as connection:
+    with tempfile.TemporaryDirectory(prefix="super-skills-history-") as directory:
+        snapshot, sidecars = stage_consistent_snapshot(resolved, Path(directory))
+        if "-journal" in sidecars:
+            # SQLite may need to recover a hot rollback journal. Recovery is
+            # allowed only in the private snapshot, never in the source tree.
+            parameters = "mode=rw"
+        elif "-wal" in sidecars:
+            parameters = "mode=ro"
+        else:
+            parameters = "mode=ro&immutable=1"
+        with closing(sqlite_connection(snapshot, parameters)) as connection:
             yield connection
-        return
-
-    raise UsageReportError(
-        f"Codex desktop history sidecars changed repeatedly while reading {resolved}"
-    )
 
 
 def content_text(payload: dict[str, object]) -> str:
@@ -314,7 +333,10 @@ def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
                 continue
 
             turn = (str(row["thread_id"]), str(row["turn_id"]))
-            timestamp = int(row["created_at_ms"])
+            try:
+                timestamp = int(row["created_at_ms"])
+            except (TypeError, ValueError):
+                continue
             for skill, record in usage.items():
                 if item_type == "userMessage" and explicit_request(text, skill):
                     record.explicit.setdefault(turn, timestamp)

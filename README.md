@@ -124,7 +124,7 @@ python3 scripts/usage_report.py --json
 python3 scripts/usage_report.py --database /path/to/thread_history.sqlite
 ```
 
-The script opens task history read-only, performs no network requests, and does not include prompt or response contents in its report. No data leaves your machine. Because the report reconstructs usage from exact invocations and natural-language announcements rather than a platform activation event, counts can omit unannounced activations and can contain heuristic false positives. Deleted, unavailable, or unretained tasks cannot be counted, and Codex's internal history schema may change. Treat the results as experimental diagnostics, not authoritative telemetry. See the current [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks) for the documented lifecycle events.
+The script copies a coherent snapshot of the source task-history files without modifying them, performs no network requests, and does not include prompt or response contents in its report. SQLite recovery, when needed, occurs only inside a private temporary snapshot. No data leaves your machine. Because the report reconstructs usage from exact invocations and natural-language announcements rather than a platform activation event, counts can omit unannounced activations and can contain heuristic false positives. Deleted, unavailable, or unretained tasks cannot be counted, and Codex's internal history schema may change. Treat the results as experimental diagnostics, not authoritative telemetry. See the current [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks) for the documented lifecycle events.
 
 ## Examples
 

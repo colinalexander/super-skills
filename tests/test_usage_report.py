@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -206,6 +208,7 @@ class UsageReportTests(unittest.TestCase):
             "I am never using interface-design.",
             "I’ll avoid using interface-design.",
             "I stopped using interface-design.",
+            "I’m using neither interface-design nor software-delivery.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -363,8 +366,11 @@ class UsageReportTests(unittest.TestCase):
                 raise FileNotFoundError(wal)
             return real_copy(source, destination)
 
-        with mock.patch.object(
-            usage_report.shutil, "copy2", side_effect=checkpoint_during_copy
+        with (
+            mock.patch.object(
+                usage_report.shutil, "copy2", side_effect=checkpoint_during_copy
+            ),
+            mock.patch.object(usage_report.time, "sleep") as sleep,
         ):
             with usage_report.connect_read_only(database) as reader:
                 self.assertEqual(
@@ -373,6 +379,7 @@ class UsageReportTests(unittest.TestCase):
 
         self.assertFalse(wal.exists())
         self.assertFalse(Path(f"{database}-shm").exists())
+        sleep.assert_called_once()
 
     def test_read_only_connection_rejects_a_changed_wal_generation(self) -> None:
         database = Path(self.temporary.name) / "restarted-wal.sqlite"
@@ -399,8 +406,11 @@ class UsageReportTests(unittest.TestCase):
                     wal.unlink()
             return result
 
-        with mock.patch.object(
-            usage_report.shutil, "copy2", side_effect=restart_during_copy
+        with (
+            mock.patch.object(
+                usage_report.shutil, "copy2", side_effect=restart_during_copy
+            ),
+            mock.patch.object(usage_report.time, "sleep") as sleep,
         ):
             with usage_report.connect_read_only(database) as reader:
                 self.assertEqual(
@@ -409,6 +419,45 @@ class UsageReportTests(unittest.TestCase):
 
         self.assertEqual(wal_copies, 2)
         self.assertFalse(wal.exists())
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_hot_rollback_journal_is_recovered_only_in_private_snapshot(self) -> None:
+        database = Path(self.temporary.name) / "hot-journal.sqlite"
+        with contextlib.closing(sqlite3.connect(database)) as connection, connection:
+            connection.execute("CREATE TABLE example (value BLOB)")
+            connection.execute("INSERT INTO example VALUES ('committed')")
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                """
+import os
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+connection.execute("PRAGMA journal_mode=DELETE")
+connection.execute("PRAGMA cache_size=5")
+connection.execute("BEGIN IMMEDIATE")
+for _ in range(100):
+    connection.execute("INSERT INTO example VALUES (?)", (b"x" * 8192,))
+os._exit(0)
+""",
+                str(database),
+            ],
+            check=True,
+        )
+        journal = Path(f"{database}-journal")
+        self.assertTrue(journal.is_file())
+
+        with usage_report.connect_read_only(database) as reader:
+            values = [
+                row[0] for row in reader.execute("SELECT value FROM example").fetchall()
+            ]
+
+        self.assertEqual(values, ["committed"])
+        self.assertTrue(journal.is_file())
 
     def test_print_table_supports_an_empty_filtered_report(self) -> None:
         output = io.StringIO()
@@ -461,6 +510,23 @@ class UsageReportTests(unittest.TestCase):
             "not-json",
         )
         usage = usage_report.reconstruct_usage(self.database)
+        self.assertTrue(all(not record.detected_turns for record in usage.values()))
+
+    def test_skips_history_items_with_malformed_timestamps(self) -> None:
+        self.insert(
+            "userMessage",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_000,
+            {"content": [{"type": "text", "text": "Use $reasoning-modes."}]},
+        )
+        with contextlib.closing(sqlite3.connect(self.database)) as connection, connection:
+            connection.execute(
+                "UPDATE thread_items SET created_at_ms = 'not-a-timestamp'"
+            )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
         self.assertTrue(all(not record.detected_turns for record in usage.values()))
 
     def test_json_report_is_machine_readable(self) -> None:
