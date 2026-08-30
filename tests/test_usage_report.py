@@ -238,6 +238,15 @@ class UsageReportTests(unittest.TestCase):
                 "software-delivery",
             )
         )
+
+    def test_rejects_post_skill_exclusions(self) -> None:
+        messages = (
+            "I’m using software-delivery and interface-design is not needed.",
+            "I’m using software-delivery because interface-design does not apply.",
+        )
+
+        for message in messages:
+            self.assertFalse(usage_report.announced_use(message, "interface-design"))
         self.assertFalse(
             usage_report.announced_use(
                 "software-delivery is the skill I am not using for this change.",
@@ -450,6 +459,8 @@ os._exit(0)
         )
         journal = Path(f"{database}-journal")
         self.assertTrue(journal.is_file())
+        database.chmod(0o444)
+        journal.chmod(0o444)
 
         with usage_report.connect_read_only(database) as reader:
             values = [
@@ -458,6 +469,8 @@ os._exit(0)
 
         self.assertEqual(values, ["committed"])
         self.assertTrue(journal.is_file())
+        self.assertEqual(database.stat().st_mode & 0o222, 0)
+        self.assertEqual(journal.stat().st_mode & 0o222, 0)
 
     def test_print_table_supports_an_empty_filtered_report(self) -> None:
         output = io.StringIO()
@@ -523,6 +536,41 @@ os._exit(0)
         with contextlib.closing(sqlite3.connect(self.database)) as connection, connection:
             connection.execute(
                 "UPDATE thread_items SET created_at_ms = 'not-a-timestamp'"
+            )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertTrue(all(not record.detected_turns for record in usage.values()))
+
+    def test_skips_history_items_with_out_of_range_timestamps(self) -> None:
+        self.insert(
+            "userMessage",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_000,
+            {"content": [{"type": "text", "text": "Use $reasoning-modes."}]},
+        )
+        with contextlib.closing(sqlite3.connect(self.database)) as connection, connection:
+            connection.execute(
+                "UPDATE thread_items SET created_at_ms = 9223372036854775807"
+            )
+
+        usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertTrue(all(not record.detected_turns for record in usage.values()))
+
+    def test_skips_item_json_with_invalid_text_encoding(self) -> None:
+        self.insert(
+            "userMessage",
+            "thread-1",
+            "turn-1",
+            1_700_000_000_000,
+            {"content": [{"type": "text", "text": "Use $reasoning-modes."}]},
+        )
+        with contextlib.closing(sqlite3.connect(self.database)) as connection, connection:
+            connection.execute(
+                "UPDATE thread_items SET item_json = ?",
+                (sqlite3.Binary(b"\xff"),),
             )
 
         usage = usage_report.reconstruct_usage(self.database)

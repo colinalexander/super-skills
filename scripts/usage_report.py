@@ -53,6 +53,11 @@ SKILL_FIRST_ACTIVATION = re.compile(
     r"\b(?:using|applying|invoking|loading|following)\b",
     re.IGNORECASE,
 )
+POST_SKILL_EXCLUSION = re.compile(
+    r"^\s+(?:(?:is|was|does|do|did|can|could|should|would|will)\s+)?"
+    r"(?:not|never)\b",
+    re.IGNORECASE,
+)
 CLAUSE_BOUNDARY = re.compile(
     r"(?:[.;:!?](?:\s+|$)|\n+|\b(?:although|but|however|instead|whereas|while)\b)",
     re.IGNORECASE,
@@ -239,6 +244,9 @@ def connect_read_only(path: Path) -> Iterator[sqlite3.Connection]:
         if "-journal" in sidecars:
             # SQLite may need to recover a hot rollback journal. Recovery is
             # allowed only in the private snapshot, never in the source tree.
+            snapshot.chmod(snapshot.stat().st_mode | 0o600)
+            journal = Path(f"{snapshot}-journal")
+            journal.chmod(journal.stat().st_mode | 0o600)
             parameters = "mode=rw"
         elif "-wal" in sidecars:
             parameters = "mode=ro"
@@ -290,6 +298,9 @@ def announced_use(text: str, skill: str) -> bool:
                 if (
                     not EXCLUSION_BEFORE_ACTIVATION.search(before)
                     and not EXCLUSION_AFTER_ACTIVATION.search(between)
+                    and not POST_SKILL_EXCLUSION.search(
+                        clause[skill_match.end() :]
+                    )
                 ):
                     return True
             suffix = clause[skill_match.end() :]
@@ -318,7 +329,7 @@ def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
         for row in iter_history_rows(connection):
             try:
                 payload = json.loads(row["item_json"])
-            except (TypeError, json.JSONDecodeError):
+            except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
                 continue
             if not isinstance(payload, dict):
                 continue
@@ -335,7 +346,8 @@ def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
             turn = (str(row["thread_id"]), str(row["turn_id"]))
             try:
                 timestamp = int(row["created_at_ms"])
-            except (TypeError, ValueError):
+                local_date(timestamp)
+            except (TypeError, ValueError, OverflowError, OSError):
                 continue
             for skill, record in usage.items():
                 if item_type == "userMessage" and explicit_request(text, skill):
