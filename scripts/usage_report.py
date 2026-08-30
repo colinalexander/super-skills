@@ -38,7 +38,7 @@ LIST_INTRODUCTION = re.compile(
     re.IGNORECASE,
 )
 MULTILINE_SKILL_LIST = re.compile(
-    r"\b(?:using|applying|invoking|loading|following)\s+"
+    r"\b(?P<activation>using|applying|invoking|loading|following)\s+"
     r"(?:these\s+)?skills?\s*:\s*"
     r"(?P<items>(?:\n[ \t]*[-*+]\s+[^\n]+)+)",
     re.IGNORECASE,
@@ -223,11 +223,13 @@ def stage_consistent_snapshot(path: Path, directory: Path) -> tuple[Path, set[st
     """Copy a stable SQLite generation into a private directory."""
 
     for attempt in range(8):
+        attempt_directory = directory / f"attempt-{attempt}"
+        attempt_directory.mkdir()
         sources = snapshot_sources(path)
         try:
             before = tuple((source.name, file_fingerprint(source)) for source in sources)
             for source in sources:
-                shutil.copy2(source, directory / source.name)
+                shutil.copy2(source, attempt_directory / source.name)
             after_sources = snapshot_sources(path)
             after = tuple(
                 (source.name, file_fingerprint(source)) for source in after_sources
@@ -242,7 +244,7 @@ def stage_consistent_snapshot(path: Path, directory: Path) -> tuple[Path, set[st
                 for source in sources
                 if source != path
             }
-            return directory / path.name, suffixes
+            return attempt_directory / path.name, suffixes
 
         if attempt < 7:
             time.sleep(0.01 * (2**attempt))
@@ -293,6 +295,16 @@ def explicit_request(text: str, skill: str) -> bool:
     return bool(pattern.search(text))
 
 
+def affirmative_activation(before: str, between: str, after: str) -> bool:
+    """Apply the same exclusion boundaries to every activation grammar."""
+
+    return (
+        not EXCLUSION_BEFORE_ACTIVATION.search(before)
+        and not EXCLUSION_AFTER_ACTIVATION.search(between)
+        and not POST_SKILL_EXCLUSION.search(after)
+    )
+
+
 def announced_use(text: str, skill: str) -> bool:
     """Return whether nearby activation language announces use of a skill.
 
@@ -305,12 +317,16 @@ def announced_use(text: str, skill: str) -> bool:
         re.IGNORECASE,
     )
     for list_match in MULTILINE_SKILL_LIST.finditer(text):
+        before_activation = CLAUSE_BOUNDARY.split(text[: list_match.start()])[-1]
         for item in list_match.group("items").splitlines():
             skill_match = skill_pattern.search(item)
             if (
                 skill_match
-                and not EXCLUSION_AFTER_ACTIVATION.search(item[: skill_match.start()])
-                and not POST_SKILL_EXCLUSION.search(item[skill_match.end() :])
+                and affirmative_activation(
+                    before_activation,
+                    item[: skill_match.start()],
+                    item[skill_match.end() :],
+                )
             ):
                 return True
 
@@ -321,12 +337,8 @@ def announced_use(text: str, skill: str) -> bool:
             for activation in ACTIVATION_WORDS.finditer(prefix):
                 before = prefix[: activation.start()]
                 between = prefix[activation.end() :]
-                if (
-                    not EXCLUSION_BEFORE_ACTIVATION.search(before)
-                    and not EXCLUSION_AFTER_ACTIVATION.search(between)
-                    and not POST_SKILL_EXCLUSION.search(
-                        clause[skill_match.end() :]
-                    )
+                if affirmative_activation(
+                    before, between, clause[skill_match.end() :]
                 ):
                     return True
             suffix = clause[skill_match.end() :]
@@ -374,7 +386,16 @@ def reconstruct_usage(path: Path) -> dict[str, SkillUsage]:
             else:
                 continue
 
-            turn = (str(row["thread_id"]), str(row["turn_id"]))
+            thread_id = row["thread_id"]
+            turn_id = row["turn_id"]
+            if (
+                not isinstance(thread_id, str)
+                or not thread_id.strip()
+                or not isinstance(turn_id, str)
+                or not turn_id.strip()
+            ):
+                continue
+            turn = (thread_id, turn_id)
             try:
                 timestamp = int(row["created_at_ms"])
                 local_date(timestamp)

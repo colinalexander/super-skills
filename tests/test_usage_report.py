@@ -252,6 +252,18 @@ class UsageReportTests(unittest.TestCase):
                 "interface-design",
             )
         )
+        self.assertFalse(
+            usage_report.announced_use(
+                "I’m not using these skills:\n- software-delivery",
+                "software-delivery",
+            )
+        )
+        self.assertTrue(
+            usage_report.announced_use(
+                "I’m not only using these skills:\n- software-delivery",
+                "software-delivery",
+            )
+        )
 
     def test_accepts_linked_skill_first_announcement(self) -> None:
         self.assertTrue(
@@ -476,6 +488,38 @@ class UsageReportTests(unittest.TestCase):
         self.assertFalse(wal.exists())
         self.assertEqual(sleep.call_count, 2)
 
+    def test_snapshot_retries_isolate_obsolete_sidecars(self) -> None:
+        database = Path(self.temporary.name) / "changing-mode.sqlite"
+        wal = Path(f"{database}-wal")
+        journal = Path(f"{database}-journal")
+        database.write_bytes(b"database")
+        wal.write_bytes(b"old-wal")
+        journal.write_bytes(b"current-journal")
+        destination = Path(self.temporary.name) / "snapshots"
+        destination.mkdir()
+        generations = [
+            (database, wal),
+            (database, journal),
+            (database, journal),
+            (database, journal),
+        ]
+
+        with (
+            mock.patch.object(
+                usage_report, "snapshot_sources", side_effect=generations
+            ),
+            mock.patch.object(usage_report.time, "sleep") as sleep,
+        ):
+            snapshot, sidecars = usage_report.stage_consistent_snapshot(
+                database, destination
+            )
+
+        self.assertEqual(sidecars, {"-journal"})
+        self.assertTrue(Path(f"{snapshot}-journal").is_file())
+        self.assertFalse(Path(f"{snapshot}-wal").exists())
+        self.assertTrue(Path(f"{destination / 'attempt-0' / database.name}-wal").is_file())
+        sleep.assert_called_once()
+
     def test_hot_rollback_journal_is_recovered_only_in_private_snapshot(self) -> None:
         database = Path(self.temporary.name) / "hot-journal.sqlite"
         with contextlib.closing(sqlite3.connect(database)) as connection, connection:
@@ -602,6 +646,38 @@ os._exit(0)
             )
 
         usage = usage_report.reconstruct_usage(self.database)
+
+        self.assertTrue(all(not record.detected_turns for record in usage.values()))
+
+    def test_skips_history_items_without_usable_turn_identifiers(self) -> None:
+        nullable = Path(self.temporary.name) / "nullable-identifiers.sqlite"
+        with contextlib.closing(sqlite3.connect(nullable)) as connection, connection:
+            connection.execute(
+                """
+                CREATE TABLE thread_items (
+                    thread_id TEXT,
+                    turn_id TEXT,
+                    created_at_ms INTEGER,
+                    rollout_ordinal INTEGER,
+                    item_json TEXT,
+                    item_type TEXT
+                )
+                """
+            )
+            payload = json.dumps(
+                {"content": [{"type": "text", "text": "Use $reasoning-modes."}]}
+            )
+            connection.executemany(
+                "INSERT INTO thread_items VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    (None, "turn-1", 1_700_000_000_000, 0, payload, "userMessage"),
+                    ("thread-1", None, 1_700_000_000_001, 0, payload, "userMessage"),
+                    ("", "turn-2", 1_700_000_000_002, 0, payload, "userMessage"),
+                    ("thread-2", " ", 1_700_000_000_003, 0, payload, "userMessage"),
+                ),
+            )
+
+        usage = usage_report.reconstruct_usage(nullable)
 
         self.assertTrue(all(not record.detected_turns for record in usage.values()))
 
