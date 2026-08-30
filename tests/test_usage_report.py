@@ -186,6 +186,8 @@ class UsageReportTests(unittest.TestCase):
             "I am not currently using interface-design.",
             "I’m using interface-design-extra.",
             "I’m using software-delivery and not interface-design.",
+            "I’m using software-delivery rather than interface-design.",
+            "I’m using software-delivery as opposed to interface-design.",
         )
         for index, text in enumerate(messages):
             self.insert(
@@ -199,6 +201,23 @@ class UsageReportTests(unittest.TestCase):
         usage = usage_report.reconstruct_usage(self.database)
 
         self.assertEqual(len(usage["interface-design"].announced), 0)
+
+    def test_database_recency_tolerates_a_disappearing_wal(self) -> None:
+        database = Path(self.temporary.name) / "thread_history.sqlite"
+        database.touch()
+        wal = Path(f"{database}-wal")
+
+        real_stat = Path.stat
+
+        def disappearing_wal(path: Path, *args: object, **kwargs: object) -> os.stat_result:
+            if path == wal:
+                raise FileNotFoundError(path)
+            return real_stat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "stat", autospec=True, side_effect=disappearing_wal):
+            activity = usage_report.database_activity_mtime(database)
+
+        self.assertEqual(activity, database.stat().st_mtime)
 
     def test_database_recency_includes_wal_activity(self) -> None:
         home = Path(self.temporary.name) / "codex-home"

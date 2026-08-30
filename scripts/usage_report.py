@@ -38,7 +38,8 @@ NEGATION_BEFORE_ACTIVATION = re.compile(
     re.IGNORECASE,
 )
 NEGATION_AFTER_ACTIVATION = re.compile(
-    r"(?:\bnot\b(?!\s+only\b)|\b(?:except|excluding|without)\b)",
+    r"(?:\bnot\b(?!\s+only\b)|\b(?:except|excluding|without)\b|"
+    r"\brather\s+than\b|\bas\s+opposed\s+to\b)",
     re.IGNORECASE,
 )
 CLAUSE_BOUNDARY = re.compile(
@@ -151,8 +152,12 @@ def discover_database(explicit: Path | None = None) -> Path:
 def database_activity_mtime(path: Path) -> float:
     mtimes = [path.stat().st_mtime]
     wal = Path(f"{path}-wal")
-    if wal.is_file():
+    try:
         mtimes.append(wal.stat().st_mtime)
+    except (FileNotFoundError, NotADirectoryError):
+        # Codex desktop can checkpoint and remove a WAL between discovery and
+        # this lookup. The main database remains a valid recency signal.
+        pass
     return max(mtimes)
 
 
